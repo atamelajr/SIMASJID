@@ -1,0 +1,118 @@
+<div class="container-fluid p-4">
+    <!-- Header Cetak Resmi (Hanya Tampil Saat Print) -->
+    <div class="print-header">
+        <h3 class="fw-bold mb-1">MASJID AL-IKHLAS</h3>
+        <h5 class="fw-bold text-uppercase mb-1">LAPORAN BUKU BESAR MUTASI KAS</h5>
+        <p class="mb-0 text-muted">Periode: <%= startDate ? formatDate(startDate) : 'Awal' %> s.d <%= endDate ? formatDate(endDate) : 'Sekarang' %></p>
+        <hr style="border-top: 2px double #000;" class="my-2">
+    </div>
+
+    <!-- Header & Action Buttons -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 no-print">
+        <div>
+            <h4 class="fw-bold mb-1 text-dark"><i class="bi bi-receipt text-primary me-2"></i>Laporan Mutasi Kas (Buku Besar)</h4>
+            <p class="text-muted small mb-0">Rincian mutasi debet/kredit arus kas tunai & transfer beserta perhitungan saldo kumulatif (*running balance*).</p>
+        </div>
+        <div class="d-flex gap-2 mt-2 mt-md-0">
+            <button onclick="window.print()" class="btn btn-outline-primary btn-print shadow-sm">
+                <i class="bi bi-printer me-1"></i> Cetak Laporan / PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="card card-custom mb-4 no-print">
+        <div class="card-body">
+            <form action="/laporan/mutasi-kas" method="GET" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Tanggal Mulai</label>
+                    <input type="date" name="startDate" class="form-control form-control-sm" value="<%= startDate %>">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Tanggal Selesai</label>
+                    <input type="date" name="endDate" class="form-control form-control-sm" value="<%= endDate %>">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Rekening Kas</label>
+                    <select name="account_id" class="form-select form-control-sm">
+                        <option value="">-- Semua Rekening Kas --</option>
+                        <% accounts.forEach(acc => { %>
+                            <option value="<%= acc.id %>" <%= selectedAccount == acc.id ? 'selected' : '' %>><%= acc.name %></option>
+                        <% }) %>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm flex-fill">
+                        <i class="bi bi-filter me-1"></i> Terapkan Filter
+                    </button>
+                    <a href="/laporan/mutasi-kas" class="btn btn-light btn-sm border">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Ledger Table -->
+    <div class="card card-custom">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 110px;">Tgl Transaksi</th>
+                            <th style="width: 140px;">Kode TRX</th>
+                            <th>Rekening</th>
+                            <th>Kategori / COA</th>
+                            <th>Donatur / Keterangan</th>
+                            <th class="text-end">Debet / Penerimaan (Rp)</th>
+                            <th class="text-end">Kredit / Pengeluaran (Rp)</th>
+                            <th class="text-end">Saldo Kumulatif (Rp)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (transactions.length > 0) { %>
+                            <% transactions.forEach(trx => { %>
+                                <tr class="<%= trx.is_in_kind === 1 ? 'table-warning-subtle' : '' %>">
+                                    <td class="small fw-semibold"><%= formatDate(trx.transaction_date) %></td>
+                                    <td class="font-monospace extra-small"><%= trx.transaction_code %></td>
+                                    <td class="small"><span class="badge bg-light text-dark border"><%= trx.account_name %></span></td>
+                                    <td>
+                                        <div class="fw-semibold small"><%= trx.category_name %></div>
+                                        <span class="badge bg-secondary-subtle text-secondary border font-monospace extra-small"><%= trx.account_code %></span>
+                                    </td>
+                                    <td>
+                                        <div class="small fw-semibold text-dark"><%= trx.donor_name || 'Hamba Allah' %></div>
+                                        <div class="text-muted extra-small"><%= trx.description || '-' %></div>
+                                        <% if (trx.is_in_kind === 1) { %>
+                                            <span class="badge bg-info text-dark extra-small mt-1"><i class="bi bi-box-seam me-1"></i>Donasi Barang (Non-Kas)</span>
+                                        <% } %>
+                                    </td>
+                                    <td class="text-end font-monospace text-success fw-semibold">
+                                        <% if (trx.type === 'Penerimaan') { %>
+                                            + <%= formatRupiah(trx.amount) %>
+                                        <% } else { %>
+                                            -
+                                        <% } %>
+                                    </td>
+                                    <td class="text-end font-monospace text-danger fw-semibold">
+                                        <% if (trx.type === 'Pengeluaran') { %>
+                                            - <%= formatRupiah(trx.amount) %>
+                                        <% } else { %>
+                                            -
+                                        <% } %>
+                                    </td>
+                                    <td class="text-end font-monospace fw-bold text-dark">
+                                        <%= formatRupiah(trx.runningBalance) %>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-4">Tidak ada data mutasi kas untuk filter ini.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

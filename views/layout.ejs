@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= typeof title !== 'undefined' ? title : 'SIMASJID - Sistem Informasi Manajemen Masjid' %></title>
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <!-- Bootstrap 5 CSS & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Custom Styles -->
+    <style>
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: #f4f6f9; }
+        .sidebar, .sidebar.offcanvas-lg { 
+            width: 260px; 
+            min-height: 100vh; 
+            background-color: #1e293b !important; 
+            color: #ffffff !important; 
+            border-right: 1px solid #334155;
+        }
+        .sidebar .nav-link { 
+            color: #cbd5e1 !important; 
+            padding: 10px 16px; 
+            font-weight: 500; 
+            border-radius: 8px; 
+            margin: 2px 8px; 
+            font-size: 0.95rem; 
+            transition: all 0.15s ease-in-out;
+        }
+        .sidebar .nav-link:hover { 
+            background-color: #0f172a !important; 
+            color: #38bdf8 !important; 
+        }
+        .sidebar .nav-link.active { 
+            background-color: #0f172a !important; 
+            color: #38bdf8 !important; 
+            font-weight: 600;
+        }
+        .sidebar .nav-link i { font-size: 1.1rem; margin-right: 8px; }
+        .sidebar .sub-menu .nav-link { padding-left: 36px; font-size: 0.88rem; color: #94a3b8 !important; }
+        .sidebar .sub-menu .nav-link:hover, .sidebar .sub-menu .nav-link.active { color: #38bdf8 !important; }
+        .sidebar .text-muted { color: #94a3b8 !important; }
+        .content-wrapper { flex: 1; min-height: 100vh; display: flex; flex-direction: column; width: 100%; min-width: 0; }
+        .navbar-custom { background-color: #ffffff; border-bottom: 1px solid #e2e8f0; }
+        .card-custom { border: none; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+
+        /* Responsive Mobile Styles */
+        @media (max-width: 991.98px) {
+            .sidebar.offcanvas-lg { width: 280px; background-color: #1e293b !important; }
+            main.p-4 { padding: 1rem 1rem 80px 1rem !important; }
+            .navbar-custom { padding: 0.75rem 1rem !important; }
+            .navbar-brand { font-size: 1.1rem !important; }
+            .user-name-text { display: none; }
+        }
+        @media (max-width: 575.98px) {
+            main.p-4 { padding: 0.75rem 0.75rem 80px 0.75rem !important; }
+            .badge-user-role { font-size: 0.7rem; }
+        }
+
+        /* Android Mobile Bottom Navigation Bar Styles */
+        .mobile-bottom-nav {
+            height: 62px;
+            z-index: 1035;
+            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.08) !important;
+            border-top: 1px solid #e2e8f0;
+        }
+        .mobile-nav-link {
+            color: #64748b;
+            font-size: 0.7rem;
+            line-height: 1.25;
+            transition: all 0.2s ease-in-out;
+            padding: 4px 0;
+        }
+        .mobile-nav-link:hover, .mobile-nav-link.active {
+            color: #0284c7 !important;
+            font-weight: 600;
+        }
+        .mobile-nav-link.active i {
+            color: #0284c7 !important;
+            transform: translateY(-2px);
+        }
+        .mobile-nav-link i {
+            font-size: 1.25rem;
+            transition: transform 0.2s ease-in-out;
+        }
+        .extra-small {
+            font-size: 0.68rem;
+        }
+
+        /* Touch horizontal scroll table wrapper */
+        .table-responsive {
+            -webkit-overflow-scrolling: touch;
+        }
+
+        @media print {
+            .sidebar, .navbar-custom, .btn-print, .no-print, form, .modal { display: none !important; }
+            body { background-color: #fff !important; font-size: 11pt; color: #000 !important; }
+            .content-wrapper { margin: 0 !important; padding: 0 !important; }
+            .card { border: 1px solid #ccc !important; box-shadow: none !important; }
+            .table { width: 100% !important; border-collapse: collapse !important; }
+            .table th, .table td { border: 1px solid #333 !important; padding: 6px 8px !important; }
+            .print-header { display: block !important; text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+        }
+        .print-header { display: none; }
+    </style>
+</head>
+<body>
+    <div class="d-flex">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar offcanvas-lg offcanvas-start d-flex flex-column p-2" tabindex="-1" id="sidebarMenu">
+            <div class="d-flex align-items-center justify-content-between mb-3 px-3 pt-2">
+                <div class="d-flex align-items-center">
+                    <img src="/images/logo.png" alt="Logo SIMASJID" class="me-2 rounded bg-white p-1" style="height: 38px; width: auto; object-fit: contain;">
+                    <span class="fs-4 fw-bold tracking-wide text-white">SIMASJID</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#sidebarMenu" aria-label="Close"></button>
+            </div>
+            <ul class="nav nav-pills flex-column mb-auto">
+                <li class="nav-item">
+                    <a href="/dashboard" class="nav-link <%= typeof title !== 'undefined' && title.includes('Dashboard') ? 'active' : '' %>">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="/profil" class="nav-link <%= typeof title !== 'undefined' && title.includes('Profil') ? 'active' : '' %>">
+                        <i class="bi bi-info-circle"></i> Profil Masjid
+                    </a>
+                </li>
+                <li>
+                    <a href="/keuangan" class="nav-link <%= typeof title !== 'undefined' && (title.includes('Transaksi') || title.includes('Keuangan')) && typeof activeSubmenu === 'undefined' ? 'active' : '' %>">
+                        <i class="bi bi-journal-text"></i> Transaksi
+                    </a>
+                </li>
+                <li>
+                    <a href="/inventaris" class="nav-link <%= typeof title !== 'undefined' && title.includes('Inventaris') && typeof activeSubmenu === 'undefined' ? 'active' : '' %>">
+                        <i class="bi bi-box-seam"></i> Aset & Inventaris
+                    </a>
+                </li>
+                <li>
+                    <a href="/proyek" class="nav-link <%= typeof title !== 'undefined' && title.includes('Pembangunan') ? 'active' : '' %>">
+                        <i class="bi bi-hammer"></i> Pembangunan
+                    </a>
+                </li>
+
+                <!-- Modul Laporan (ISAK 35) Sub-Menu Section -->
+                <% const isLaporanActive = typeof activeSubmenu !== 'undefined' && ['posisi-keuangan', 'aktivitas', 'kas', 'mutasi-kas', 'inventaris', 'persediaan'].includes(activeSubmenu); %>
+                <li class="nav-item">
+                    <a href="#laporanSubmenu" data-bs-toggle="collapse" class="nav-link d-flex align-items-center justify-content-between <%= isLaporanActive ? '' : 'collapsed' %>" aria-expanded="<%= isLaporanActive ? 'true' : 'false' %>">
+                        <span><i class="bi bi-file-earmark-bar-graph"></i> Laporan Keuangan</span>
+                        <i class="bi bi-chevron-down style-arrow" style="font-size: 0.8rem;"></i>
+                    </a>
+                    <div class="collapse <%= isLaporanActive ? 'show' : '' %>" id="laporanSubmenu">
+                        <ul class="nav flex-column sub-menu ps-2">
+                            <li>
+                                <a href="/laporan/posisi-keuangan" class="nav-link <%= typeof activeSubmenu !== 'undefined' && activeSubmenu === 'posisi-keuangan' ? 'active' : '' %>">
+                                    <i class="bi bi-journal-bookmark"></i> Posisi Keuangan (ISAK 35)
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/laporan/aktivitas" class="nav-link <%= typeof activeSubmenu !== 'undefined' && activeSubmenu === 'aktivitas' ? 'active' : '' %>">
+                                    <i class="bi bi-graph-up-arrow"></i> Penghasilan & Beban
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/laporan/kas" class="nav-link <%= typeof activeSubmenu !== 'undefined' && activeSubmenu === 'kas' ? 'active' : '' %>">
+                                    <i class="bi bi-cash-stack"></i> Rekening Kas & Bank
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/laporan/mutasi-kas" class="nav-link <%= typeof activeSubmenu !== 'undefined' && activeSubmenu === 'mutasi-kas' ? 'active' : '' %>">
+                                    <i class="bi bi-receipt"></i> Mutasi Kas (Buku Besar)
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/laporan/inventaris" class="nav-link <%= typeof activeSubmenu !== 'undefined' && activeSubmenu === 'inventaris' ? 'active' : '' %>">
+                                    <i class="bi bi-box-seam"></i> Inventaris & Aset Tetap
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/laporan/persediaan" class="nav-link <%= typeof activeSubmenu !== 'undefined' && activeSubmenu === 'persediaan' ? 'active' : '' %>">
+                                    <i class="bi bi-boxes"></i> Persediaan / Material
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
+                <!-- Master Data & Parameter Menu Section -->
+                <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
+                    <% const isMasterActive = typeof activeSubmenu !== 'undefined' && ['categories', 'accounts', 'items', 'units', 'donors-mustahik'].includes(activeSubmenu); %>
+                    <li class="nav-item">
+                        <a href="#masterSubmenu" data-bs-toggle="collapse" class="nav-link d-flex align-items-center justify-content-between <%= isMasterActive ? '' : 'collapsed' %>" aria-expanded="<%= isMasterActive ? 'true' : 'false' %>">
+                            <span><i class="bi bi-sliders"></i> Master & Parameter</span>
+                            <i class="bi bi-chevron-down style-arrow" style="font-size: 0.8rem;"></i>
+                        </a>
+                        <div class="collapse <%= isMasterActive ? 'show' : '' %>" id="masterSubmenu">
+                            <ul class="nav flex-column sub-menu ps-2">
+                                <li>
+                                    <a href="/master/categories" class="nav-link <%= typeof activeSubmenu !== 'undefined' && activeSubmenu === 'categories' ? 'active' : '' %>">
+                                        <i class="bi bi-diagram-3"></i> Kategori & COA
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="/master/accounts" class="nav-link <%= typeof activeSubmenu !== 'undefined' && activeSubmenu === 'accounts' ? 'active' : '' %>">
+                                        <i class="bi bi-bank"></i> Rekening Kas/Bank
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="/master/items" class="nav-link <%= typeof activeSubmenu !== 'undefined' && activeSubmenu === 'items' ? 'active' : '' %>">
+                                        <i class="bi bi-boxes"></i> Katalog Barang/Material
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="/master/units" class="nav-link <%= typeof activeSubmenu !== 'undefined' && activeSubmenu === 'units' ? 'active' : '' %>">
+                                        <i class="bi bi-rulers"></i> Satuan Barang
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="/master/donors-mustahik" class="nav-link <%= typeof activeSubmenu !== 'undefined' && activeSubmenu === 'donors-mustahik' ? 'active' : '' %>">
+                                        <i class="bi bi-people"></i> Donatur & Mustahik
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                <% } %>
+
+                <% if (user && user.role_name === 'Admin') { %>
+                    <li class="nav-item mt-2">
+                        <a href="/settings" class="nav-link">
+                            <i class="bi bi-gear"></i> Pengaturan User
+                        </a>
+                    </li>
+                <% } %>
+            </ul>
+            <hr class="text-secondary">
+            <div class="px-3 pb-2 text-muted small">
+                <i class="bi bi-building"></i> Masjid Al-Ikhlas
+            </div>
+        </aside>
+
+        <!-- Main Content Wrapper -->
+        <div class="content-wrapper">
+            <!-- Navbar Header -->
+            <nav class="navbar navbar-custom navbar-expand-lg px-4 py-3">
+                <div class="container-fluid p-0 d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-light d-lg-none me-2 border shadow-sm px-2 py-1" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" title="Menu Sidebar">
+                            <i class="bi bi-list fs-4 text-dark"></i>
+                        </button>
+                        <span class="navbar-brand fw-semibold text-secondary mb-0 h1 text-truncate" style="max-width: 220px;"><%= typeof title !== 'undefined' ? title : 'SIMASJID' %></span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <% if (user) { %>
+                            <div class="dropdown">
+                                <button class="btn btn-light dropdown-toggle d-flex align-items-center gap-2 border" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-person-circle fs-5 text-primary"></i>
+                                    <span class="fw-semibold user-name-text"><%= user.full_name %></span>
+                                    <span class="badge bg-primary-subtle text-primary rounded-pill badge-user-role"><%= user.role_name %></span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                    <li class="px-3 py-2 d-lg-none border-bottom mb-1">
+                                        <div class="fw-bold small text-dark"><%= user.full_name %></div>
+                                        <div class="extra-small text-muted"><%= user.role_name %></div>
+                                    </li>
+                                    <li><a class="dropdown-item text-danger" href="/auth/logout"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                                </ul>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Page Body -->
+            <main class="p-4">
+                <%- body %>
+            </main>
+        </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation Bar (Android Style) -->
+    <nav class="mobile-bottom-nav d-lg-none fixed-bottom bg-white no-print">
+        <div class="d-flex justify-content-around align-items-center h-100 text-center px-1">
+            <!-- 1. Dashboard -->
+            <a href="/dashboard" class="mobile-nav-link text-decoration-none d-flex flex-column align-items-center justify-content-center flex-fill <%= typeof title !== 'undefined' && title.includes('Dashboard') ? 'active' : '' %>">
+                <i class="bi bi-speedometer2"></i>
+                <span class="extra-small mt-1">Beranda</span>
+            </a>
+
+            <!-- 2. Transaksi -->
+            <a href="/keuangan" class="mobile-nav-link text-decoration-none d-flex flex-column align-items-center justify-content-center flex-fill <%= typeof title !== 'undefined' && (title.includes('Transaksi') || title.includes('Keuangan')) ? 'active' : '' %>">
+                <i class="bi bi-journal-text"></i>
+                <span class="extra-small mt-1">Transaksi</span>
+            </a>
+
+            <!-- 3. Inventaris -->
+            <a href="/inventaris" class="mobile-nav-link text-decoration-none d-flex flex-column align-items-center justify-content-center flex-fill <%= typeof title !== 'undefined' && title.includes('Inventaris') ? 'active' : '' %>">
+                <i class="bi bi-box-seam"></i>
+                <span class="extra-small mt-1">Inventaris</span>
+            </a>
+
+            <!-- 4. Laporan -->
+            <a href="/laporan/posisi-keuangan" class="mobile-nav-link text-decoration-none d-flex flex-column align-items-center justify-content-center flex-fill <%= typeof activeSubmenu !== 'undefined' && ['posisi-keuangan', 'aktivitas', 'kas', 'mutasi-kas', 'inventaris', 'persediaan'].includes(activeSubmenu) ? 'active' : '' %>">
+                <i class="bi bi-file-earmark-bar-graph"></i>
+                <span class="extra-small mt-1">Laporan</span>
+            </a>
+
+            <!-- 5. Menu Drawer -->
+            <button type="button" class="btn border-0 mobile-nav-link d-flex flex-column align-items-center justify-content-center flex-fill bg-transparent p-0" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu">
+                <i class="bi bi-grid-fill text-secondary"></i>
+                <span class="extra-small text-secondary mt-1">Menu</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<div class="container-fluid p-4">
+    <!-- Header Cetak Resmi (Hanya Tampil Saat Print) -->
+    <div class="print-header">
+        <h3 class="fw-bold mb-1">MASJID AL-IKHLAS</h3>
+        <h5 class="fw-bold text-uppercase mb-1">LAPORAN PENGHASILAN & BEBAN (AKTIVITAS - ISAK 35)</h5>
+        <p class="mb-0 text-muted">Periode: <%= startDate ? formatDate(startDate) : 'Awal' %> s.d <%= endDate ? formatDate(endDate) : 'Sekarang' %></p>
+        <hr style="border-top: 2px double #000;" class="my-2">
+    </div>
+
+    <!-- Header & Action Buttons -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 no-print">
+        <div>
+            <h4 class="fw-bold mb-1 text-dark"><i class="bi bi-graph-up-arrow text-success me-2"></i>Laporan Penghasilan & Beban (ISAK 35)</h4>
+            <p class="text-muted small mb-0">Rincian seluruh Penerimaan (Kas & Donasi Barang) disandingkan dengan Beban Pengeluaran untuk menghitung Surplus/Defisit Periode.</p>
+        </div>
+        <div class="d-flex gap-2 mt-2 mt-md-0">
+            <button onclick="window.print()" class="btn btn-outline-primary btn-print shadow-sm">
+                <i class="bi bi-printer me-1"></i> Cetak Laporan / PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card card-custom border-start border-success border-4 h-100">
+                <div class="card-body">
+                    <span class="text-muted extra-small fw-bold text-uppercase">Total Penerimaan (Inflow)</span>
+                    <h3 class="fw-bold text-success mb-0 mt-1"><%= formatRupiah(totalPenerimaan) %></h3>
+                    <div class="text-muted extra-small mt-1"><i class="bi bi-arrow-down-left-circle text-success me-1"></i>Termasuk Penerimaan Kas & Non-Kas</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-custom border-start border-danger border-4 h-100">
+                <div class="card-body">
+                    <span class="text-muted extra-small fw-bold text-uppercase">Total Beban (Outflow)</span>
+                    <h3 class="fw-bold text-danger mb-0 mt-1"><%= formatRupiah(totalPengeluaran) %></h3>
+                    <div class="text-muted extra-small mt-1"><i class="bi bi-arrow-up-right-circle text-danger me-1"></i>Beban Operasional & Program</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-custom border-start border-<%= surplusDefisit >= 0 ? 'primary' : 'warning' %> border-4 h-100">
+                <div class="card-body">
+                    <span class="text-muted extra-small fw-bold text-uppercase">Surplus / (Defisit) Periode</span>
+                    <h3 class="fw-bold text-<%= surplusDefisit >= 0 ? 'primary' : 'warning' %> mb-0 mt-1"><%= formatRupiah(surplusDefisit) %></h3>
+                    <div class="text-muted extra-small mt-1"><i class="bi bi-calculator me-1"></i>Hasil Operasional Periode Ini</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="card card-custom mb-4 no-print">
+        <div class="card-body">
+            <form action="/laporan/aktivitas" method="GET" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Tanggal Mulai</label>
+                    <input type="date" name="startDate" class="form-control form-control-sm" value="<%= startDate %>">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Tanggal Selesai</label>
+                    <input type="date" name="endDate" class="form-control form-control-sm" value="<%= endDate %>">
+                </div>
+                <div class="col-md-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm flex-fill">
+                        <i class="bi bi-filter me-1"></i> Filter Periode
+                    </button>
+                    <a href="/laporan/aktivitas" class="btn btn-light btn-sm border">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Detailed Aktivitas Tables -->
+    <div class="card card-custom mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0 text-dark">Rincian Penghasilan / Penerimaan Sesuai COA</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 120px;">Kode COA</th>
+                            <th>Kategori Penerimaan</th>
+                            <th>Sub-Tipe</th>
+                            <th class="text-end">Penerimaan Kas (Rp)</th>
+                            <th class="text-end">Donasi Barang / Non-Kas (Rp)</th>
+                            <th class="text-end">Total Penerimaan (Rp)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (penerimaanRows.length > 0) { %>
+                            <% penerimaanRows.forEach(row => { %>
+                                <tr>
+                                    <td><span class="badge bg-success-subtle text-success border border-success font-monospace"><%= row.account_code %></span></td>
+                                    <td class="fw-semibold text-dark"><%= row.category_name %></td>
+                                    <td><span class="badge bg-light text-dark border"><%= row.sub_type %></span></td>
+                                    <td class="text-end font-monospace"><%= formatRupiah(row.total_kas) %></td>
+                                    <td class="text-end font-monospace text-info"><%= formatRupiah(row.total_non_kas) %></td>
+                                    <td class="text-end font-monospace fw-bold text-success"><%= formatRupiah(row.total_amount) %></td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-3">Tidak ada data penerimaan pada periode ini.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr class="fw-bold">
+                            <td colspan="3">TOTAL PENERIMAAN</td>
+                            <td class="text-end font-monospace text-success"><%= formatRupiah(penerimaanRows.reduce((s, r) => s + parseFloat(r.total_kas), 0)) %></td>
+                            <td class="text-end font-monospace text-info"><%= formatRupiah(penerimaanRows.reduce((s, r) => s + parseFloat(r.total_non_kas), 0)) %></td>
+                            <td class="text-end font-monospace text-success fs-6"><%= formatRupiah(totalPenerimaan) %></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card card-custom">
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0 text-dark">Rincian Beban / Pengeluaran Sesuai COA</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 120px;">Kode COA</th>
+                            <th>Kategori Beban</th>
+                            <th>Sub-Tipe</th>
+                            <th class="text-end">Total Pengeluaran (Rp)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (pengeluaranRows.length > 0) { %>
+                            <% pengeluaranRows.forEach(row => { %>
+                                <tr>
+                                    <td><span class="badge bg-danger-subtle text-danger border border-danger font-monospace"><%= row.account_code %></span></td>
+                                    <td class="fw-semibold text-dark"><%= row.category_name %></td>
+                                    <td><span class="badge bg-light text-dark border"><%= row.sub_type %></span></td>
+                                    <td class="text-end font-monospace fw-bold text-danger"><%= formatRupiah(row.total_amount) %></td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-3">Tidak ada data pengeluaran pada periode ini.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr class="fw-bold fs-6">
+                            <td colspan="3">TOTAL BEBAN / PENGELUARAN</td>
+                            <td class="text-end font-monospace text-danger"><%= formatRupiah(totalPengeluaran) %></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

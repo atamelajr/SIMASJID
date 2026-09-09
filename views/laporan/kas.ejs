@@ -1,0 +1,92 @@
+<div class="container-fluid p-4">
+    <!-- Header Cetak Resmi (Hanya Tampil Saat Print) -->
+    <div class="print-header">
+        <h3 class="fw-bold mb-1">MASJID AL-IKHLAS</h3>
+        <h5 class="fw-bold text-uppercase mb-1">LAPORAN REKAPITULASI KAS & BANK</h5>
+        <p class="mb-0 text-muted">Periode: <%= startDate ? formatDate(startDate) : 'Keseluruhan' %> s.d <%= endDate ? formatDate(endDate) : 'Sekarang' %></p>
+        <hr style="border-top: 2px double #000;" class="my-2">
+    </div>
+
+    <!-- Header & Action Buttons -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 no-print">
+        <div>
+            <h4 class="fw-bold mb-1 text-dark"><i class="bi bi-cash-stack text-primary me-2"></i>Laporan Rekening Kas & Bank</h4>
+            <p class="text-muted small mb-0">Ringkasan total penerimaan tunai, pengeluaran kas, serta saldo akhir terverifikasi untuk setiap akun kas & rekening bank masjid.</p>
+        </div>
+        <div class="d-flex gap-2 mt-2 mt-md-0">
+            <button onclick="window.print()" class="btn btn-outline-primary btn-print shadow-sm">
+                <i class="bi bi-printer me-1"></i> Cetak Laporan / PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="card card-custom mb-4 no-print">
+        <div class="card-body">
+            <form action="/laporan/kas" method="GET" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Tanggal Mulai</label>
+                    <input type="date" name="startDate" class="form-control form-control-sm" value="<%= startDate %>">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Tanggal Selesai</label>
+                    <input type="date" name="endDate" class="form-control form-control-sm" value="<%= endDate %>">
+                </div>
+                <div class="col-md-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm flex-fill">
+                        <i class="bi bi-filter me-1"></i> Filter Periode
+                    </button>
+                    <a href="/laporan/kas" class="btn btn-light btn-sm border">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Table Cash Accounts -->
+    <div class="card card-custom">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 100px;">Kode</th>
+                            <th>Nama Rekening Kas / Bank</th>
+                            <th>Bank / Jenis</th>
+                            <th>No. Rekening</th>
+                            <th class="text-end">Total Penerimaan (Rp)</th>
+                            <th class="text-end">Total Pengeluaran (Rp)</th>
+                            <th class="text-end">Saldo Akhir (Rp)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (accountsReport.length > 0) { %>
+                            <% accountsReport.forEach(acc => { %>
+                                <tr>
+                                    <td><span class="badge bg-secondary-subtle text-dark border font-monospace"><%= acc.code %></span></td>
+                                    <td class="fw-bold text-dark"><%= acc.name %></td>
+                                    <td><span class="badge bg-info-subtle text-info border border-info"><%= acc.bank_name %></span></td>
+                                    <td class="font-monospace small"><%= acc.account_number %></td>
+                                    <td class="text-end font-monospace text-success fw-semibold">+ <%= formatRupiah(acc.totalPenerimaan) %></td>
+                                    <td class="text-end font-monospace text-danger fw-semibold">- <%= formatRupiah(acc.totalPengeluaran) %></td>
+                                    <td class="text-end font-monospace fw-bold text-primary fs-6"><%= formatRupiah(acc.currentBalance) %></td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">Belum ada akun kas terdaftar.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                    <tfoot class="table-dark">
+                        <tr class="fw-bold">
+                            <td colspan="4">TOTAL KAS & BANK TERSEDIA</td>
+                            <td class="text-end font-monospace text-success">+ <%= formatRupiah(accountsReport.reduce((s, a) => s + a.totalPenerimaan, 0)) %></td>
+                            <td class="text-end font-monospace text-danger">- <%= formatRupiah(accountsReport.reduce((s, a) => s + a.totalPengeluaran, 0)) %></td>
+                            <td class="text-end font-monospace text-warning fs-6"><%= formatRupiah(accountsReport.reduce((s, a) => s + a.currentBalance, 0)) %></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

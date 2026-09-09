@@ -1,0 +1,211 @@
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div>
+        <h4 class="fw-bold text-dark mb-1">Master Katalog Barang & Material</h4>
+        <p class="text-muted small mb-0">Standarisasi nama barang aset tetap dan material persediaan masjid.</p>
+    </div>
+    <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddItem">
+        <i class="bi bi-plus-lg me-1"></i> Tambah Barang / Material
+    </button>
+</div>
+
+<div class="card card-custom p-3">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Kode Barang</th>
+                        <th>Nama Barang / Material</th>
+                        <th>Tipe</th>
+                        <th>Satuan Standar</th>
+                        <th>Kategori</th>
+                        <th>Keterangan</th>
+                        <th class="text-end">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (items.length > 0) { %>
+                        <% items.forEach(itm => { %>
+                            <tr>
+                                <td class="fw-bold text-primary"><code><%= itm.code %></code></td>
+                                <td class="fw-semibold"><%= itm.name %></td>
+                                <td>
+                                    <span class="badge <%= itm.type === 'Aset' ? 'bg-primary' : 'bg-warning text-dark' %>">
+                                        <%= itm.type === 'Aset' ? 'Barang Modal (Aset)' : 'Persediaan (Material)' %>
+                                    </span>
+                                </td>
+                                <td><span class="badge bg-light text-dark border"><%= itm.unit_name ? itm.unit_name + ' (' + itm.unit_code + ')' : '-' %></span></td>
+                                <td><%= itm.category %></td>
+                                <td class="small text-muted"><%= itm.description || '-' %></td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-warning me-1" 
+                                            onclick="editItem(<%= JSON.stringify(itm) %>)">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </button>
+                                    <% if (user.role_name === 'Admin') { %>
+                                        <form action="/master/items/delete/<%= itm.id %>" method="POST" class="d-inline" onsubmit="return confirm('Hapus master barang ini?')">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">Belum ada katalog barang/material terdaftar.</td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah Barang -->
+<div class="modal fade" id="modalAddItem" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Tambah Katalog Barang / Material</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/master/items/create" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tipe Kelompok Barang</label>
+                        <select name="type" id="add_item_type" class="form-select" required onchange="onAddItemTypeChange()">
+                            <option value="Material">Persediaan (Material / Habis Pakai)</option>
+                            <option value="Aset">Barang Modal (Aset Tetap)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label fw-semibold mb-0">Kode Barang / SKU (Otomatis)</label>
+                            <span class="badge bg-info-subtle text-info border">Penomoran Otomatis</span>
+                        </div>
+                        <input type="text" name="code" id="add_item_code" class="form-control fw-bold bg-light text-primary" required readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nama Barang / Material</label>
+                        <input type="text" name="name" class="form-control" placeholder="Contoh: Semen Gresik 50kg" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Satuan Standar</label>
+                        <select name="unit_id" class="form-select" required>
+                            <option value="">-- Pilih Satuan --</option>
+                            <% units.forEach(u => { %>
+                                <option value="<%= u.id %>"><%= u.name %> (<%= u.code %>)</option>
+                            <% }) %>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Kategori Peruntukan</label>
+                        <select name="category" class="form-select" required>
+                            <option value="Pembangunan">Material Pembangunan</option>
+                            <option value="Operasional">Operasional Harian</option>
+                            <option value="Peralatan">Peralatan Masjid</option>
+                            <option value="Lainnya">Lainnya</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Keterangan / Spesifikasi</label>
+                        <textarea name="description" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Barang</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit Barang -->
+<div class="modal fade" id="modalEditItem" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Edit Katalog Barang / Material</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEditItem" action="" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tipe Kelompok</label>
+                        <select id="edit_item_type" name="type" class="form-select" required>
+                            <option value="Material">Persediaan (Material / Habis Pakai)</option>
+                            <option value="Aset">Barang Modal (Aset Tetap)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Kode Barang / SKU</label>
+                        <input type="text" id="edit_item_code" name="code" class="form-control fw-bold" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nama Barang / Material</label>
+                        <input type="text" id="edit_item_name" name="name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Satuan Standar</label>
+                        <select id="edit_item_unit_id" name="unit_id" class="form-select" required>
+                            <option value="">-- Pilih Satuan --</option>
+                            <% units.forEach(u => { %>
+                                <option value="<%= u.id %>"><%= u.name %> (<%= u.code %>)</option>
+                            <% }) %>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Kategori Peruntukan</label>
+                        <select id="edit_item_category" name="category" class="form-select" required>
+                            <option value="Pembangunan">Material Pembangunan</option>
+                            <option value="Operasional">Operasional Harian</option>
+                            <option value="Peralatan">Peralatan Masjid</option>
+                            <option value="Lainnya">Lainnya</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Keterangan / Spesifikasi</label>
+                        <textarea id="edit_item_description" name="description" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-warning">Update Barang</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+const nextCodes = <%- JSON.stringify(nextCodes) %>;
+
+function onAddItemTypeChange() {
+    const selectedType = document.getElementById('add_item_type').value;
+    document.getElementById('add_item_code').value = nextCodes[selectedType] || '';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    onAddItemTypeChange();
+});
+
+const modalAddItem = document.getElementById('modalAddItem');
+if (modalAddItem) {
+    modalAddItem.addEventListener('shown.bs.modal', function () {
+        onAddItemTypeChange();
+    });
+}
+
+function editItem(itm) {
+    document.getElementById('formEditItem').action = '/master/items/update/' + itm.id;
+    document.getElementById('edit_item_code').value = itm.code;
+    document.getElementById('edit_item_name').value = itm.name;
+    document.getElementById('edit_item_type').value = itm.type;
+    document.getElementById('edit_item_unit_id').value = itm.unit_id || '';
+    document.getElementById('edit_item_category').value = itm.category || 'Operasional';
+    document.getElementById('edit_item_description').value = itm.description || '';
+    
+    new bootstrap.Modal(document.getElementById('modalEditItem')).show();
+}
+</script>

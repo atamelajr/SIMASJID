@@ -1,0 +1,163 @@
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div>
+        <h4 class="fw-bold text-dark mb-1">Master Rekening Kas & Bank</h4>
+        <p class="text-muted small mb-0">Pengaturan Rekening Kas Tunai dan Bank Syariah Penampungan Dana Masjid.</p>
+    </div>
+    <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddAccount">
+        <i class="bi bi-plus-lg me-1"></i> Tambah Rekening Kas/Bank
+    </button>
+</div>
+
+<div class="card card-custom p-3">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Kode Kas</th>
+                        <th>Nama Rekening</th>
+                        <th>Bank / Metode</th>
+                        <th>No. Rekening</th>
+                        <th>Atas Nama</th>
+                        <th>Saldo Saat Ini</th>
+                        <th class="text-end">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% accounts.forEach(acc => { %>
+                        <tr>
+                            <td class="fw-bold text-primary"><%= acc.code %></td>
+                            <td class="fw-semibold"><%= acc.name %></td>
+                            <td><span class="badge bg-light text-dark border"><%= acc.bank_name %></span></td>
+                            <td><code><%= acc.account_number %></code></td>
+                            <td><%= acc.account_holder %></td>
+                            <td class="fw-bold text-success"><%= formatRupiah(acc.balance) %></td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-warning me-1" 
+                                        onclick="editAccount(<%= JSON.stringify(acc) %>)">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </button>
+                                <% if (user.role_name === 'Admin') { %>
+                                    <form action="/master/accounts/delete/<%= acc.id %>" method="POST" class="d-inline" onsubmit="return confirm('Hapus rekening kas ini?')">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah Rekening Kas -->
+<div class="modal fade" id="modalAddAccount" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Tambah Rekening Kas / Bank</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/master/accounts/create" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Kode Rekening Kas</label>
+                        <input type="text" name="code" class="form-control" placeholder="Contoh: BANK-02" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nama Rekening Kas</label>
+                        <input type="text" name="name" class="form-control" placeholder="Contoh: Kas Wakaf Tunai BSI" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nama Bank / Kas</label>
+                        <input type="text" name="bank_name" class="form-control" placeholder="Contoh: Bank Syariah Indonesia / Kas Tunai" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nomor Rekening</label>
+                        <input type="text" name="account_number" class="form-control" placeholder="Isi '-' jika kas tunai">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Atas Nama Rekening</label>
+                        <input type="text" name="account_holder" class="form-control" placeholder="Contoh: DKM Masjid Al-Ikhlas">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Saldo Awal (Rp)</label>
+                        <input type="number" step="0.01" name="balance" class="form-control" placeholder="0">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Keterangan / Alokasi</label>
+                        <textarea name="description" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Rekening</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit Rekening Kas -->
+<div class="modal fade" id="modalEditAccount" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Edit Rekening Kas / Bank</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEditAccount" action="" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Kode Rekening Kas</label>
+                        <input type="text" id="edit_acc_code" name="code" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nama Rekening Kas</label>
+                        <input type="text" id="edit_acc_name" name="name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nama Bank / Kas</label>
+                        <input type="text" id="edit_acc_bank_name" name="bank_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nomor Rekening</label>
+                        <input type="text" id="edit_acc_number" name="account_number" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Atas Nama Rekening</label>
+                        <input type="text" id="edit_acc_holder" name="account_holder" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Saldo Saat Ini (Rp)</label>
+                        <input type="number" step="0.01" id="edit_acc_balance" name="balance" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Keterangan / Alokasi</label>
+                        <textarea id="edit_acc_description" name="description" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-warning">Update Rekening</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function editAccount(acc) {
+    document.getElementById('formEditAccount').action = '/master/accounts/update/' + acc.id;
+    document.getElementById('edit_acc_code').value = acc.code;
+    document.getElementById('edit_acc_name').value = acc.name;
+    document.getElementById('edit_acc_bank_name').value = acc.bank_name || '';
+    document.getElementById('edit_acc_number').value = acc.account_number || '-';
+    document.getElementById('edit_acc_holder').value = acc.account_holder || '';
+    document.getElementById('edit_acc_balance').value = acc.balance || 0;
+    document.getElementById('edit_acc_description').value = acc.description || '';
+    
+    new bootstrap.Modal(document.getElementById('modalEditAccount')).show();
+}
+</script>

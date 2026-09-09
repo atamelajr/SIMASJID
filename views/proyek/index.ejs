@@ -1,0 +1,407 @@
+<div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-2">
+    <div>
+        <h4 class="fw-bold text-dark mb-1"><i class="bi bi-hammer text-primary me-2"></i>Manajemen Pembangunan Masjid</h4>
+        <p class="text-muted small mb-0">Rencana Anggaran Biaya (RAB) & Log Laporan Progres Fisik Bangunan.</p>
+    </div>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <!-- Dropdown Selector Proyek -->
+        <% if (projects.length > 0) { %>
+            <div class="d-flex align-items-center bg-white p-1 rounded border shadow-sm">
+                <span class="small fw-bold text-muted px-2"><i class="bi bi-building me-1"></i>Pilih Proyek:</span>
+                <select class="form-select form-select-sm border-0 fw-bold text-primary" style="width: auto; min-width: 250px;" onchange="window.location.href='/proyek?project_id=' + this.value">
+                    <% projects.forEach(p => { %>
+                        <option value="<%= p.id %>" <%= activeProject && activeProject.id === p.id ? 'selected' : '' %>>
+                            <%= p.title %> (<%= p.log_count || 0 %> Log, <%= p.current_percentage %>%)
+                        </option>
+                    <% }) %>
+                </select>
+            </div>
+        <% } %>
+
+        <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
+            <button class="btn btn-outline-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddProject">
+                <i class="bi bi-plus-lg me-1"></i> Tambah Proyek Baru
+            </button>
+        <% } %>
+        <% if (activeProject && user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
+            <button class="btn btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#modalProgress">
+                <i class="bi bi-plus-circle me-1"></i> Update Progres Bangunan
+            </button>
+        <% } %>
+    </div>
+</div>
+
+<% if (activeProject) { %>
+    <!-- Proyek Aktif Card -->
+    <div class="card card-custom p-4 mb-4 border-start border-4 border-warning">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="badge bg-warning-subtle text-warning-emphasis fw-bold">Proyek Yang Sedang Dilihat</span>
+                    <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
+                        <div class="d-flex gap-1">
+                            <button type="button" class="btn btn-sm btn-outline-warning" onclick='openEditProjectModal(<%- JSON.stringify(activeProject) %>)' title="Edit Proyek RAB">
+                                <i class="bi bi-pencil"></i> Edit Proyek
+                            </button>
+                            <% if (user.role_name === 'Admin') { %>
+                                <form action="/proyek/delete/<%= activeProject.id %>" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus proyek ini beserta seluruh log progresnya?')">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Proyek">
+                                        <i class="bi bi-trash"></i> Hapus
+                                    </button>
+                                </form>
+                            <% } %>
+                        </div>
+                    <% } %>
+                </div>
+                <h3 class="fw-bold text-dark mb-1"><%= activeProject.title %></h3>
+                <p class="text-muted small mb-3">
+                    Target Penyelesaian: <strong><%= formatDate(activeProject.target_date) %></strong> | 
+                    Status: <span class="badge bg-success"><%= activeProject.status %></span> |
+                    Total Log: <span class="badge bg-secondary"><%= activeProject.log_count || 0 %> Laporan</span>
+                </p>
+                <div class="d-flex align-items-center gap-3">
+                    <div>
+                        <div class="small text-muted">Target Anggaran (RAB)</div>
+                        <h4 class="fw-bold text-primary mb-0"><%= formatRupiah(activeProject.target_budget) %></h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-center border-start mt-3 mt-md-0">
+                <div class="small text-muted mb-1 fw-bold">REALISASI PROGRES FISIK</div>
+                <div class="display-4 fw-bold text-success"><%= activeProject.current_percentage %>%</div>
+                <div class="progress mt-2" style="height: 12px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: <%= activeProject.current_percentage %>%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Progres Laporan -->
+    <div class="card card-custom p-3 mb-4">
+        <div class="card-body">
+            <h5 class="fw-bold text-dark mb-3">Riwayat Update Progres Mingguan / Bulanan (<%= activeProject.title %>)</h5>
+            <div class="timeline">
+                <% if (progressLogs.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Tanggal Log</th>
+                                    <th>Capaian %</th>
+                                    <th>Keterangan Progres Fisik</th>
+                                    <th>Foto Dokumentasi</th>
+                                    <th class="text-end">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% progressLogs.forEach(log => { %>
+                                    <tr>
+                                        <td class="fw-bold text-dark" style="width: 140px;"><%= formatDate(log.log_date) %></td>
+                                        <td style="width: 110px;"><span class="badge bg-success fs-6"><%= log.percentage %>%</span></td>
+                                        <td><%= log.description %></td>
+                                        <td>
+                                            <% if (log.photo) { %>
+                                                <a href="/uploads/<%= log.photo %>" target="_blank" class="btn btn-sm btn-outline-info">
+                                                    <i class="bi bi-image me-1"></i> lihat Foto
+                                                </a>
+                                            <% } else { %>
+                                                <span class="text-muted small">Tidak ada foto</span>
+                                            <% } %>
+                                        </td>
+                                        <td class="text-end text-nowrap">
+                                            <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
+                                                <button type="button" class="btn btn-sm btn-outline-warning me-1" onclick='openEditProgressModal(<%- JSON.stringify(log) %>)' title="Edit Log Progres">
+                                                    <i class="bi bi-pencil"></i> Edit
+                                                </button>
+                                                <% if (user.role_name === 'Admin') { %>
+                                                    <form action="/proyek/progress/delete/<%= log.id %>?project_id=<%= activeProject.id %>" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus log progres ini?')">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Log">
+                                                            <i class="bi bi-trash"></i> Hapus
+                                                        </button>
+                                                    </form>
+                                                <% } %>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-journal-x fs-1 text-secondary mb-2 d-block"></i>
+                        <h6>Belum ada riwayat log progres fisik untuk proyek <strong>"<%= activeProject.title %>"</strong>.</h6>
+                        <p class="small text-muted mb-3">Tambahkan laporan kemajuan fisik mingguan/bulanan untuk memantau realisasi pembangunan.</p>
+                        <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
+                            <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#modalProgress">
+                                <i class="bi bi-plus-circle me-1"></i> Tambah Log Progres Sekarang
+                            </button>
+                        <% } %>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+<% } else { %>
+    <div class="card card-custom p-5 text-center mb-4">
+        <h4 class="text-muted mb-3">Belum ada proyek pembangunan masjid yang terdaftar.</h4>
+        <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
+            <div>
+                <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddProject">
+                    <i class="bi bi-plus-lg me-1"></i> Buat Proyek Pembangunan Baru
+                </button>
+            </div>
+        <% } %>
+    </div>
+<% } %>
+
+<!-- Daftar Seluruh Proyek Pembangunan (RAB Summary) -->
+<% if (projects.length > 0) { %>
+    <div class="card card-custom p-3">
+        <div class="card-body">
+            <h5 class="fw-bold text-dark mb-3"><i class="bi bi-list-task me-2"></i>Daftar Seluruh Proyek Pembangunan Masjid (<%= projects.length %> Proyek)</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nama / Judul Proyek</th>
+                            <th>Target Anggaran (RAB)</th>
+                            <th>Target Selesai</th>
+                            <th>Status</th>
+                            <th>Jumlah Log</th>
+                            <th>Realisasi Fisik</th>
+                            <th class="text-end">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% projects.forEach(p => { %>
+                            <tr class="<%= activeProject && activeProject.id === p.id ? 'table-warning-subtle fw-semibold' : '' %>">
+                                <td>
+                                    <div class="fw-bold text-dark"><%= p.title %></div>
+                                </td>
+                                <td class="font-monospace text-primary fw-bold"><%= formatRupiah(p.target_budget) %></td>
+                                <td class="small"><%= formatDate(p.target_date) %></td>
+                                <td><span class="badge bg-success"><%= p.status %></span></td>
+                                <td><span class="badge bg-secondary"><%= p.log_count || 0 %> Laporan</span></td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2" style="max-width: 160px;">
+                                        <span class="fw-bold small"><%= p.current_percentage %>%</span>
+                                        <div class="progress flex-fill" style="height: 8px;">
+                                            <div class="progress-bar bg-success" style="width: <%= p.current_percentage %>%;"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-end text-nowrap">
+                                    <% if (activeProject && activeProject.id === p.id) { %>
+                                        <span class="badge bg-primary-subtle text-primary border py-2 px-3 me-2"><i class="bi bi-eye-fill me-1"></i>Sedang Dilihat</span>
+                                    <% } else { %>
+                                        <a href="/proyek?project_id=<%= p.id %>" class="btn btn-sm btn-outline-primary me-2">
+                                            <i class="bi bi-cursor me-1"></i> Pilih Proyek
+                                        </a>
+                                    <% } %>
+                                    <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
+                                        <button type="button" class="btn btn-sm btn-outline-warning me-1" onclick='openEditProjectModal(<%- JSON.stringify(p) %>)' title="Edit Proyek RAB">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <% if (user.role_name === 'Admin') { %>
+                                            <form action="/proyek/delete/<%= p.id %>" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus proyek ini beserta seluruh log progresnya?')">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Proyek">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        <% } %>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+<% } %>
+
+<!-- Modal Tambah Proyek RAB -->
+<div class="modal fade" id="modalAddProject" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Tambah Proyek Pembangunan Baru</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/proyek/create" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nama / Judul Proyek</label>
+                        <input type="text" name="title" class="form-control" placeholder="Contoh: Renovasi & Pembangunan Menara Masjid" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Target Anggaran RAB (Rp)</label>
+                        <input type="number" step="0.01" name="target_budget" class="form-control" placeholder="Contoh: 150000000" required>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Tanggal Mulai</label>
+                            <input type="date" name="start_date" class="form-control" value="<%= new Date().toISOString().split('T')[0] %>">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Target Selesai</label>
+                            <input type="date" name="target_date" class="form-control">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Status Proyek</label>
+                        <select name="status" class="form-select" required>
+                            <option value="Berjalan">Berjalan</option>
+                            <option value="Perencanaan">Perencanaan</option>
+                            <option value="Selesai">Selesai</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Proyek</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit Proyek RAB -->
+<div class="modal fade" id="modalEditProject" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning-subtle">
+                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-pencil-square me-2"></i>Edit Proyek Pembangunan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEditProject" action="" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nama / Judul Proyek</label>
+                        <input type="text" name="title" id="edit_project_title" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Target Anggaran RAB (Rp)</label>
+                        <input type="number" step="0.01" name="target_budget" id="edit_project_target_budget" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Target Selesai</label>
+                        <input type="date" name="target_date" id="edit_project_target_date" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Status Proyek</label>
+                        <select name="status" id="edit_project_status" class="form-select" required>
+                            <option value="Berjalan">Berjalan</option>
+                            <option value="Perencanaan">Perencanaan</option>
+                            <option value="Selesai">Selesai</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-warning fw-bold"><i class="bi bi-check-circle me-1"></i> Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Update Progress -->
+<% if (activeProject) { %>
+    <div class="modal fade" id="modalProgress" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Update Progres Fisik Pembangunan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="/proyek/progress" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="project_id" value="<%= activeProject.id %>">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Tanggal Update</label>
+                            <input type="date" name="log_date" class="form-control" required value="<%= new Date().toISOString().split('T')[0] %>">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Persentase Capaian Terbaru (%)</label>
+                            <input type="number" step="0.1" name="percentage" class="form-control" placeholder="Contoh: 45.5" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Keterangan / Laporan Kemajuan</label>
+                            <textarea name="description" class="form-control" rows="3" placeholder="Contoh: Pemasangan keramik lantai 1 dan plester dinding bagian timur." required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Foto Dokumentasi Progres</label>
+                            <input type="file" name="photo" class="form-control">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-success">Simpan Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Edit Progress Log -->
+    <div class="modal fade" id="modalEditProgress" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning-subtle">
+                    <h5 class="modal-title fw-bold text-dark"><i class="bi bi-pencil-square me-2"></i>Edit Log Progres Fisik</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="formEditProgress" action="" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="project_id" value="<%= activeProject.id %>">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Tanggal Update Log</label>
+                            <input type="date" name="log_date" id="edit_log_date" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Persentase Capaian (%)</label>
+                            <input type="number" step="0.1" name="percentage" id="edit_log_percentage" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Keterangan Progres Fisik</label>
+                            <textarea name="description" id="edit_log_description" class="form-control" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Ganti Foto Dokumentasi (Opsional)</label>
+                            <input type="file" name="photo" class="form-control">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-warning fw-bold"><i class="bi bi-check-circle me-1"></i> Simpan Perubahan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+<% } %>
+
+<script>
+    function openEditProjectModal(project) {
+        document.getElementById('formEditProject').action = '/proyek/update/' + project.id;
+        document.getElementById('edit_project_title').value = project.title;
+        document.getElementById('edit_project_target_budget').value = project.target_budget;
+        document.getElementById('edit_project_target_date').value = project.target_date ? project.target_date.split('T')[0] : '';
+        document.getElementById('edit_project_status').value = project.status;
+
+        const modal = new bootstrap.Modal(document.getElementById('modalEditProject'));
+        modal.show();
+    }
+
+    function openEditProgressModal(log) {
+        document.getElementById('formEditProgress').action = '/proyek/progress/update/' + log.id;
+        document.getElementById('edit_log_date').value = log.log_date ? log.log_date.split('T')[0] : '';
+        document.getElementById('edit_log_percentage').value = log.percentage;
+        document.getElementById('edit_log_description').value = log.description;
+
+        const modal = new bootstrap.Modal(document.getElementById('modalEditProgress'));
+        modal.show();
+    }
+</script>

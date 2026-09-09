@@ -1,0 +1,204 @@
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div>
+        <h4 class="fw-bold text-dark mb-1">Master Donatur & Mustahik (ZIS)</h4>
+        <p class="text-muted small mb-0">Direktori Penyumbang (Donatur) dan Penerima Manfaat Zakat (Mustahik / Asnaf).</p>
+    </div>
+    <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddDonorMustahik">
+        <i class="bi bi-person-plus me-1"></i> Tambah Data
+    </button>
+</div>
+
+<div class="row g-4">
+    <!-- Tabel Donatur -->
+    <div class="col-md-6">
+        <div class="card card-custom p-3 h-100 border-start border-4 border-success">
+            <div class="card-body">
+                <h5 class="fw-bold text-dark mb-3"><i class="bi bi-heart-fill text-success me-2"></i>Daftar Donatur Tetap / Instansi</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nama Donatur</th>
+                                <th>Kategori</th>
+                                <th>No. HP</th>
+                                <th class="text-end">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (donors.length > 0) { %>
+                                <% donors.forEach(d => { %>
+                                    <tr>
+                                        <td class="fw-bold text-dark"><%= d.name %></td>
+                                        <td><span class="badge bg-success-subtle text-success-emphasis border"><%= d.category %></span></td>
+                                        <td class="small text-muted"><%= d.phone || '-' %></td>
+                                        <td class="text-end">
+                                            <button class="btn btn-sm btn-outline-warning me-1" 
+                                                    onclick="editDonorMustahik(<%= JSON.stringify(d) %>)">
+                                                <i class="bi bi-pencil"></i> Edit
+                                            </button>
+                                            <% if (user.role_name === 'Admin') { %>
+                                                <form action="/master/donors-mustahik/delete/<%= d.id %>" method="POST" class="d-inline" onsubmit="return confirm('Hapus donatur ini?')">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                                </form>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-3">Belum ada data donatur.</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabel Mustahik -->
+    <div class="col-md-6">
+        <div class="card card-custom p-3 h-100 border-start border-4 border-warning">
+            <div class="card-body">
+                <h5 class="fw-bold text-dark mb-3"><i class="bi bi-people-fill text-warning me-2"></i>Daftar Mustahik ZIS (Asnaf)</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nama Mustahik</th>
+                                <th>Golongan Asnaf</th>
+                                <th>No. HP</th>
+                                <th class="text-end">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (mustahik.length > 0) { %>
+                                <% mustahik.forEach(m => { %>
+                                    <tr>
+                                        <td class="fw-bold text-dark"><%= m.name %></td>
+                                        <td><span class="badge bg-warning-subtle text-warning-emphasis border"><%= m.category %></span></td>
+                                        <td class="small text-muted"><%= m.phone || '-' %></td>
+                                        <td class="text-end">
+                                            <button class="btn btn-sm btn-outline-warning me-1" 
+                                                    onclick="editDonorMustahik(<%= JSON.stringify(m) %>)">
+                                                <i class="bi bi-pencil"></i> Edit
+                                            </button>
+                                            <% if (user.role_name === 'Admin') { %>
+                                                <form action="/master/donors-mustahik/delete/<%= m.id %>" method="POST" class="d-inline" onsubmit="return confirm('Hapus data mustahik ini?')">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                                </form>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-3">Belum ada data mustahik.</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah Data Donatur / Mustahik -->
+<div class="modal fade" id="modalAddDonorMustahik" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Tambah Data Donatur / Mustahik</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/master/donors-mustahik/create" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tipe Data</label>
+                        <select name="type" class="form-select" required>
+                            <option value="Donatur">Donatur (Penyumbang)</option>
+                            <option value="Mustahik">Mustahik (Penerima Zakat/Bantuan)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nama Lengkap / Instansi</label>
+                        <input type="text" name="name" class="form-control" required placeholder="Contoh: H. Ahmad / PT Amanah">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Kategori / Golongan (Asnaf)</label>
+                        <input type="text" name="category" class="form-control" placeholder="Contoh: Perorangan / Instansi / Fakir / Miskin / Amil" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">No. HP / WA</label>
+                        <input type="text" name="phone" class="form-control" placeholder="0812...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Alamat Lengkap</label>
+                        <textarea name="address" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Data</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit Data Donatur / Mustahik -->
+<div class="modal fade" id="modalEditDonorMustahik" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Edit Data Donatur / Mustahik</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEditDonorMustahik" action="" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tipe Data</label>
+                        <select id="edit_dm_type" name="type" class="form-select" required>
+                            <option value="Donatur">Donatur (Penyumbang)</option>
+                            <option value="Mustahik">Mustahik (Penerima Zakat/Bantuan)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nama Lengkap / Instansi</label>
+                        <input type="text" id="edit_dm_name" name="name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Kategori / Golongan (Asnaf)</label>
+                        <input type="text" id="edit_dm_category" name="category" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">No. HP / WA</label>
+                        <input type="text" id="edit_dm_phone" name="phone" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Alamat Lengkap</label>
+                        <textarea id="edit_dm_address" name="address" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-warning">Update Data</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function editDonorMustahik(dm) {
+    document.getElementById('formEditDonorMustahik').action = '/master/donors-mustahik/update/' + dm.id;
+    document.getElementById('edit_dm_type').value = dm.type;
+    document.getElementById('edit_dm_name').value = dm.name;
+    document.getElementById('edit_dm_category').value = dm.category || '';
+    document.getElementById('edit_dm_phone').value = dm.phone || '';
+    document.getElementById('edit_dm_address').value = dm.address || '';
+    
+    new bootstrap.Modal(document.getElementById('modalEditDonorMustahik')).show();
+}
+</script>

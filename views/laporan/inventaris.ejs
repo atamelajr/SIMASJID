@@ -1,0 +1,137 @@
+<div class="container-fluid p-4">
+    <!-- Header Cetak Resmi (Hanya Tampil Saat Print) -->
+    <div class="print-header">
+        <h3 class="fw-bold mb-1">MASJID AL-IKHLAS</h3>
+        <h5 class="fw-bold text-uppercase mb-1">LAPORAN INVENTARIS & ASET TETAP (MODAL)</h5>
+        <p class="mb-0 text-muted">Per Tanggal: <%= formatDate(new Date()) %></p>
+        <hr style="border-top: 2px double #000;" class="my-2">
+    </div>
+
+    <!-- Header & Action Buttons -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 no-print">
+        <div>
+            <h4 class="fw-bold mb-1 text-dark"><i class="bi bi-box-seam text-primary me-2"></i>Laporan Inventaris & Aset Tetap</h4>
+            <p class="text-muted small mb-0">Daftar seluruh kekayaan aset modal fisik (Sound System, AC, Karpet, Mimbar, dll.) beserta kondisi dan nilai total aset.</p>
+        </div>
+        <div class="d-flex gap-2 mt-2 mt-md-0">
+            <button onclick="window.print()" class="btn btn-outline-primary btn-print shadow-sm">
+                <i class="bi bi-printer me-1"></i> Cetak Laporan / PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card card-custom border-start border-primary border-4 h-100">
+                <div class="card-body">
+                    <span class="text-muted extra-small fw-bold text-uppercase">Total Item Aset Tetap</span>
+                    <h3 class="fw-bold text-primary mb-0 mt-1"><%= totalAssetsCount %> Unit</h3>
+                    <div class="text-muted extra-small mt-1"><i class="bi bi-boxes me-1"></i>Kekayaan Modal Masjid</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-custom border-start border-success border-4 h-100">
+                <div class="card-body">
+                    <span class="text-muted extra-small fw-bold text-uppercase">Total Nilai Perolehan Aset</span>
+                    <h3 class="fw-bold text-success mb-0 mt-1"><%= formatRupiah(totalPerolehan) %></h3>
+                    <div class="text-muted extra-small mt-1"><i class="bi bi-calculator me-1"></i>Akumulasi Nilai Modal</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-custom border-start border-info border-4 h-100">
+                <div class="card-body">
+                    <span class="text-muted extra-small fw-bold text-uppercase">Status Kondisi</span>
+                    <div class="d-flex gap-2 mt-2">
+                        <span class="badge bg-success"><%= assets.filter(a => a.condition_status === 'Baik').length %> Baik</span>
+                        <span class="badge bg-warning text-dark"><%= assets.filter(a => a.condition_status === 'Rusak Ringan').length %> Rusak Ringan</span>
+                        <span class="badge bg-danger"><%= assets.filter(a => a.condition_status === 'Rusak Berat').length %> Rusak Berat</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="card card-custom mb-4 no-print">
+        <div class="card-body">
+            <form action="/laporan/inventaris" method="GET" class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label small fw-semibold">Pencarian Barang / Lokasi</label>
+                    <input type="text" name="search" class="form-control form-control-sm" placeholder="Cari nama aset, kode, atau lokasi..." value="<%= search %>">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Status Kondisi</label>
+                    <select name="condition" class="form-select form-select-sm">
+                        <option value="">-- Semua Kondisi --</option>
+                        <option value="Baik" <%= selectedCondition === 'Baik' ? 'selected' : '' %>>Baik</option>
+                        <option value="Rusak Ringan" <%= selectedCondition === 'Rusak Ringan' ? 'selected' : '' %>>Rusak Ringan</option>
+                        <option value="Rusak Berat" <%= selectedCondition === 'Rusak Berat' ? 'selected' : '' %>>Rusak Berat</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm flex-fill">
+                        <i class="bi bi-filter me-1"></i> Filter Data
+                    </button>
+                    <a href="/laporan/inventaris" class="btn btn-light btn-sm border">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Assets Table -->
+    <div class="card card-custom">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 120px;">Kode Aset</th>
+                            <th>Nama Barang / Aset Modal</th>
+                            <th>Tanggal Perolehan</th>
+                            <th>Lokasi Penempatan</th>
+                            <th>Status Kondisi</th>
+                            <th>Donatur / Sumber</th>
+                            <th class="text-end">Nilai Perolehan (Rp)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (assets.length > 0) { %>
+                            <% assets.forEach(item => { %>
+                                <tr>
+                                    <td><span class="badge bg-secondary-subtle text-dark border font-monospace"><%= item.asset_code %></span></td>
+                                    <td class="fw-bold text-dark"><%= item.name %></td>
+                                    <td class="small"><%= formatDate(item.purchase_date) %></td>
+                                    <td><span class="badge bg-light text-dark border"><i class="bi bi-geo-alt me-1"></i><%= item.location || 'Masjid' %></span></td>
+                                    <td>
+                                        <% if (item.condition_status === 'Baik') { %>
+                                            <span class="badge bg-success-subtle text-success border border-success"><i class="bi bi-check-circle me-1"></i>Baik</span>
+                                        <% } else if (item.condition_status === 'Rusak Ringan') { %>
+                                            <span class="badge bg-warning-subtle text-warning border border-warning"><i class="bi bi-exclamation-triangle me-1"></i>Rusak Ringan</span>
+                                        <% } else { %>
+                                            <span class="badge bg-danger-subtle text-danger border border-danger"><i class="bi bi-x-circle me-1"></i>Rusak Berat</span>
+                                        <% } %>
+                                    </td>
+                                    <td class="small text-muted"><%= item.donor_name || 'Kas Masjid' %></td>
+                                    <td class="text-end font-monospace fw-bold text-success"><%= formatRupiah(item.cost) %></td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">Belum ada aset tetap tercatat.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                    <tfoot class="table-dark">
+                        <tr class="fw-bold">
+                            <td colspan="6">TOTAL AKUMULASI NILAI PEROLEHAN ASET TETAP</td>
+                            <td class="text-end font-monospace text-warning fs-6"><%= formatRupiah(totalPerolehan) %></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

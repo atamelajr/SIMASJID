@@ -1,0 +1,202 @@
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div>
+        <h4 class="fw-bold text-dark mb-1">Master Kategori Transaksi & Bagan Akun (COA)</h4>
+        <p class="text-muted small mb-0">Standar Akuntansi Masjid (ISAK 35) - Pengaturan Kode Akun Penerimaan & Pengeluaran Kas/Barang.</p>
+    </div>
+    <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddCategory">
+        <i class="bi bi-plus-lg me-1"></i> Tambah Kategori / Akun
+    </button>
+</div>
+
+<div class="card card-custom p-3">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Kode Akun (COA)</th>
+                        <th>Nama Kategori Akun</th>
+                        <th>Tipe Akun</th>
+                        <th>Sub-Tipe / Alokasi</th>
+                        <th>Keterangan Deskripsi</th>
+                        <th class="text-end">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (categories.length > 0) { %>
+                        <% categories.forEach(cat => { %>
+                            <tr>
+                                <td class="fw-bold text-primary"><code><%= cat.account_code %></code></td>
+                                <td class="fw-semibold"><%= cat.name %></td>
+                                <td>
+                                    <span class="badge <%= cat.type === 'Penerimaan' ? 'bg-success' : 'bg-danger' %>">
+                                        <%= cat.type %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info-subtle text-info-emphasis border"><%= cat.sub_type %></span>
+                                </td>
+                                <td class="small text-muted"><%= cat.description || '-' %></td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-warning me-1" 
+                                            onclick="editCategory(<%= JSON.stringify(cat) %>)">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </button>
+                                    <% if (user.role_name === 'Admin') { %>
+                                        <form action="/master/categories/delete/<%= cat.id %>" method="POST" class="d-inline" onsubmit="return confirm('Hapus kategori akun ini?')">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">Belum ada kategori akun terdaftar.</td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah Kategori -->
+<div class="modal fade" id="modalAddCategory" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Tambah Kode Akun / Kategori Transaksi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/master/categories/create" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tipe Akun</label>
+                        <select name="type" id="add_cat_type" class="form-select" required onchange="onAddCategoryTypeChange()">
+                            <option value="Penerimaan">Penerimaan</option>
+                            <option value="Pengeluaran">Pengeluaran</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label fw-semibold mb-0">Kode Akun Akuntansi (COA)</label>
+                            <span class="badge bg-info-subtle text-info border">Penomoran Otomatis</span>
+                        </div>
+                        <input type="text" name="account_code" id="add_account_code" class="form-control fw-bold bg-light text-primary" required readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nama Kategori</label>
+                        <input type="text" name="name" class="form-control" placeholder="Contoh: Infaq Parkir & Kantin" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Sub-Tipe / Alokasi Otomatis</label>
+                        <select name="sub_type" class="form-select" required>
+                            <option value="Operasional">Operasional</option>
+                            <option value="Modal">Modal (Auto-Insert Aset Tetap)</option>
+                            <option value="Material">Material (Auto-Insert Stok Persediaan)</option>
+                            <option value="ZIS">ZIS (Zakat, Infak, Sedekah)</option>
+                            <option value="Wakaf">Wakaf</option>
+                            <option value="Donasi">Donasi</option>
+                            <option value="Utilitas">Utilitas (Listrik, Air, Wifi)</option>
+                            <option value="Honor">Honorarium (Imam, Khatib)</option>
+                            <option value="Lainnya">Lainnya</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Deskripsi Singkat</label>
+                        <textarea name="description" class="form-control" rows="2" placeholder="Penjelasan penggunaan akun..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Kategori</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit Kategori -->
+<div class="modal fade" id="modalEditCategory" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Edit Kategori Transaksi / Kode Akun</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEditCategory" action="" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tipe Akun</label>
+                        <select id="edit_type" name="type" class="form-select" required>
+                            <option value="Penerimaan">Penerimaan</option>
+                            <option value="Pengeluaran">Pengeluaran</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Kode Akun Akuntansi (COA)</label>
+                        <input type="text" id="edit_account_code" name="account_code" class="form-control fw-bold" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nama Kategori</label>
+                        <input type="text" id="edit_name" name="name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Sub-Tipe / Alokasi Otomatis</label>
+                        <select id="edit_sub_type" name="sub_type" class="form-select" required>
+                            <option value="Operasional">Operasional</option>
+                            <option value="Modal">Modal (Auto-Insert Aset Tetap)</option>
+                            <option value="Material">Material (Auto-Insert Stok Persediaan)</option>
+                            <option value="ZIS">ZIS (Zakat, Infak, Sedekah)</option>
+                            <option value="Wakaf">Wakaf</option>
+                            <option value="Donasi">Donasi</option>
+                            <option value="Utilitas">Utilitas (Listrik, Air, Wifi)</option>
+                            <option value="Honor">Honorarium (Imam, Khatib)</option>
+                            <option value="Lainnya">Lainnya</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Deskripsi Singkat</label>
+                        <textarea id="edit_description" name="description" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-warning">Update Kategori</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+const nextCategoryCodes = <%- JSON.stringify(nextCategoryCodes) %>;
+
+function onAddCategoryTypeChange() {
+    const selectedType = document.getElementById('add_cat_type').value;
+    document.getElementById('add_account_code').value = nextCategoryCodes[selectedType] || '';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    onAddCategoryTypeChange();
+});
+
+const modalAddCategory = document.getElementById('modalAddCategory');
+if (modalAddCategory) {
+    modalAddCategory.addEventListener('shown.bs.modal', function () {
+        onAddCategoryTypeChange();
+    });
+}
+
+function editCategory(cat) {
+    document.getElementById('formEditCategory').action = '/master/categories/update/' + cat.id;
+    document.getElementById('edit_account_code').value = cat.account_code;
+    document.getElementById('edit_name').value = cat.name;
+    document.getElementById('edit_type').value = cat.type;
+    document.getElementById('edit_sub_type').value = cat.sub_type;
+    document.getElementById('edit_description').value = cat.description || '';
+    
+    new bootstrap.Modal(document.getElementById('modalEditCategory')).show();
+}
+</script>

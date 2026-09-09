@@ -1,0 +1,408 @@
+<div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-2">
+    <div>
+        <h4 class="fw-bold text-dark mb-1"><i class="bi bi-box-seam text-primary me-2"></i>Manajemen Aset & Inventaris Masjid</h4>
+        <p class="text-muted small mb-0">Pengelolaan Aset Tetap (Modal) dan Stok Persediaan (Material & Operasional Harian).</p>
+    </div>
+    <div class="d-flex gap-2">
+        <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
+            <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddAsset">
+                <i class="bi bi-plus-lg me-1"></i> Tambah Aset Tetap Baru
+            </button>
+            <button class="btn btn-warning shadow-sm" data-bs-toggle="modal" data-bs-target="#modalUsage">
+                <i class="bi bi-box-arrow-right me-1"></i> Catat Pemakaian Persediaan
+            </button>
+        <% } %>
+    </div>
+</div>
+
+<!-- Tabs Navigation -->
+<ul class="nav nav-tabs mb-4" id="inventarisTab" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active fw-semibold" id="aset-tab" data-bs-toggle="tab" data-bs-target="#aset" type="button" role="tab">
+            <i class="bi bi-box-seam me-1"></i> Aset Tetap (Modal) (<%= assets.length %>)
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link fw-semibold" id="persediaan-tab" data-bs-toggle="tab" data-bs-target="#persediaan" type="button" role="tab">
+            <i class="bi bi-boxes me-1"></i> Persediaan & Material (<%= items.length %>)
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link fw-semibold" id="logs-tab" data-bs-toggle="tab" data-bs-target="#logs" type="button" role="tab">
+            <i class="bi bi-clock-history me-1"></i> Log Masuk / Keluar (<%= logs.length %>)
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="inventarisTabContent">
+    <!-- Tab 1: Aset Tetap -->
+    <div class="tab-pane fade show active" id="aset" role="tabpanel">
+        <div class="card card-custom p-3">
+            <div class="card-body">
+                <h5 class="fw-bold text-dark mb-3">Daftar Barang Aset Tetap Masjid</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Kode Aset</th>
+                                <th>Nama & Detail Barang Aset</th>
+                                <th>Nilai / Perolehan</th>
+                                <th>Status Kondisi</th>
+                                <th>Lokasi Simpan</th>
+                                <th>Ref. Transaksi</th>
+                                <th class="text-end">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (assets.length > 0) { %>
+                                <% assets.forEach(ast => { %>
+                                    <tr>
+                                        <td class="fw-bold text-primary font-monospace" style="width: 150px;"><%= ast.asset_code %></td>
+                                        <td>
+                                            <div class="fw-bold text-dark"><%= ast.name %></div>
+                                            <% if (ast.brand || ast.model_no_plate) { %>
+                                                <div class="small text-secondary mt-1">
+                                                    <% if (ast.brand) { %>
+                                                        <span class="badge bg-light text-dark border me-1"><i class="bi bi-tag-fill text-muted me-1"></i>Merk: <%= ast.brand %></span>
+                                                    <% } %>
+                                                    <% if (ast.model_no_plate) { %>
+                                                        <span class="badge bg-info-subtle text-info border"><i class="bi bi-card-text me-1"></i>Model/No.Polisi: <%= ast.model_no_plate %></span>
+                                                    <% } %>
+                                                </div>
+                                            <% } %>
+                                            <% if (ast.description) { %>
+                                                <div class="extra-small text-muted mt-1"><i class="bi bi-info-circle me-1"></i><%= ast.description %></div>
+                                            <% } %>
+                                        </td>
+                                        <td class="font-monospace fw-bold text-success"><%= formatRupiah(ast.cost) %></td>
+                                        <td>
+                                            <!-- Static Condition Badge -->
+                                            <% if (ast.condition_status === 'Baik') { %>
+                                                <span class="badge bg-success px-3 py-2"><i class="bi bi-check-circle me-1"></i>Baik</span>
+                                            <% } else if (ast.condition_status === 'Rusak Ringan') { %>
+                                                <span class="badge bg-warning text-dark px-3 py-2"><i class="bi bi-exclamation-triangle me-1"></i>Rusak Ringan</span>
+                                            <% } else { %>
+                                                <span class="badge bg-danger px-3 py-2"><i class="bi bi-x-circle me-1"></i>Rusak Berat</span>
+                                            <% } %>
+                                        </td>
+                                        <td><i class="bi bi-geo-alt text-muted me-1"></i><%= ast.location || 'Masjid' %></td>
+                                        <td class="small text-muted font-monospace"><%= ast.transaction_code || 'Input Manual' %></td>
+                                        <td class="text-end text-nowrap">
+                                            <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
+                                                <button type="button" class="btn btn-sm btn-outline-warning me-1" onclick='openEditAssetModal(<%- JSON.stringify(ast) %>)' title="Edit Detail & Spesifikasi Aset">
+                                                    <i class="bi bi-pencil me-1"></i> Edit Detail
+                                                </button>
+                                                <% if (user.role_name === 'Admin') { %>
+                                                    <form action="/inventaris/asset/delete/<%= ast.id %>" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus aset ini?')">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Aset">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                <% } %>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-4">Belum ada barang aset tetap terdaftar.</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 2: Persediaan -->
+    <div class="tab-pane fade" id="persediaan" role="tabpanel">
+        <div class="card card-custom p-3">
+            <div class="card-body">
+                <h5 class="fw-bold text-dark mb-3">Stok Barang Persediaan (Habis Pakai)</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Kode Barang</th>
+                                <th>Nama Barang</th>
+                                <th>Kategori</th>
+                                <th>Stok Saat Ini</th>
+                                <th>Satuan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (items.length > 0) { %>
+                                <% items.forEach(itm => { %>
+                                    <tr>
+                                        <td class="fw-bold text-dark font-monospace"><%= itm.item_code %></td>
+                                        <td class="fw-semibold"><%= itm.name %></td>
+                                        <td>
+                                            <span class="badge <%= itm.category === 'Pembangunan' ? 'bg-warning text-dark' : 'bg-info' %>">
+                                                <%= itm.category %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="fw-bold fs-5 <%= itm.stock <= 5 ? 'text-danger' : 'text-success' %>">
+                                                <%= itm.stock %>
+                                            </span>
+                                        </td>
+                                        <td class="text-muted"><%= itm.unit %></td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">Belum ada barang persediaan terdaftar.</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 3: Logs -->
+    <div class="tab-pane fade" id="logs" role="tabpanel">
+        <div class="card card-custom p-3">
+            <div class="card-body">
+                <h5 class="fw-bold text-dark mb-3">Riwayat Mutasi Persediaan</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Waktu</th>
+                                <th>Nama Barang</th>
+                                <th>Tipe Mutasi</th>
+                                <th>Jumlah</th>
+                                <th>Catatan Pemakaian / Pengadaan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (logs.length > 0) { %>
+                                <% logs.forEach(lg => { %>
+                                    <tr>
+                                        <td class="small text-muted"><%= formatDate(lg.created_at) %></td>
+                                        <td class="fw-semibold"><%= lg.item_name %></td>
+                                        <td>
+                                            <span class="badge <%= lg.type === 'Masuk' ? 'bg-success' : 'bg-danger' %>">
+                                                <%= lg.type %>
+                                            </span>
+                                        </td>
+                                        <td class="fw-bold"><%= lg.qty %> <%= lg.unit %></td>
+                                        <td class="small text-muted"><%= lg.notes %></td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">Belum ada riwayat mutasi persediaan.</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah Aset Tetap Baru -->
+<div class="modal fade" id="modalAddAsset" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="bi bi-box-seam me-2"></i>Tambah Barang Aset Tetap Baru</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/inventaris/asset/create" method="POST">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nama Barang Aset (Dari Katalog)</label>
+                            <select name="name" class="form-select" required>
+                                <option value="">-- Pilih Nama Barang Aset --</option>
+                                <% if (typeof assetCatalog !== 'undefined' && assetCatalog.length > 0) { %>
+                                    <% assetCatalog.forEach(catItem => { %>
+                                        <option value="<%= catItem.name %>"><%= catItem.code %> - <%= catItem.name %></option>
+                                    <% }) %>
+                                <% } %>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Merk / Brand (Opsional)</label>
+                            <input type="text" name="brand" class="form-control" placeholder="Contoh: Panasonic / Sharp / Jepara">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Tipe / Model / No. Seri / No. Polisi (Opsional)</label>
+                            <input type="text" name="model_no_plate" class="form-control" placeholder="Contoh: CS-PN12WKJ / BL 1234 AB">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Lokasi Penempatan</label>
+                            <input type="text" name="location" class="form-control" placeholder="Contoh: Ruang Utama / Gudang / Kantor DKM" value="Masjid">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Tanggal Perolehan</label>
+                            <input type="date" name="purchase_date" class="form-control" value="<%= new Date().toISOString().split('T')[0] %>">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Nilai Perolehan / Cost (Rp)</label>
+                            <input type="number" step="0.01" name="cost" class="form-control" placeholder="Contoh: 5000000" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Status Kondisi</label>
+                            <select name="condition_status" class="form-select" required>
+                                <option value="Baik">🟢 Baik</option>
+                                <option value="Rusak Ringan">🟡 Rusak Ringan</option>
+                                <option value="Rusak Berat">🔴 Rusak Berat</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Catatan / Spesifikasi Tambahan (Opsional)</label>
+                            <textarea name="description" class="form-control" rows="2" placeholder="Detail garansi, spesifikasi teknis, dll."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Aset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit Detail Aset Tetap -->
+<div class="modal fade" id="modalEditAsset" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning-subtle">
+                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-pencil-square me-2"></i>Edit Detail & Spesifikasi Aset</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEditAsset" action="" method="POST">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nama Barang Aset (Dari Katalog)</label>
+                            <select name="name" id="edit_asset_name" class="form-select" required>
+                                <% if (typeof assetCatalog !== 'undefined' && assetCatalog.length > 0) { %>
+                                    <% assetCatalog.forEach(catItem => { %>
+                                        <option value="<%= catItem.name %>"><%= catItem.code %> - <%= catItem.name %></option>
+                                    <% }) %>
+                                <% } %>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Merk / Brand (Opsional)</label>
+                            <input type="text" name="brand" id="edit_asset_brand" class="form-control" placeholder="Contoh: Panasonic / Sharp / Jepara">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Tipe / Model / No. Seri / No. Polisi (Opsional)</label>
+                            <input type="text" name="model_no_plate" id="edit_asset_model_no_plate" class="form-control" placeholder="Contoh: CS-PN12WKJ / BL 1234 AB">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Lokasi Penempatan</label>
+                            <input type="text" name="location" id="edit_asset_location" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Tanggal Perolehan</label>
+                            <input type="date" name="purchase_date" id="edit_asset_purchase_date" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Nilai Perolehan / Cost (Rp)</label>
+                            <input type="number" step="0.01" name="cost" id="edit_asset_cost" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Status Kondisi</label>
+                            <select name="condition_status" id="edit_asset_condition_status" class="form-select" required>
+                                <option value="Baik">🟢 Baik</option>
+                                <option value="Rusak Ringan">🟡 Rusak Ringan</option>
+                                <option value="Rusak Berat">🔴 Rusak Berat</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Catatan / Spesifikasi Tambahan (Opsional)</label>
+                            <textarea name="description" id="edit_asset_description" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-warning fw-bold"><i class="bi bi-check-circle me-1"></i> Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Pemakaian Persediaan -->
+<div class="modal fade" id="modalUsage" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Catat Pemakaian Barang Persediaan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/inventaris/usage" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Pilih Barang</label>
+                        <select name="item_id" class="form-select" required>
+                            <% items.forEach(itm => { %>
+                                <option value="<%= itm.id %>"><%= itm.name %> (Stok Tersedia: <%= itm.stock %> <%= itm.unit %>)</option>
+                            <% }) %>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Jumlah Keluar / Dipakai</label>
+                        <input type="number" step="0.1" name="qty" class="form-control" placeholder="Contoh: 2" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Keperluan Pemakaian / Catatan</label>
+                        <textarea name="notes" class="form-control" rows="2" placeholder="Contoh: Digunakan untuk pengecoran menara masjid"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-warning">Simpan Pemakaian</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openEditAssetModal(ast) {
+        document.getElementById('formEditAsset').action = '/inventaris/asset/update/' + ast.id;
+        
+        const nameSelect = document.getElementById('edit_asset_name');
+        if (nameSelect) {
+            let found = false;
+            for (let i = 0; i < nameSelect.options.length; i++) {
+                if (nameSelect.options[i].value === ast.name) {
+                    nameSelect.selectedIndex = i;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found && ast.name) {
+                const opt = document.createElement('option');
+                opt.value = ast.name;
+                opt.text = ast.name;
+                opt.selected = true;
+                nameSelect.appendChild(opt);
+            }
+        }
+
+        document.getElementById('edit_asset_brand').value = ast.brand || '';
+        document.getElementById('edit_asset_model_no_plate').value = ast.model_no_plate || '';
+        document.getElementById('edit_asset_location').value = ast.location || '';
+        document.getElementById('edit_asset_purchase_date').value = ast.purchase_date ? ast.purchase_date.split('T')[0] : '';
+        document.getElementById('edit_asset_cost').value = ast.cost || 0;
+        document.getElementById('edit_asset_condition_status').value = ast.condition_status || 'Baik';
+        document.getElementById('edit_asset_description').value = ast.description || '';
+
+        const modal = new bootstrap.Modal(document.getElementById('modalEditAsset'));
+        modal.show();
+    }
+</script>

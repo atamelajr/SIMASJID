@@ -1,0 +1,150 @@
+<div class="d-flex justify-content-between align-items-center mb-4 d-print-none">
+    <div>
+        <h4 class="fw-bold text-dark mb-1">Laporan Transparansi Keuangan & Aset</h4>
+        <p class="text-muted small mb-0">Laporan Kasir, Mutasi Kas, Neraca Saldo, dan Daftar Aset Inventaris Masjid.</p>
+    </div>
+    <button onclick="window.print()" class="btn btn-dark shadow-sm">
+        <i class="bi bi-printer me-1"></i> Cetak Laporan
+    </button>
+</div>
+
+<!-- Header Laporan Saat Cetak -->
+<div class="text-center mb-4 d-none d-print-block">
+    <h2 class="fw-bold mb-0">MASJID AL-IKHLAS</h2>
+    <p class="mb-1">Jl. Raya Masjid No. 1, Kota | Telp: 021-5551234</p>
+    <hr class="my-2">
+    <h4 class="fw-bold">LAPORAN REKAPITULASI KEUANGAN & INVENTARIS</h4>
+</div>
+
+<!-- Card Neraca Saldo per Kas -->
+<div class="card card-custom p-3 mb-4">
+    <div class="card-body">
+        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-wallet2 text-primary me-2"></i>1. Ringkasan Saldo Rekening Kas (Neraca Saldo)</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Kode Kas</th>
+                        <th>Nama Rekening Kas</th>
+                        <th>Keterangan Alokasi</th>
+                        <th class="text-end">Saldo Kas saat ini</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% let grandTotal = 0; %>
+                    <% accounts.forEach(acc => { %>
+                        <% grandTotal += parseFloat(acc.balance); %>
+                        <tr>
+                            <td class="fw-bold"><%= acc.code %></td>
+                            <td><%= acc.name %></td>
+                            <td class="small text-muted"><%= acc.description %></td>
+                            <td class="text-end fw-bold"><%= formatRupiah(acc.balance) %></td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+                <tfoot class="table-dark">
+                    <tr>
+                        <th colspan="3" class="text-end">TOTAL SALDO SELURUH KAS:</th>
+                        <th class="text-end fs-5"><%= formatRupiah(grandTotal) %></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Card Mutasi Transaksi -->
+<div class="card card-custom p-3 mb-4">
+    <div class="card-body">
+        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-journal-text text-success me-2"></i>2. Laporan Rekapitulasi Mutasi Buku Kas</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Tanggal</th>
+                        <th>Kode</th>
+                        <th>Rekening</th>
+                        <th>Kategori</th>
+                        <th>Keterangan / Donatur</th>
+                        <th class="text-end">Pemasukan (Rp)</th>
+                        <th class="text-end">Pengeluaran (Rp)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (transactions.length > 0) { %>
+                        <% transactions.forEach(trx => { %>
+                            <tr>
+                                <td class="small"><%= formatDate(trx.transaction_date) %></td>
+                                <td class="fw-bold small"><%= trx.transaction_code %></td>
+                                <td><%= trx.account_name %></td>
+                                <td><%= trx.category_name %></td>
+                                <td>
+                                    <%= trx.donor_name ? '[' + trx.donor_name + '] ' : '' %>
+                                    <%= trx.description %>
+                                </td>
+                                <td class="text-end text-success fw-semibold">
+                                    <%= trx.type === 'Penerimaan' ? formatRupiah(trx.amount) : '-' %>
+                                </td>
+                                <td class="text-end text-danger fw-semibold">
+                                    <%= trx.type === 'Pengeluaran' ? formatRupiah(trx.amount) : '-' %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">Belum ada transaksi.</td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Card Laporan Aset -->
+<div class="card card-custom p-3 mb-4">
+    <div class="card-body">
+        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-box-seam text-warning me-2"></i>3. Laporan Daftar Inventaris Aset Tetap</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Kode Aset</th>
+                        <th>Nama Barang Inventaris</th>
+                        <th>Tanggal Beli</th>
+                        <th>Nilai Perolehan</th>
+                        <th>Kondisi</th>
+                        <th>Lokasi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (assets.length > 0) { %>
+                        <% assets.forEach(ast => { %>
+                            <tr>
+                                <td class="fw-bold"><%= ast.asset_code %></td>
+                                <td><%= ast.name %></td>
+                                <td><%= formatDate(ast.purchase_date) %></td>
+                                <td><%= formatRupiah(ast.cost) %></td>
+                                <td><%= ast.condition_status %></td>
+                                <td><%= ast.location %></td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">Belum ada aset terdaftar.</td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    @media print {
+        .sidebar, .navbar, .d-print-none { display: none !important; }
+        .content-wrapper { margin: 0 !important; padding: 0 !important; }
+        body { background: white !important; }
+        .card { border: none !important; box-shadow: none !important; }
+    }
+</style>

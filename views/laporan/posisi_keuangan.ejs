@@ -1,0 +1,163 @@
+<div class="container-fluid p-4">
+    <!-- Header Cetak Resmi (Hanya Tampil Saat Print) -->
+    <div class="print-header">
+        <h3 class="fw-bold mb-1">MASJID AL-IKHLAS</h3>
+        <h5 class="fw-bold text-uppercase mb-1">LAPORAN POSISI KEUANGAN (NERACA - ISAK 35)</h5>
+        <p class="mb-0 text-muted">Per Tanggal: <%= endDate ? formatDate(endDate) : formatDate(new Date()) %></p>
+        <hr style="border-top: 2px double #000;" class="my-2">
+    </div>
+
+    <!-- Header & Action Buttons -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 no-print">
+        <div>
+            <h4 class="fw-bold mb-1 text-dark"><i class="bi bi-journal-bookmark text-primary me-2"></i>Laporan Posisi Keuangan (Neraca ISAK 35)</h4>
+            <p class="text-muted small mb-0">Menyajikan akumulasi Aset (Lancar & Tetap), Liabilitas, serta Aset Neto Terikat & Tidak Terikat sesuai standar ISAK 35.</p>
+        </div>
+        <div class="d-flex gap-2 mt-2 mt-md-0">
+            <button onclick="window.print()" class="btn btn-outline-primary btn-print shadow-sm">
+                <i class="bi bi-printer me-1"></i> Cetak Laporan / PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="card card-custom mb-4 no-print">
+        <div class="card-body">
+            <form action="/laporan/posisi-keuangan" method="GET" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Tanggal Mulai</label>
+                    <input type="date" name="startDate" class="form-control form-control-sm" value="<%= startDate %>">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Tanggal Selesai</label>
+                    <input type="date" name="endDate" class="form-control form-control-sm" value="<%= endDate %>">
+                </div>
+                <div class="col-md-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm flex-fill">
+                        <i class="bi bi-filter me-1"></i> Terapkan Filter
+                    </button>
+                    <a href="/laporan/posisi-keuangan" class="btn btn-light btn-sm border">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Report Body (ISAK 35 Format) -->
+    <div class="row g-4">
+        <!-- Kolom Aset -->
+        <div class="col-md-6">
+            <div class="card card-custom h-100">
+                <div class="card-header bg-primary text-white fw-bold py-3">
+                    <i class="bi bi-building me-2"></i>ASET (ASSETS)
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Uraian Akun</th>
+                                <th class="text-end">Jumlah (Rp)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- ASET LANCAR -->
+                            <tr class="fw-bold table-secondary">
+                                <td colspan="2"><i class="bi bi-cash me-1"></i> 1. ASET LANCAR</td>
+                            </tr>
+                            <% cashAccounts.forEach(acc => { %>
+                                <tr>
+                                    <td class="ps-4">Saldo <%= acc.name %></td>
+                                    <td class="text-end font-monospace"><%= formatRupiah(acc.balance) %></td>
+                                </tr>
+                            <% }) %>
+                            <tr class="fw-semibold bg-light">
+                                <td class="ps-3 text-secondary">Subtotal Kas & Bank</td>
+                                <td class="text-end font-monospace fw-bold text-success"><%= formatRupiah(totalKasLancar) %></td>
+                            </tr>
+
+                            <!-- ASET TIDAK LANCAR -->
+                            <tr class="fw-bold table-secondary">
+                                <td colspan="2"><i class="bi bi-boxes me-1"></i> 2. ASET TIDAK LANCAR (ASET TETAP)</td>
+                            </tr>
+                            <tr>
+                                <td class="ps-4">Aset Tetap / Inventaris Modal (<%= assetSummary.total_assets || 0 %> Item)</td>
+                                <td class="text-end font-monospace"><%= formatRupiah(totalAsetTetap) %></td>
+                            </tr>
+                            <tr class="fw-semibold bg-light">
+                                <td class="ps-3 text-secondary">Subtotal Aset Tetap</td>
+                                <td class="text-end font-monospace fw-bold text-success"><%= formatRupiah(totalAsetTetap) %></td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="table-dark">
+                            <tr class="fs-6 fw-bold">
+                                <td>TOTAL ASET</td>
+                                <td class="text-end font-monospace"><%= formatRupiah(totalAset) %></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kolom Liabilitas & Aset Neto -->
+        <div class="col-md-6">
+            <div class="card card-custom h-100">
+                <div class="card-header bg-success text-white fw-bold py-3">
+                    <i class="bi bi-pie-chart me-2"></i>LIABILITAS & ASET NETO (EQUITY)
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Uraian Akun</th>
+                                <th class="text-end">Jumlah (Rp)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- LIABILITAS -->
+                            <tr class="fw-bold table-secondary">
+                                <td colspan="2"><i class="bi bi-credit-card me-1"></i> 1. LIABILITAS (KEWAJIBAN / UTANG)</td>
+                            </tr>
+                            <tr>
+                                <td class="ps-4">Kewajiban Jangka Pendek</td>
+                                <td class="text-end font-monospace">Rp 0</td>
+                            </tr>
+                            <tr class="fw-semibold bg-light">
+                                <td class="ps-3 text-secondary">Total Liabilitas</td>
+                                <td class="text-end font-monospace fw-bold text-dark">Rp 0</td>
+                            </tr>
+
+                            <!-- ASET NETO -->
+                            <tr class="fw-bold table-secondary">
+                                <td colspan="2"><i class="bi bi-shield-check me-1"></i> 2. ASET NETO (EKUITAS MASJID)</td>
+                            </tr>
+                            <tr>
+                                <td class="ps-4">
+                                    <strong>Tanpa Pembatasan Penggunaan</strong>
+                                    <div class="text-muted extra-small">Kas Operasional & Perolehan Aset Tetap</div>
+                                </td>
+                                <td class="text-end font-monospace text-primary fw-semibold"><%= formatRupiah(asetNetoTanpaPembatasan) %></td>
+                            </tr>
+                            <tr>
+                                <td class="ps-4">
+                                    <strong>Dengan Pembatasan Penggunaan</strong>
+                                    <div class="text-muted extra-small">Kas ZIS, Sosialisasi & Wakaf</div>
+                                </td>
+                                <td class="text-end font-monospace text-info fw-semibold"><%= formatRupiah(asetNetoDenganPembatasan) %></td>
+                            </tr>
+                            <tr class="fw-semibold bg-light">
+                                <td class="ps-3 text-secondary">Total Aset Neto</td>
+                                <td class="text-end font-monospace fw-bold text-primary"><%= formatRupiah(totalAsetNeto) %></td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="table-dark">
+                            <tr class="fs-6 fw-bold">
+                                <td>TOTAL LIABILITAS & ASET NETO</td>
+                                <td class="text-end font-monospace"><%= formatRupiah(totalAsetNeto) %></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

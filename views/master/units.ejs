@@ -1,0 +1,110 @@
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div>
+        <h4 class="fw-bold text-dark mb-1">Master Satuan Barang</h4>
+        <p class="text-muted small mb-0">Daftar standar satuan pengukuran barang inventaris & persediaan material.</p>
+    </div>
+    <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddUnit">
+        <i class="bi bi-plus-lg me-1"></i> Tambah Satuan Baru
+    </button>
+</div>
+
+<div class="card card-custom p-3">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Kode Satuan</th>
+                        <th>Nama Satuan</th>
+                        <th class="text-end">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% units.forEach(u => { %>
+                        <tr>
+                            <td class="fw-bold text-primary"><code><%= u.code %></code></td>
+                            <td class="fw-semibold"><%= u.name %></td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-warning me-1" 
+                                        onclick="editUnit(<%= JSON.stringify(u) %>)">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </button>
+                                <% if (user.role_name === 'Admin') { %>
+                                    <form action="/master/units/delete/<%= u.id %>" method="POST" class="d-inline" onsubmit="return confirm('Hapus satuan barang ini?')">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah Satuan -->
+<div class="modal fade" id="modalAddUnit" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Tambah Satuan Barang Baru</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/master/units/create" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Kode Satuan (Singkatan)</label>
+                        <input type="text" name="code" class="form-control" placeholder="Contoh: zak, pcs, mtr, ltr, kg" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nama Lengkap Satuan</label>
+                        <input type="text" name="name" class="form-control" placeholder="Contoh: Zak, Pieces, Meter" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Satuan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit Satuan -->
+<div class="modal fade" id="modalEditUnit" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Edit Satuan Barang</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEditUnit" action="" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Kode Satuan (Singkatan)</label>
+                        <input type="text" id="edit_unit_code" name="code" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nama Lengkap Satuan</label>
+                        <input type="text" id="edit_unit_name" name="name" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-warning">Update Satuan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function editUnit(u) {
+    document.getElementById('formEditUnit').action = '/master/units/update/' + u.id;
+    document.getElementById('edit_unit_code').value = u.code;
+    document.getElementById('edit_unit_name').value = u.name;
+    
+    new bootstrap.Modal(document.getElementById('modalEditUnit')).show();
+}
+</script>

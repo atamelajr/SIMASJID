@@ -1,0 +1,779 @@
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div>
+        <h4 class="fw-bold text-dark mb-1">Transaksi Keuangan</h4>
+        <p class="text-muted small mb-0">Riwayat seluruh transaksi penerimaan (Tunai, Non-Tunai, Donasi Barang) dan pengeluaran kas masjid.</p>
+    </div>
+    <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
+        <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddTransaction">
+            <i class="bi bi-plus-lg me-1"></i> Tambah Transaksi / Donasi
+        </button>
+    <% } %>
+</div>
+
+<!-- Account Summary Cards (Single Horizontal Row) -->
+<div class="row row-cols-1 row-cols-sm-2 row-cols-lg-<%= Math.min(accounts.length, 4) %> g-3 mb-4">
+    <% accounts.forEach((acc, idx) => { 
+        let borderClass = 'border-primary';
+        let iconClass = 'bi-wallet2 text-primary';
+        let bgSubtle = 'bg-primary-subtle';
+
+        const accNameLower = (acc.name || '').toLowerCase();
+        if (accNameLower.includes('bank') || accNameLower.includes('bsi')) {
+            borderClass = 'border-success';
+            iconClass = 'bi-bank text-success';
+            bgSubtle = 'bg-success-subtle';
+        } else if (accNameLower.includes('zis') || accNameLower.includes('sosial')) {
+            borderClass = 'border-warning';
+            iconClass = 'bi-piggy-bank text-warning';
+            bgSubtle = 'bg-warning-subtle';
+        } else if (idx % 2 === 1) {
+            borderClass = 'border-info';
+            iconClass = 'bi-cash-stack text-info';
+            bgSubtle = 'bg-info-subtle';
+        }
+    %>
+        <div class="col">
+            <div class="card card-custom p-3 border-start border-4 <%= borderClass %> shadow-sm h-100 position-relative overflow-hidden">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="badge <%= bgSubtle %> text-dark border mb-1 fw-bold"><%= acc.code %></span>
+                        <div class="small text-muted fw-semibold text-truncate" style="max-width: 170px;" title="<%= acc.name %>"><%= acc.name %></div>
+                        <h5 class="fw-bold text-dark mt-2 mb-0"><%= formatRupiah(acc.balance) %></h5>
+                    </div>
+                    <div class="rounded-circle p-2 <%= bgSubtle %> d-flex align-items-center justify-content-center" style="width:40px; height:40px;">
+                        <i class="bi <%= iconClass %> fs-5"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <% }) %>
+</div>
+
+<!-- Filter & Transaction Table -->
+<div class="card card-custom p-3 mb-4 shadow-sm border-0">
+    <div class="card-body p-2">
+        <!-- Advanced Filter Form -->
+        <form action="/keuangan" method="GET" class="row g-2 align-items-end mb-3">
+            <input type="hidden" name="limit" value="<%= pagination.limit %>">
+
+            <div class="col-md-2">
+                <label class="form-label extra-small fw-bold text-muted mb-1"><i class="bi bi-calendar-event me-1"></i>Tanggal Dari</label>
+                <input type="date" name="start_date" class="form-control form-control-sm" value="<%= filters.start_date || '' %>">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label extra-small fw-bold text-muted mb-1"><i class="bi bi-calendar-event me-1"></i>Tanggal Sampai</label>
+                <input type="date" name="end_date" class="form-control form-control-sm" value="<%= filters.end_date || '' %>">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label extra-small fw-bold text-muted mb-1"><i class="bi bi-arrow-left-right me-1"></i>Tipe Transaksi</label>
+                <select name="type" class="form-select form-select-sm">
+                    <option value="">-- Semua Tipe --</option>
+                    <option value="Penerimaan" <%= filters.type === 'Penerimaan' ? 'selected' : '' %>>Penerimaan</option>
+                    <option value="Pengeluaran" <%= filters.type === 'Pengeluaran' ? 'selected' : '' %>>Pengeluaran</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label extra-small fw-bold text-muted mb-1"><i class="bi bi-box-seam me-1"></i>Bentuk Transaksi</label>
+                <select name="payment_mode" class="form-select form-select-sm">
+                    <option value="">-- Semua Bentuk --</option>
+                    <option value="Tunai" <%= filters.payment_mode === 'Tunai' ? 'selected' : '' %>>Uang (Tunai)</option>
+                    <option value="Non-Tunai" <%= filters.payment_mode === 'Non-Tunai' ? 'selected' : '' %>>Uang (Non-Tunai)</option>
+                    <option value="Donasi Barang" <%= filters.payment_mode === 'Donasi Barang' ? 'selected' : '' %>>Donasi Barang</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label extra-small fw-bold text-muted mb-1"><i class="bi bi-wallet2 me-1"></i>Rekening Kas</label>
+                <select name="account_id" class="form-select form-select-sm">
+                    <option value="">-- Semua Kas --</option>
+                    <% accounts.forEach(acc => { %>
+                        <option value="<%= acc.id %>" <%= filters.account_id == acc.id ? 'selected' : '' %>><%= acc.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-1">
+                <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-filter me-1"></i>Filter</button>
+                <a href="/keuangan" class="btn btn-sm btn-light border w-100" title="Reset Filter"><i class="bi bi-arrow-counterclockwise me-1"></i>Reset</a>
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Kode & Tgl Transaksi</th>
+                        <th>Bentuk & Kas</th>
+                        <th>Kategori & Detail</th>
+                        <th>Donatur / Keterangan</th>
+                        <th>Jumlah / Nilai Estimasi</th>
+                        <th>Input Oleh</th>
+                        <th class="text-end">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (transactions.length > 0) { %>
+                        <% transactions.forEach(trx => { %>
+                            <tr>
+                                <td>
+                                    <div class="fw-bold text-dark"><%= trx.transaction_code %></div>
+                                    <div class="small text-primary"><i class="bi bi-calendar-event me-1"></i><%= formatDate(trx.transaction_date) %></div>
+                                    <div class="extra-small text-muted" style="font-size:0.75rem;">System Input: <%= formatDate(trx.created_at) %></div>
+                                </td>
+                                <td>
+                                    <% if (trx.payment_mode === 'Donasi Barang' || trx.is_in_kind === 1) { %>
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border mb-1"><i class="bi bi-box-seam me-1"></i>Donasi Barang</span>
+                                    <% } else if (trx.payment_mode === 'Non-Tunai') { %>
+                                        <span class="badge bg-info-subtle text-info border mb-1"><i class="bi bi-credit-card me-1"></i>Uang (Non-Tunai)</span>
+                                        <div class="extra-small text-muted"><%= trx.account_name %></div>
+                                    <% } else { %>
+                                        <span class="badge bg-light text-dark border mb-1"><i class="bi bi-cash me-1"></i>Uang (Tunai)</span>
+                                        <div class="extra-small text-muted"><%= trx.account_name %></div>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold"><%= trx.category_name %></div>
+                                    <span class="badge bg-info-subtle text-info"><%= trx.sub_type %></span>
+                                </td>
+                                <td>
+                                    <% if (trx.donor_name) { %>
+                                        <div><i class="bi bi-person-fill text-muted me-1"></i><strong><%= trx.donor_name %></strong></div>
+                                    <% } %>
+                                    <div class="small text-muted"><%= trx.description %></div>
+                                </td>
+                                <td>
+                                    <% if (trx.is_in_kind === 1) { %>
+                                        <span class="fw-bold text-primary" title="Nilai Estimasi Barang"><i class="bi bi-tag-fill me-1"></i><%= formatRupiah(trx.amount) %></span>
+                                    <% } else if (trx.type === 'Penerimaan') { %>
+                                        <span class="fw-bold text-success">+ <%= formatRupiah(trx.amount) %></span>
+                                    <% } else { %>
+                                        <span class="fw-bold text-danger">- <%= formatRupiah(trx.amount) %></span>
+                                    <% } %>
+                                </td>
+                                <td class="small text-muted"><%= trx.created_by_name %></td>
+                                <td class="text-end text-nowrap">
+                                    <button type="button" class="btn btn-sm btn-outline-warning me-1" onclick='openEditModal(<%- JSON.stringify(trx) %>)' title="Edit Transaksi">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </button>
+                                    <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
+                                        <form action="/keuangan/delete/<%= trx.id %>" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus transaksi ini? Saldo kas akan otomatis disesuaikan kembali.')">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Transaksi">
+                                                <i class="bi bi-trash"></i> Hapus
+                                            </button>
+                                        </form>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">Tidak ada data transaksi yang sesuai filter.</td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Bar -->
+        <% if (pagination && pagination.totalCount > 0) { 
+            const startItem = pagination.limit === 'all' ? 1 : Math.min((pagination.page - 1) * parseInt(pagination.limit) + 1, pagination.totalCount);
+            const endItem = pagination.limit === 'all' ? pagination.totalCount : Math.min(pagination.page * parseInt(pagination.limit), pagination.totalCount);
+            
+            const queryParams = new URLSearchParams();
+            if (filters.start_date) queryParams.set('start_date', filters.start_date);
+            if (filters.end_date) queryParams.set('end_date', filters.end_date);
+            if (filters.type) queryParams.set('type', filters.type);
+            if (filters.payment_mode) queryParams.set('payment_mode', filters.payment_mode);
+            if (filters.account_id) queryParams.set('account_id', filters.account_id);
+            queryParams.set('limit', pagination.limit);
+        %>
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-3 pt-3 border-top gap-2">
+                <!-- Row Limit Selector & Total Summary -->
+                <div class="d-flex align-items-center gap-2">
+                    <span class="small text-muted">Tampilkan:</span>
+                    <form action="/keuangan" method="GET" class="d-inline-block">
+                        <% if (filters.start_date) { %><input type="hidden" name="start_date" value="<%= filters.start_date %>"><% } %>
+                        <% if (filters.end_date) { %><input type="hidden" name="end_date" value="<%= filters.end_date %>"><% } %>
+                        <% if (filters.type) { %><input type="hidden" name="type" value="<%= filters.type %>"><% } %>
+                        <% if (filters.payment_mode) { %><input type="hidden" name="payment_mode" value="<%= filters.payment_mode %>"><% } %>
+                        <% if (filters.account_id) { %><input type="hidden" name="account_id" value="<%= filters.account_id %>"><% } %>
+                        
+                        <select name="limit" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+                            <option value="10" <%= pagination.limit === '10' ? 'selected' : '' %>>10</option>
+                            <option value="25" <%= pagination.limit === '25' ? 'selected' : '' %>>25</option>
+                            <option value="50" <%= pagination.limit === '50' ? 'selected' : '' %>>50</option>
+                            <option value="100" <%= pagination.limit === '100' ? 'selected' : '' %>>100</option>
+                            <option value="all" <%= pagination.limit === 'all' ? 'selected' : '' %>>Semua (<%= pagination.totalCount %>)</option>
+                        </select>
+                    </form>
+                    <span class="small text-muted ms-2">
+                        Menampilkan <strong><%= startItem %></strong> - <strong><%= endItem %></strong> dari <strong><%= pagination.totalCount %></strong> transaksi
+                    </span>
+                </div>
+
+                <!-- Page Navigation Links -->
+                <% if (pagination.limit !== 'all' && pagination.totalPages > 1) { %>
+                    <nav aria-label="Navigasi Halaman">
+                        <ul class="pagination pagination-sm mb-0">
+                            <!-- Previous Page -->
+                            <li class="page-item <%= pagination.page <= 1 ? 'disabled' : '' %>">
+                                <% queryParams.set('page', pagination.page - 1); %>
+                                <a class="page-link" href="/keuangan?<%= queryParams.toString() %>">Sebelumnya</a>
+                            </li>
+
+                            <!-- Page Numbers -->
+                            <% for (let p = 1; p <= pagination.totalPages; p++) { 
+                                queryParams.set('page', p);
+                            %>
+                                <li class="page-item <%= p === pagination.page ? 'active' : '' %>">
+                                    <a class="page-link" href="/keuangan?<%= queryParams.toString() %>"><%= p %></a>
+                                </li>
+                            <% } %>
+
+                            <!-- Next Page -->
+                            <li class="page-item <%= pagination.page >= pagination.totalPages ? 'disabled' : '' %>">
+                                <% queryParams.set('page', pagination.page + 1); %>
+                                <a class="page-link" href="/keuangan?<%= queryParams.toString() %>">Selanjutnya</a>
+                            </li>
+                        </ul>
+                    </nav>
+                <% } %>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<!-- Modal Tambah Transaksi -->
+<div class="modal fade" id="modalAddTransaction" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-header-title fw-bold">Tambah Transaksi / Donasi Baru</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/keuangan/create" method="POST" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Tanggal Transaksi</label>
+                            <input type="date" name="transaction_date" class="form-control" value="<%= new Date().toISOString().split('T')[0] %>" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Tipe Transaksi</label>
+                            <select name="type" id="trxType" class="form-select" required onchange="onTypeChange()">
+                                <option value="Penerimaan">Penerimaan</option>
+                                <option value="Pengeluaran">Pengeluaran</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Bentuk Penerimaan / Transaksi</label>
+                            <select name="payment_mode" id="paymentMode" class="form-select" required onchange="onPaymentModeChange()">
+                                <option value="Tunai">Uang (Tunai)</option>
+                                <option value="Non-Tunai">Uang (Non Tunai)</option>
+                                <option value="Donasi Barang">Donasi Barang</option>
+                            </select>
+                            <input type="hidden" name="is_in_kind" id="isInKind" value="0">
+                        </div>
+                        <div class="col-md-6" id="wrapperAccount">
+                            <label class="form-label fw-semibold">Rekening Kas Tujuan</label>
+                            <select name="account_id" class="form-select" required>
+                                <% accounts.forEach(acc => { %>
+                                    <option value="<%= acc.id %>"><%= acc.name %> (Saldo: <%= formatRupiah(acc.balance) %>)</option>
+                                <% }) %>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Kategori Transaksi</label>
+                            <select name="category_id" id="categoryId" class="form-select" required onchange="onCategoryChange()">
+                                <% categories.forEach(cat => { %>
+                                    <option value="<%= cat.id %>" data-subtype="<%= cat.sub_type %>" data-type="<%= cat.type %>">
+                                        <%= cat.account_code %> - <%= cat.name %> (<%= cat.sub_type %>)
+                                    </option>
+                                <% }) %>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" id="labelAmount">Jumlah (Rp)</label>
+                            <input type="number" step="0.01" name="amount" class="form-control" placeholder="Contoh: 500000" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nama Donatur / Penyumbang</label>
+                            <input type="text" name="donor_name" class="form-control" value="Hamba Allah" placeholder="Isi nama donatur / Hamba Allah" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Keterangan / Catatan</label>
+                            <textarea name="description" class="form-control" rows="2" placeholder="Detail transaksi / barang yang disumbangkan..."></textarea>
+                        </div>
+
+                        <!-- In-Kind Item Type Selector -->
+                        <div id="wrapperItemType" class="col-12 border p-3 rounded bg-warning-subtle d-none">
+                            <label class="form-label fw-bold text-dark"><i class="bi bi-box-seam me-1"></i>Jenis Donasi Barang Yang Diterima:</label>
+                            <div class="d-flex gap-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="item_kind_type" id="kindAsset" value="Asset" onchange="toggleInKindForm('Asset')" checked>
+                                    <label class="form-check-label fw-semibold" for="kindAsset">
+                                        Barang Modal / Aset Tetap (Sound System, AC, Karpet, Mimbar, dll.)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="item_kind_type" id="kindMaterial" value="Material" onchange="toggleInKindForm('Material')">
+                                    <label class="form-check-label fw-semibold" for="kindMaterial">
+                                        Material / Persediaan (Semen, Pasir, Cat, Sabun, dll.)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Section for Modal (Fixed Asset) Auto-Trigger -->
+                        <div id="sectionAsset" class="col-12 border p-3 rounded bg-light d-none">
+                            <h6 class="fw-bold text-primary mb-2"><i class="bi bi-box-fill me-1"></i>Detail Barang Aset Tetap</h6>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label extra-small fw-bold">Pilih Barang Aset (Dari Katalog)</label>
+                                    <select name="asset_name" id="asset_select" class="form-select form-select-sm" onchange="onAssetItemSelect()">
+                                        <option value="">-- Pilih dari Katalog Aset --</option>
+                                        <% masterItems.filter(i => i.type === 'Aset').forEach(i => { %>
+                                            <option value="<%= i.name %>" data-unitid="<%= i.unit_id %>"><%= i.name %> (<%= i.unit_name || '' %>)</option>
+                                        <% }) %>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label extra-small fw-bold">Kondisi Barang</label>
+                                    <select name="asset_condition" class="form-select form-select-sm">
+                                        <option value="Baik">Kondisi: Baik</option>
+                                        <option value="Rusak Ringan">Rusak Ringan</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label extra-small fw-bold">Lokasi Penempatan</label>
+                                    <input type="text" name="asset_location" class="form-control form-control-sm" placeholder="Lokasi (cth: Ruang Utama)">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Section for Material (Inventory) Auto-Trigger -->
+                        <div id="sectionInventory" class="col-12 border p-3 rounded bg-light d-none">
+                            <h6 class="fw-bold text-warning mb-2"><i class="bi bi-boxes me-1"></i>Detail Material / Persediaan (Stok Masuk)</h6>
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <label class="form-label extra-small fw-bold">Pilih Material (Dari Katalog)</label>
+                                    <select name="inventory_name" id="inventory_select" class="form-select form-select-sm" onchange="onInventoryItemSelect()">
+                                        <option value="">-- Pilih dari Katalog Material --</option>
+                                        <% masterItems.filter(i => i.type === 'Material').forEach(i => { %>
+                                            <option value="<%= i.name %>" data-unitid="<%= i.unit_id %>" data-unitcode="<%= i.unit_code %>"><%= i.name %></option>
+                                        <% }) %>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label extra-small fw-bold">Jumlah Stok</label>
+                                    <input type="number" step="0.1" name="inventory_qty" class="form-control form-control-sm" placeholder="Jumlah" value="1">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label extra-small fw-bold">Satuan (Dropdown)</label>
+                                    <select name="inventory_unit" id="inventory_unit_select" class="form-select form-select-sm">
+                                        <% units.forEach(u => { %>
+                                            <option value="<%= u.code %>" data-unitid="<%= u.id %>"><%= u.name %> (<%= u.code %>)</option>
+                                        <% }) %>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label extra-small fw-bold">Kategori Peruntukan</label>
+                                    <select name="inventory_category" class="form-select form-select-sm">
+                                        <option value="Pembangunan">Material Pembangunan</option>
+                                        <option value="Operasional">Operasional Harian</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Bukti Nota / Struk / Foto Barang (Opsional)</label>
+                            <input type="file" name="proof_file" class="form-control">
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Transaksi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit Transaksi -->
+<div class="modal fade" id="modalEditTransaction" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning-subtle">
+                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-pencil-square me-2"></i>Edit Transaksi Keuangan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEditTransaction" action="" method="POST" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Tanggal Transaksi</label>
+                            <input type="date" name="transaction_date" id="edit_transaction_date" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Tipe Transaksi</label>
+                            <select name="type" id="edit_type" class="form-select" required>
+                                <option value="Penerimaan">Penerimaan</option>
+                                <option value="Pengeluaran">Pengeluaran</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Bentuk Transaksi</label>
+                            <select name="payment_mode" id="edit_payment_mode" class="form-select" required onchange="onEditPaymentModeChange()">
+                                <option value="Tunai">Uang (Tunai)</option>
+                                <option value="Non-Tunai">Uang (Non Tunai)</option>
+                                <option value="Donasi Barang">Donasi Barang</option>
+                            </select>
+                            <input type="hidden" name="is_in_kind" id="edit_is_in_kind" value="0">
+                        </div>
+                        <div class="col-md-6" id="edit_wrapperAccount">
+                            <label class="form-label fw-semibold">Rekening Kas / Bank</label>
+                            <select name="account_id" id="edit_account_id" class="form-select" required>
+                                <% accounts.forEach(acc => { %>
+                                    <option value="<%= acc.id %>"><%= acc.name %> (Saldo: <%= formatRupiah(acc.balance) %>)</option>
+                                <% }) %>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Kategori Transaksi (COA)</label>
+                            <select name="category_id" id="edit_category_id" class="form-select" required>
+                                <% categories.forEach(cat => { %>
+                                    <option value="<%= cat.id %>">
+                                        <%= cat.account_code %> - <%= cat.name %> (<%= cat.sub_type %>)
+                                    </option>
+                                <% }) %>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" id="edit_labelAmount">Jumlah / Nilai Estimasi (Rp)</label>
+                            <input type="number" step="0.01" name="amount" id="edit_amount" class="form-control" placeholder="Contoh: 500000" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nama Donatur / Penyumbang</label>
+                            <input type="text" name="donor_name" id="edit_donor_name" class="form-control" placeholder="Nama Donatur">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Keterangan / Catatan</label>
+                            <textarea name="description" id="edit_description" class="form-control" rows="2"></textarea>
+                        </div>
+
+                        <!-- In-Kind Item Type Selector for Edit Modal -->
+                        <div id="edit_wrapperItemType" class="col-12 border p-3 rounded bg-warning-subtle d-none">
+                            <label class="form-label fw-bold text-dark"><i class="bi bi-box-seam me-1"></i>Jenis Donasi Barang Yang Diterima:</label>
+                            <div class="d-flex gap-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="item_kind_type" id="edit_kindAsset" value="Asset" onchange="toggleEditInKindForm('Asset')" checked>
+                                    <label class="form-check-label fw-semibold" for="edit_kindAsset">
+                                        Barang Modal / Aset Tetap (Sound System, AC, Karpet, Mimbar, dll.)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="item_kind_type" id="edit_kindMaterial" value="Material" onchange="toggleEditInKindForm('Material')">
+                                    <label class="form-check-label fw-semibold" for="edit_kindMaterial">
+                                        Material / Persediaan (Semen, Pasir, Cat, Sabun, dll.)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Section for Modal (Fixed Asset) for Edit Modal -->
+                        <div id="edit_sectionAsset" class="col-12 border p-3 rounded bg-light d-none">
+                            <h6 class="fw-bold text-primary mb-2"><i class="bi bi-box-fill me-1"></i>Detail Barang Aset Tetap</h6>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label extra-small fw-bold">Pilih Barang Aset (Dari Katalog)</label>
+                                    <select name="asset_name" id="edit_asset_select" class="form-select form-select-sm">
+                                        <option value="">-- Pilih dari Katalog Aset --</option>
+                                        <% masterItems.filter(i => i.type === 'Aset').forEach(i => { %>
+                                            <option value="<%= i.name %>"><%= i.name %> (<%= i.unit_name || '' %>)</option>
+                                        <% }) %>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label extra-small fw-bold">Kondisi Barang</label>
+                                    <select name="asset_condition" id="edit_asset_condition" class="form-select form-select-sm">
+                                        <option value="Baik">Kondisi: Baik</option>
+                                        <option value="Rusak Ringan">Rusak Ringan</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label extra-small fw-bold">Lokasi Penempatan</label>
+                                    <input type="text" name="asset_location" id="edit_asset_location" class="form-control form-control-sm" placeholder="Lokasi (cth: Ruang Utama)">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Section for Material (Inventory) for Edit Modal -->
+                        <div id="edit_sectionInventory" class="col-12 border p-3 rounded bg-light d-none">
+                            <h6 class="fw-bold text-warning mb-2"><i class="bi bi-boxes me-1"></i>Detail Material / Persediaan (Stok Masuk)</h6>
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <label class="form-label extra-small fw-bold">Pilih Material (Dari Katalog)</label>
+                                    <select name="inventory_name" id="edit_inventory_select" class="form-select form-select-sm">
+                                        <option value="">-- Pilih dari Katalog Material --</option>
+                                        <% masterItems.filter(i => i.type === 'Material').forEach(i => { %>
+                                            <option value="<%= i.name %>"><%= i.name %></option>
+                                        <% }) %>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label extra-small fw-bold">Jumlah Stok</label>
+                                    <input type="number" step="0.1" name="inventory_qty" id="edit_inventory_qty" class="form-control form-control-sm" placeholder="Jumlah" value="1">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label extra-small fw-bold">Satuan (Dropdown)</label>
+                                    <select name="inventory_unit" id="edit_inventory_unit_select" class="form-select form-select-sm">
+                                        <% units.forEach(u => { %>
+                                            <option value="<%= u.code %>"><%= u.name %> (<%= u.code %>)</option>
+                                        <% }) %>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label extra-small fw-bold">Kategori Peruntukan</label>
+                                    <select name="inventory_category" id="edit_inventory_category" class="form-select form-select-sm">
+                                        <option value="Pembangunan">Material Pembangunan</option>
+                                        <option value="Operasional">Operasional Harian</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Ganti Bukti Transaksi (Opsional)</label>
+                            <input type="file" name="proof_file" class="form-control">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-warning fw-bold"><i class="bi bi-check-circle me-1"></i> Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openEditModal(trx) {
+        document.getElementById('formEditTransaction').action = '/keuangan/update/' + trx.id;
+        document.getElementById('edit_transaction_date').value = trx.transaction_date ? trx.transaction_date.split('T')[0] : '';
+        document.getElementById('edit_type').value = trx.type;
+
+        let mode = 'Tunai';
+        if (trx.is_in_kind == 1 || trx.payment_mode === 'Donasi Barang') {
+            mode = 'Donasi Barang';
+        } else if (trx.payment_mode === 'Non-Tunai') {
+            mode = 'Non-Tunai';
+        } else {
+            mode = 'Tunai';
+        }
+        document.getElementById('edit_payment_mode').value = mode;
+
+        document.getElementById('edit_account_id').value = trx.account_id;
+        document.getElementById('edit_category_id').value = trx.category_id;
+        document.getElementById('edit_amount').value = trx.amount;
+        document.getElementById('edit_donor_name').value = trx.donor_name || 'Hamba Allah';
+        document.getElementById('edit_description').value = trx.description || '';
+
+        // Reset/Populate Asset and Inventory fields for Edit Modal
+        const editKindAsset = document.getElementById('edit_kindAsset');
+        const editKindMaterial = document.getElementById('edit_kindMaterial');
+
+        if (trx.inventory_name) {
+            if (editKindMaterial) editKindMaterial.checked = true;
+            document.getElementById('edit_inventory_select').value = trx.inventory_name;
+            document.getElementById('edit_inventory_qty').value = trx.inventory_qty || 1;
+            if (trx.inventory_unit) {
+                document.getElementById('edit_inventory_unit_select').value = trx.inventory_unit;
+            }
+        } else {
+            if (editKindAsset) editKindAsset.checked = true;
+            document.getElementById('edit_asset_select').value = trx.asset_name || '';
+            document.getElementById('edit_asset_condition').value = trx.asset_condition || 'Baik';
+            document.getElementById('edit_asset_location').value = trx.asset_location || '';
+        }
+
+        onEditPaymentModeChange();
+
+        const modal = new bootstrap.Modal(document.getElementById('modalEditTransaction'));
+        modal.show();
+    }
+
+    function toggleEditInKindForm(kind) {
+        const sectionAsset = document.getElementById('edit_sectionAsset');
+        const sectionInventory = document.getElementById('edit_sectionInventory');
+        if (kind === 'Asset') {
+            if (sectionAsset) sectionAsset.classList.remove('d-none');
+            if (sectionInventory) sectionInventory.classList.add('d-none');
+        } else if (kind === 'Material') {
+            if (sectionAsset) sectionAsset.classList.add('d-none');
+            if (sectionInventory) sectionInventory.classList.remove('d-none');
+        }
+    }
+
+    function onEditPaymentModeChange() {
+        const mode = document.getElementById('edit_payment_mode').value;
+        const isInKindInput = document.getElementById('edit_is_in_kind');
+        const labelAmount = document.getElementById('edit_labelAmount');
+        const wrapperAccount = document.getElementById('edit_wrapperAccount');
+        const accountSelect = document.getElementById('edit_account_id');
+        const amountInput = document.getElementById('edit_amount');
+        const editWrapperItemType = document.getElementById('edit_wrapperItemType');
+
+        if (mode === 'Donasi Barang') {
+            isInKindInput.value = '1';
+            labelAmount.innerText = 'Nilai Estimasi Barang (Rp) (Opsional)';
+            if (wrapperAccount) wrapperAccount.classList.add('d-none');
+            if (accountSelect) accountSelect.required = false;
+            if (amountInput) amountInput.required = false;
+            if (editWrapperItemType) editWrapperItemType.classList.remove('d-none');
+
+            const isMaterial = document.getElementById('edit_kindMaterial')?.checked;
+            toggleEditInKindForm(isMaterial ? 'Material' : 'Asset');
+        } else {
+            isInKindInput.value = '0';
+            labelAmount.innerText = 'Jumlah (Rp)';
+            if (wrapperAccount) wrapperAccount.classList.remove('d-none');
+            if (accountSelect) accountSelect.required = true;
+            if (amountInput) amountInput.required = true;
+            if (editWrapperItemType) editWrapperItemType.classList.add('d-none');
+            document.getElementById('edit_sectionAsset')?.classList.add('d-none');
+            document.getElementById('edit_sectionInventory')?.classList.add('d-none');
+        }
+    }
+    function onAssetItemSelect() {
+        const select = document.getElementById('asset_select');
+        const selectedOption = select.options[select.selectedIndex];
+        const unitId = selectedOption ? selectedOption.getAttribute('data-unitid') : null;
+    }
+
+    function onInventoryItemSelect() {
+        const select = document.getElementById('inventory_select');
+        const selectedOption = select.options[select.selectedIndex];
+        const unitId = selectedOption ? selectedOption.getAttribute('data-unitid') : null;
+        
+        if (unitId) {
+            const unitSelect = document.getElementById('inventory_unit_select');
+            for (let i = 0; i < unitSelect.options.length; i++) {
+                if (unitSelect.options[i].getAttribute('data-unitid') === unitId) {
+                    unitSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+    }
+
+    function onCategoryChange() {
+        const select = document.getElementById('categoryId');
+        if (!select || select.selectedIndex === -1) return;
+        const selectedOption = select.options[select.selectedIndex];
+        const subType = selectedOption ? selectedOption.getAttribute('data-subtype') : null;
+        const mode = document.getElementById('paymentMode').value;
+
+        if (mode !== 'Donasi Barang') {
+            document.getElementById('sectionAsset').classList.add('d-none');
+            document.getElementById('sectionInventory').classList.add('d-none');
+
+            if (subType === 'Modal') {
+                document.getElementById('sectionAsset').classList.remove('d-none');
+            } else if (subType === 'Material') {
+                document.getElementById('sectionInventory').classList.remove('d-none');
+            }
+        }
+    }
+
+    function onPaymentModeChange() {
+        const mode = document.getElementById('paymentMode').value;
+        const isInKindInput = document.getElementById('isInKind');
+        const labelAmount = document.getElementById('labelAmount');
+        const wrapperItemType = document.getElementById('wrapperItemType');
+        const wrapperAccount = document.getElementById('wrapperAccount');
+        const accountSelect = wrapperAccount ? wrapperAccount.querySelector('select') : null;
+        const amountInput = document.querySelector('input[name="amount"]');
+
+        if (mode === 'Donasi Barang') {
+            isInKindInput.value = '1';
+            labelAmount.innerText = 'Nilai Estimasi Barang (Rp) (Opsional)';
+            wrapperItemType.classList.remove('d-none');
+            if (wrapperAccount) wrapperAccount.classList.add('d-none');
+            if (accountSelect) accountSelect.required = false;
+            if (amountInput) amountInput.required = false;
+            
+            const selectedKind = document.querySelector('input[name="item_kind_type"]:checked').value;
+            toggleInKindForm(selectedKind);
+        } else {
+            isInKindInput.value = '0';
+            labelAmount.innerText = 'Jumlah (Rp)';
+            wrapperItemType.classList.add('d-none');
+            if (wrapperAccount) wrapperAccount.classList.remove('d-none');
+            if (accountSelect) accountSelect.required = true;
+            if (amountInput) amountInput.required = true;
+            onCategoryChange();
+        }
+    }
+
+    function toggleInKindForm(kindType) {
+        document.getElementById('sectionAsset').classList.add('d-none');
+        document.getElementById('sectionInventory').classList.add('d-none');
+
+        if (kindType === 'Asset') {
+            document.getElementById('sectionAsset').classList.remove('d-none');
+        } else if (kindType === 'Material') {
+            document.getElementById('sectionInventory').classList.remove('d-none');
+        }
+    }
+
+    function onTypeChange() {
+        const selectedType = document.getElementById('trxType').value;
+        const categorySelect = document.getElementById('categoryId');
+        const options = categorySelect.options;
+        let firstValidOption = null;
+
+        for (let i = 0; i < options.length; i++) {
+            const optionType = options[i].getAttribute('data-type');
+            if (optionType === selectedType) {
+                options[i].hidden = false;
+                options[i].disabled = false;
+                if (!firstValidOption) {
+                    firstValidOption = options[i];
+                }
+            } else {
+                options[i].hidden = true;
+                options[i].disabled = true;
+            }
+        }
+
+        if (firstValidOption) {
+            categorySelect.value = firstValidOption.value;
+        }
+
+        const paymentModeSelect = document.getElementById('paymentMode');
+        const donasiOption = paymentModeSelect.querySelector('option[value="Donasi Barang"]');
+        if (selectedType === 'Pengeluaran') {
+            if (paymentModeSelect.value === 'Donasi Barang') {
+                paymentModeSelect.value = 'Tunai';
+            }
+            if (donasiOption) donasiOption.disabled = true;
+        } else {
+            if (donasiOption) donasiOption.disabled = false;
+        }
+
+        onPaymentModeChange();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        onTypeChange();
+    });
+
+    const modalAddTrx = document.getElementById('modalAddTransaction');
+    if (modalAddTrx) {
+        modalAddTrx.addEventListener('shown.bs.modal', function () {
+            onTypeChange();
+        });
+    }
+</script>
