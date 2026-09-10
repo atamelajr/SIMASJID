@@ -79,6 +79,7 @@
                     <option value="Tunai" <%= filters.payment_mode === 'Tunai' ? 'selected' : '' %>>Uang (Tunai)</option>
                     <option value="Non-Tunai" <%= filters.payment_mode === 'Non-Tunai' ? 'selected' : '' %>>Uang (Non-Tunai)</option>
                     <option value="Donasi Barang" <%= filters.payment_mode === 'Donasi Barang' ? 'selected' : '' %>>Donasi Barang</option>
+                    <option value="Hutang" <%= filters.payment_mode === 'Hutang' ? 'selected' : '' %>>Belanja Hutang / Kredit</option>
                 </select>
             </div>
             <div class="col-md-2">
@@ -101,7 +102,7 @@
                 <thead class="table-light">
                     <tr>
                         <th>Kode & Tgl Transaksi</th>
-                        <th>Bentuk & Kas</th>
+                        <th>Bentuk & Kas / Hutang</th>
                         <th>Kategori & Detail</th>
                         <th>Donatur / Keterangan</th>
                         <th>Jumlah / Nilai Estimasi</th>
@@ -119,7 +120,21 @@
                                     <div class="extra-small text-muted" style="font-size:0.75rem;">System Input: <%= formatDate(trx.created_at) %></div>
                                 </td>
                                 <td>
-                                    <% if (trx.payment_mode === 'Donasi Barang' || trx.is_in_kind === 1) { %>
+                                    <% if (trx.payment_mode === 'Hutang') { %>
+                                        <% if (trx.debt_status === 'Belum Lunas') { %>
+                                            <span class="badge bg-danger-subtle text-danger border mb-1"><i class="bi bi-clock-history me-1"></i>Hutang (Belum Lunas)</span>
+                                            <div class="extra-small text-dark fw-semibold"><i class="bi bi-shop me-1"></i><%= trx.creditor_name || 'Supplier/Toko' %></div>
+                                            <% if (trx.due_date) { %>
+                                                <div class="extra-small text-danger" style="font-size:0.75rem;">Jatuh Tempo: <%= formatDate(trx.due_date) %></div>
+                                            <% } %>
+                                        <% } else { %>
+                                            <span class="badge bg-success-subtle text-success border mb-1"><i class="bi bi-check-circle me-1"></i>Hutang (Lunas)</span>
+                                            <div class="extra-small text-muted"><%= trx.paid_account_name || trx.account_name %></div>
+                                            <% if (trx.paid_at) { %>
+                                                <div class="extra-small text-muted" style="font-size:0.75rem;">Lunas tgl: <%= formatDate(trx.paid_at) %></div>
+                                            <% } %>
+                                        <% } %>
+                                    <% } else if (trx.payment_mode === 'Donasi Barang' || trx.is_in_kind === 1) { %>
                                         <span class="badge bg-warning-subtle text-warning-emphasis border mb-1"><i class="bi bi-box-seam me-1"></i>Donasi Barang</span>
                                     <% } else if (trx.payment_mode === 'Non-Tunai') { %>
                                         <span class="badge bg-info-subtle text-info border mb-1"><i class="bi bi-credit-card me-1"></i>Uang (Non-Tunai)</span>
@@ -150,6 +165,13 @@
                                 </td>
                                 <td class="small text-muted"><%= trx.created_by_name %></td>
                                 <td class="text-end text-nowrap">
+                                    <% if (trx.payment_mode === 'Hutang' && trx.debt_status === 'Belum Lunas') { %>
+                                        <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
+                                            <button type="button" class="btn btn-sm btn-success me-1" onclick='openPayDebtModal(<%- JSON.stringify(trx) %>)' title="Pelunasan Utang">
+                                                <i class="bi bi-cash-stack me-1"></i> Pelunasan
+                                            </button>
+                                        <% } %>
+                                    <% } %>
                                     <button type="button" class="btn btn-sm btn-outline-warning me-1" onclick='openEditModal(<%- JSON.stringify(trx) %>)' title="Edit Transaksi">
                                         <i class="bi bi-pencil"></i> Edit
                                     </button>
@@ -269,6 +291,7 @@
                                 <option value="Tunai">Uang (Tunai)</option>
                                 <option value="Non-Tunai">Uang (Non Tunai)</option>
                                 <option value="Donasi Barang">Donasi Barang</option>
+                                <option value="Hutang">Belanja Hutang / Kredit</option>
                             </select>
                             <input type="hidden" name="is_in_kind" id="isInKind" value="0">
                         </div>
@@ -279,6 +302,21 @@
                                     <option value="<%= acc.id %>"><%= acc.name %> (Saldo: <%= formatRupiah(acc.balance) %>)</option>
                                 <% }) %>
                             </select>
+                        </div>
+                        
+                        <!-- Debt Details Section (Visible only when Hutang) -->
+                        <div id="wrapperDebt" class="col-12 border p-3 rounded bg-danger-subtle d-none">
+                            <h6 class="fw-bold text-danger mb-2"><i class="bi bi-card-checklist me-1"></i>Detail Transaksi Belanja Hutang / Kredit</h6>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label extra-small fw-bold">Nama Toko / Supplier / Creditor</label>
+                                    <input type="text" name="creditor_name" id="creditor_name" class="form-control form-control-sm" placeholder="Contoh: Toko Bangunan Abadi">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label extra-small fw-bold">Tanggal Jatuh Tempo (Opsional)</label>
+                                    <input type="date" name="due_date" id="due_date" class="form-control form-control-sm">
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Kategori Transaksi</label>
@@ -428,6 +466,7 @@
                                 <option value="Tunai">Uang (Tunai)</option>
                                 <option value="Non-Tunai">Uang (Non Tunai)</option>
                                 <option value="Donasi Barang">Donasi Barang</option>
+                                <option value="Hutang">Belanja Hutang / Kredit</option>
                             </select>
                             <input type="hidden" name="is_in_kind" id="edit_is_in_kind" value="0">
                         </div>
@@ -438,6 +477,21 @@
                                     <option value="<%= acc.id %>"><%= acc.name %> (Saldo: <%= formatRupiah(acc.balance) %>)</option>
                                 <% }) %>
                             </select>
+                        </div>
+
+                        <!-- Debt Details Section for Edit Modal -->
+                        <div id="edit_wrapperDebt" class="col-12 border p-3 rounded bg-danger-subtle d-none">
+                            <h6 class="fw-bold text-danger mb-2"><i class="bi bi-card-checklist me-1"></i>Detail Transaksi Belanja Hutang / Kredit</h6>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label extra-small fw-bold">Nama Toko / Supplier / Creditor</label>
+                                    <input type="text" name="creditor_name" id="edit_creditor_name" class="form-control form-control-sm" placeholder="Contoh: Toko Bangunan Abadi">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label extra-small fw-bold">Tanggal Jatuh Tempo (Opsional)</label>
+                                    <input type="date" name="due_date" id="edit_due_date" class="form-control form-control-sm">
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Kategori Transaksi (COA)</label>
@@ -552,6 +606,41 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
                     <button type="submit" class="btn btn-warning fw-bold"><i class="bi bi-check-circle me-1"></i> Simpan Perubahan</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Pelunasan Utang -->
+<div class="modal fade" id="modalPayDebt" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success-subtle">
+                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-cash-stack me-2"></i>Pelunasan Utang Usaha</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formPayDebt" action="" method="POST">
+                <div class="modal-body">
+                    <div class="alert alert-info py-2 small">
+                        <div class="fw-bold mb-1" id="pay_debt_trx_code">TRX-0000</div>
+                        <div>Supplier/Toko: <strong id="pay_debt_creditor">Toko Abadi</strong></div>
+                        <div>Total Utang: <strong class="text-danger fs-6" id="pay_debt_amount">Rp 0</strong></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Sumber Rekening Kas Pembayar</label>
+                        <select name="paid_account_id" class="form-select" required>
+                            <% accounts.forEach(acc => { %>
+                                <option value="<%= acc.id %>"><%= acc.name %> (Saldo: <%= formatRupiah(acc.balance) %>)</option>
+                            <% }) %>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tanggal Pelunasan Real</label>
+                        <input type="date" name="payment_date" class="form-control" value="<%= new Date().toISOString().split('T')[0] %>" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-success fw-bold"><i class="bi bi-check-circle me-1"></i> Simpan Pelunasan Kas</button>
                 </div>
             </form>
         </div>
@@ -559,13 +648,25 @@
 </div>
 
 <script>
+    function openPayDebtModal(trx) {
+        document.getElementById('formPayDebt').action = '/keuangan/pay-debt/' + trx.id;
+        document.getElementById('pay_debt_trx_code').innerText = trx.transaction_code;
+        document.getElementById('pay_debt_creditor').innerText = trx.creditor_name || 'Supplier / Toko';
+        document.getElementById('pay_debt_amount').innerText = 'Rp ' + Number(trx.amount).toLocaleString('id-ID');
+        
+        const modal = new bootstrap.Modal(document.getElementById('modalPayDebt'));
+        modal.show();
+    }
+
     function openEditModal(trx) {
         document.getElementById('formEditTransaction').action = '/keuangan/update/' + trx.id;
         document.getElementById('edit_transaction_date').value = trx.transaction_date ? trx.transaction_date.split('T')[0] : '';
         document.getElementById('edit_type').value = trx.type;
 
         let mode = 'Tunai';
-        if (trx.is_in_kind == 1 || trx.payment_mode === 'Donasi Barang') {
+        if (trx.payment_mode === 'Hutang') {
+            mode = 'Hutang';
+        } else if (trx.is_in_kind == 1 || trx.payment_mode === 'Donasi Barang') {
             mode = 'Donasi Barang';
         } else if (trx.payment_mode === 'Non-Tunai') {
             mode = 'Non-Tunai';
@@ -578,6 +679,12 @@
         document.getElementById('edit_category_id').value = trx.category_id;
         document.getElementById('edit_amount').value = trx.amount;
         document.getElementById('edit_donor_name').value = trx.donor_name || 'Hamba Allah';
+        if (document.getElementById('edit_creditor_name')) {
+            document.getElementById('edit_creditor_name').value = trx.creditor_name || '';
+        }
+        if (document.getElementById('edit_due_date')) {
+            document.getElementById('edit_due_date').value = trx.due_date ? trx.due_date.split('T')[0] : '';
+        }
         document.getElementById('edit_description').value = trx.description || '';
 
         // Reset/Populate Asset and Inventory fields for Edit Modal
@@ -624,14 +731,26 @@
         const accountSelect = document.getElementById('edit_account_id');
         const amountInput = document.getElementById('edit_amount');
         const editWrapperItemType = document.getElementById('edit_wrapperItemType');
+        const editWrapperDebt = document.getElementById('edit_wrapperDebt');
 
-        if (mode === 'Donasi Barang') {
+        if (mode === 'Hutang') {
+            isInKindInput.value = '0';
+            labelAmount.innerText = 'Jumlah Belanja Hutang (Rp)';
+            if (wrapperAccount) wrapperAccount.classList.add('d-none');
+            if (accountSelect) accountSelect.required = false;
+            if (amountInput) amountInput.required = true;
+            if (editWrapperItemType) editWrapperItemType.classList.add('d-none');
+            if (editWrapperDebt) editWrapperDebt.classList.remove('d-none');
+            document.getElementById('edit_sectionAsset')?.classList.add('d-none');
+            document.getElementById('edit_sectionInventory')?.classList.add('d-none');
+        } else if (mode === 'Donasi Barang') {
             isInKindInput.value = '1';
             labelAmount.innerText = 'Nilai Estimasi Barang (Rp) (Opsional)';
             if (wrapperAccount) wrapperAccount.classList.add('d-none');
             if (accountSelect) accountSelect.required = false;
             if (amountInput) amountInput.required = false;
             if (editWrapperItemType) editWrapperItemType.classList.remove('d-none');
+            if (editWrapperDebt) editWrapperDebt.classList.add('d-none');
 
             const isMaterial = document.getElementById('edit_kindMaterial')?.checked;
             toggleEditInKindForm(isMaterial ? 'Material' : 'Asset');
@@ -642,6 +761,7 @@
             if (accountSelect) accountSelect.required = true;
             if (amountInput) amountInput.required = true;
             if (editWrapperItemType) editWrapperItemType.classList.add('d-none');
+            if (editWrapperDebt) editWrapperDebt.classList.add('d-none');
             document.getElementById('edit_sectionAsset')?.classList.add('d-none');
             document.getElementById('edit_sectionInventory')?.classList.add('d-none');
         }
@@ -693,14 +813,25 @@
         const labelAmount = document.getElementById('labelAmount');
         const wrapperItemType = document.getElementById('wrapperItemType');
         const wrapperAccount = document.getElementById('wrapperAccount');
+        const wrapperDebt = document.getElementById('wrapperDebt');
         const accountSelect = wrapperAccount ? wrapperAccount.querySelector('select') : null;
         const amountInput = document.querySelector('input[name="amount"]');
 
-        if (mode === 'Donasi Barang') {
+        if (mode === 'Hutang') {
+            isInKindInput.value = '0';
+            labelAmount.innerText = 'Jumlah Belanja Hutang (Rp)';
+            if (wrapperItemType) wrapperItemType.classList.add('d-none');
+            if (wrapperAccount) wrapperAccount.classList.add('d-none');
+            if (wrapperDebt) wrapperDebt.classList.remove('d-none');
+            if (accountSelect) accountSelect.required = false;
+            if (amountInput) amountInput.required = true;
+            onCategoryChange();
+        } else if (mode === 'Donasi Barang') {
             isInKindInput.value = '1';
             labelAmount.innerText = 'Nilai Estimasi Barang (Rp) (Opsional)';
-            wrapperItemType.classList.remove('d-none');
+            if (wrapperItemType) wrapperItemType.classList.remove('d-none');
             if (wrapperAccount) wrapperAccount.classList.add('d-none');
+            if (wrapperDebt) wrapperDebt.classList.add('d-none');
             if (accountSelect) accountSelect.required = false;
             if (amountInput) amountInput.required = false;
             
@@ -709,8 +840,9 @@
         } else {
             isInKindInput.value = '0';
             labelAmount.innerText = 'Jumlah (Rp)';
-            wrapperItemType.classList.add('d-none');
+            if (wrapperItemType) wrapperItemType.classList.add('d-none');
             if (wrapperAccount) wrapperAccount.classList.remove('d-none');
+            if (wrapperDebt) wrapperDebt.classList.add('d-none');
             if (accountSelect) accountSelect.required = true;
             if (amountInput) amountInput.required = true;
             onCategoryChange();
@@ -754,13 +886,20 @@
 
         const paymentModeSelect = document.getElementById('paymentMode');
         const donasiOption = paymentModeSelect.querySelector('option[value="Donasi Barang"]');
+        const hutangOption = paymentModeSelect.querySelector('option[value="Hutang"]');
+
         if (selectedType === 'Pengeluaran') {
             if (paymentModeSelect.value === 'Donasi Barang') {
                 paymentModeSelect.value = 'Tunai';
             }
             if (donasiOption) donasiOption.disabled = true;
+            if (hutangOption) hutangOption.disabled = false;
         } else {
+            if (paymentModeSelect.value === 'Hutang') {
+                paymentModeSelect.value = 'Tunai';
+            }
             if (donasiOption) donasiOption.disabled = false;
+            if (hutangOption) hutangOption.disabled = true;
         }
 
         onPaymentModeChange();

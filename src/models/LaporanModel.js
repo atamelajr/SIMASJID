@@ -34,9 +34,18 @@ class LaporanModel {
         const totalAsetTetap = parseFloat(assetRows[0].total_cost_assets || 0);
         const totalAset = totalKasLancar + totalAsetTetap;
 
+        // Liabilitas Jangka Pendek: Utang Belanja / Usaha yang Belum Lunas
+        const [debtRows] = await db.query(`
+            SELECT 
+                COUNT(*) as total_unpaid_debts,
+                IFNULL(SUM(amount), 0) as total_liabilitas
+            FROM transactions
+            WHERE payment_mode = 'Hutang' AND debt_status = 'Belum Lunas'
+        `);
+
+        const totalLiabilitas = parseFloat(debtRows[0].total_liabilitas || 0);
+
         // Klasifikasi Aset Neto Sesuai ISAK 35 (Tanpa Pembatasan vs Dengan Pembatasan)
-        // Kas ZIS, Sosial & Wakaf = Dengan Pembatasan (Restricted)
-        // Kas Operasional & Bank Umum = Tanpa Pembatasan (Unrestricted)
         let asetNetoTanpaPembatasan = 0;
         let asetNetoDenganPembatasan = 0;
 
@@ -54,17 +63,22 @@ class LaporanModel {
 
         // Aset Tetap termasuk Aset Neto Tanpa Pembatasan untuk Operasional Masjid
         asetNetoTanpaPembatasan += totalAsetTetap;
+        
+        // Aset Neto Total = Total Aset - Total Liabilitas
+        const totalAsetNeto = totalAset - totalLiabilitas;
 
         return {
             cashAccounts: cashRows,
             totalKasLancar,
             totalAsetTetap,
             totalAset,
+            totalLiabilitas,
+            totalUnpaidDebts: debtRows[0].total_unpaid_debts,
             inventorySummary: invRows[0],
             assetSummary: assetRows[0],
             asetNetoTanpaPembatasan,
             asetNetoDenganPembatasan,
-            totalAsetNeto: asetNetoTanpaPembatasan + asetNetoDenganPembatasan
+            totalAsetNeto
         };
     }
 

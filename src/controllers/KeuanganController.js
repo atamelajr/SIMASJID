@@ -51,15 +51,19 @@ class KeuanganController {
             const userId = req.session.user.id;
             const proofFile = req.file ? req.file.filename : null;
 
+            const isHutang = req.body.payment_mode === 'Hutang';
+            const isInKind = req.body.payment_mode === 'Donasi Barang' || req.body.is_in_kind == '1';
+            const itemKindType = req.body.item_kind_type || 'Asset';
+
             const data = {
                 ...req.body,
                 proof_file: proofFile,
-                asset_item: req.body.asset_name ? {
+                asset_item: ((isInKind || isHutang) && itemKindType === 'Asset' && req.body.asset_name) ? {
                     name: req.body.asset_name,
                     condition: req.body.asset_condition,
                     location: req.body.asset_location
                 } : null,
-                inventory_item: req.body.inventory_name ? {
+                inventory_item: ((isInKind || isHutang) && itemKindType === 'Material' && req.body.inventory_name) ? {
                     name: req.body.inventory_name,
                     unit: req.body.inventory_unit,
                     category: req.body.inventory_category,
@@ -81,18 +85,19 @@ class KeuanganController {
             const userId = req.session.user.id;
             const proofFile = req.file ? req.file.filename : null;
 
+            const isHutang = req.body.payment_mode === 'Hutang';
             const isInKind = req.body.payment_mode === 'Donasi Barang' || req.body.is_in_kind == '1';
             const itemKindType = req.body.item_kind_type || 'Asset';
 
             const data = {
                 ...req.body,
                 proof_file: proofFile,
-                asset_item: (isInKind && itemKindType === 'Asset' && req.body.asset_name) ? {
+                asset_item: ((isInKind || isHutang) && itemKindType === 'Asset' && req.body.asset_name) ? {
                     name: req.body.asset_name,
                     condition: req.body.asset_condition,
                     location: req.body.asset_location
                 } : null,
-                inventory_item: (isInKind && itemKindType === 'Material' && req.body.inventory_name) ? {
+                inventory_item: ((isInKind || isHutang) && itemKindType === 'Material' && req.body.inventory_name) ? {
                     name: req.body.inventory_name,
                     unit: req.body.inventory_unit,
                     category: req.body.inventory_category,
@@ -104,6 +109,20 @@ class KeuanganController {
             res.redirect('/keuangan');
         } catch (err) {
             console.error('Update Transaction Error:', err);
+            res.redirect('/keuangan');
+        }
+    }
+
+    static async payDebt(req, res) {
+        try {
+            const { id } = req.params;
+            const { paid_account_id, payment_date } = req.body;
+            const userId = req.session.user.id;
+
+            await TransactionModel.payDebt(id, paid_account_id, payment_date, userId);
+            res.redirect('/keuangan');
+        } catch (err) {
+            console.error('Pay Debt Error:', err);
             res.redirect('/keuangan');
         }
     }

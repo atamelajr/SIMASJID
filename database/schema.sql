@@ -142,15 +142,21 @@ CREATE TABLE transactions (
     account_id INT NOT NULL,
     category_id INT NOT NULL,
     type ENUM('Penerimaan', 'Pengeluaran') NOT NULL,
-    payment_mode ENUM('Tunai', 'Non-Tunai', 'Donasi Barang') NOT NULL DEFAULT 'Tunai', -- 'Tunai', 'Non-Tunai', 'Donasi Barang'
-    is_in_kind TINYINT(1) DEFAULT 0, -- 0 = Uang (Tunai/Non-Tunai), 1 = Donasi Barang
+    payment_mode ENUM('Tunai', 'Non-Tunai', 'Donasi Barang', 'Hutang') NOT NULL DEFAULT 'Tunai', -- 'Tunai', 'Non-Tunai', 'Donasi Barang', 'Hutang'
+    is_in_kind TINYINT(1) DEFAULT 0, -- 0 = Uang (Tunai/Non-Tunai/Hutang), 1 = Donasi Barang
     amount DECIMAL(15,2) NOT NULL,
     description TEXT,
     donor_name VARCHAR(100) DEFAULT 'Hamba Allah',
+    creditor_name VARCHAR(150) NULL,
+    due_date DATE NULL,
+    debt_status ENUM('Belum Lunas', 'Lunas') DEFAULT 'Lunas',
+    paid_at DATE NULL,
+    paid_account_id INT NULL,
     proof_file VARCHAR(255),
     created_by INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (account_id) REFERENCES cash_accounts(id),
+    FOREIGN KEY (paid_account_id) REFERENCES cash_accounts(id) ON DELETE SET NULL,
     FOREIGN KEY (category_id) REFERENCES categories(id),
     FOREIGN KEY (created_by) REFERENCES users(id)
 ) ENGINE=InnoDB;

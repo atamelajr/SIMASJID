@@ -118,12 +118,12 @@
                                 <td colspan="2"><i class="bi bi-credit-card me-1"></i> 1. LIABILITAS (KEWAJIBAN / UTANG)</td>
                             </tr>
                             <tr>
-                                <td class="ps-4">Kewajiban Jangka Pendek</td>
-                                <td class="text-end font-monospace">Rp 0</td>
+                                <td class="ps-4">Utang Usaha / Belanja Kredit (<%= totalUnpaidDebts || 0 %> Transaksi)</td>
+                                <td class="text-end font-monospace text-danger"><%= formatRupiah(totalLiabilitas || 0) %></td>
                             </tr>
                             <tr class="fw-semibold bg-light">
                                 <td class="ps-3 text-secondary">Total Liabilitas</td>
-                                <td class="text-end font-monospace fw-bold text-dark">Rp 0</td>
+                                <td class="text-end font-monospace fw-bold text-danger"><%= formatRupiah(totalLiabilitas || 0) %></td>
                             </tr>
 
                             <!-- ASET NETO -->
@@ -152,7 +152,7 @@
                         <tfoot class="table-dark">
                             <tr class="fs-6 fw-bold">
                                 <td>TOTAL LIABILITAS & ASET NETO</td>
-                                <td class="text-end font-monospace"><%= formatRupiah(totalAsetNeto) %></td>
+                                <td class="text-end font-monospace"><%= formatRupiah(totalLiabilitas + totalAsetNeto) %></td>
                             </tr>
                         </tfoot>
                     </table>
