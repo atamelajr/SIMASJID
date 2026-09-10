@@ -58,11 +58,22 @@
     <div class="card card-custom mb-4 no-print">
         <div class="card-body">
             <form action="/laporan/inventaris" method="GET" class="row g-3 align-items-end">
-                <div class="col-md-5">
+                <div class="col-md-4">
                     <label class="form-label small fw-semibold">Pencarian Barang / Lokasi</label>
                     <input type="text" name="search" class="form-control form-control-sm" placeholder="Cari nama aset, kode, atau lokasi..." value="<%= search %>">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Kategori Aset</label>
+                    <select name="category" class="form-select form-select-sm">
+                        <option value="">-- Semua Kategori --</option>
+                        <option value="Tanah & Lahan" <%= typeof selectedCategory !== 'undefined' && selectedCategory === 'Tanah & Lahan' ? 'selected' : '' %>>Tanah & Lahan</option>
+                        <option value="Bangunan & Infrastruktur" <%= typeof selectedCategory !== 'undefined' && selectedCategory === 'Bangunan & Infrastruktur' ? 'selected' : '' %>>Bangunan & Infrastruktur</option>
+                        <option value="Peralatan & Mesin" <%= typeof selectedCategory !== 'undefined' && selectedCategory === 'Peralatan & Mesin' ? 'selected' : '' %>>Peralatan & Mesin</option>
+                        <option value="Meubiler & Mebel" <%= typeof selectedCategory !== 'undefined' && selectedCategory === 'Meubiler & Mebel' ? 'selected' : '' %>>Meubiler & Mebel</option>
+                        <option value="Aset Tetap Lainnya" <%= typeof selectedCategory !== 'undefined' && selectedCategory === 'Aset Tetap Lainnya' ? 'selected' : '' %>>Aset Tetap Lainnya</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
                     <label class="form-label small fw-semibold">Status Kondisi</label>
                     <select name="condition" class="form-select form-select-sm">
                         <option value="">-- Semua Kondisi --</option>
@@ -71,9 +82,9 @@
                         <option value="Rusak Berat" <%= selectedCondition === 'Rusak Berat' ? 'selected' : '' %>>Rusak Berat</option>
                     </select>
                 </div>
-                <div class="col-md-3 d-flex gap-2">
+                <div class="col-md-2 d-flex gap-2">
                     <button type="submit" class="btn btn-primary btn-sm flex-fill">
-                        <i class="bi bi-filter me-1"></i> Filter Data
+                        <i class="bi bi-filter me-1"></i> Filter
                     </button>
                     <a href="/laporan/inventaris" class="btn btn-light btn-sm border">Reset</a>
                 </div>
@@ -90,6 +101,7 @@
                         <tr>
                             <th style="width: 120px;">Kode Aset</th>
                             <th>Nama Barang / Aset Modal</th>
+                            <th>Kategori</th>
                             <th>Tanggal Perolehan</th>
                             <th>Lokasi Penempatan</th>
                             <th>Status Kondisi</th>
@@ -103,6 +115,7 @@
                                 <tr>
                                     <td><span class="badge bg-secondary-subtle text-dark border font-monospace"><%= item.asset_code %></span></td>
                                     <td class="fw-bold text-dark"><%= item.name %></td>
+                                    <td><span class="badge bg-light text-dark border"><%= item.category || 'Peralatan & Mesin' %></span></td>
                                     <td class="small"><%= formatDate(item.purchase_date) %></td>
                                     <td><span class="badge bg-light text-dark border"><i class="bi bi-geo-alt me-1"></i><%= item.location || 'Masjid' %></span></td>
                                     <td>
@@ -120,13 +133,13 @@
                             <% }) %>
                         <% } else { %>
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-4">Belum ada aset tetap tercatat.</td>
+                                <td colspan="8" class="text-center text-muted py-4">Belum ada aset tetap tercatat.</td>
                             </tr>
                         <% } %>
                     </tbody>
                     <tfoot class="table-dark">
                         <tr class="fw-bold">
-                            <td colspan="6">TOTAL AKUMULASI NILAI PEROLEHAN ASET TETAP</td>
+                            <td colspan="7">TOTAL AKUMULASI NILAI PEROLEHAN ASET TETAP</td>
                             <td class="text-end font-monospace text-warning fs-6"><%= formatRupiah(totalPerolehan) %></td>
                         </tr>
                     </tfoot>

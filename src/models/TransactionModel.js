@@ -191,16 +191,19 @@ class TransactionModel {
 
             if ((subType === 'Modal' || asset_item) && asset_item && asset_item.name) {
                 const assetCode = `AST-${Date.now()}`;
+                const [miRows] = await connection.query(`SELECT category FROM master_items WHERE name = ? LIMIT 1`, [asset_item.name]);
+                const assetCategory = miRows[0]?.category || 'Peralatan & Mesin';
                 await connection.query(
-                    `INSERT INTO fixed_assets (asset_code, name, purchase_date, cost, condition_status, location, transaction_id)
-                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                    [assetCode, asset_item.name || description, transactionDate, finalAmount, asset_item.condition || 'Baik', asset_item.location || 'Masjid', transactionId]
+                    `INSERT INTO fixed_assets (asset_code, name, category, purchase_date, cost, condition_status, location, transaction_id)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [assetCode, asset_item.name || description, assetCategory, transactionDate, finalAmount, asset_item.condition || 'Baik', asset_item.location || 'Masjid', transactionId]
                 );
             }
 
             if ((subType === 'Material' || inventory_item) && inventory_item && inventory_item.name) {
                 const itemCode = `INV-${Date.now()}`;
-                const categoryType = inventory_item.category || 'Pembangunan';
+                const [miRows] = await connection.query(`SELECT category FROM master_items WHERE name = ? LIMIT 1`, [inventory_item.name]);
+                const categoryType = inventory_item.category || miRows[0]?.category || 'Material dan Bahan Lainnya';
                 
                 const [existingItem] = await connection.query(
                     `SELECT id FROM inventory_items WHERE name = ? AND unit = ?`,
@@ -420,23 +423,26 @@ class TransactionModel {
 
             if (asset_item && asset_item.name) {
                 await connection.query(`DELETE FROM inventory_logs WHERE transaction_id = ?`, [id]);
+                const [miRows] = await connection.query(`SELECT category FROM master_items WHERE name = ? LIMIT 1`, [asset_item.name]);
+                const assetCategory = miRows[0]?.category || 'Peralatan & Mesin';
                 const [existingAsset] = await connection.query(`SELECT id FROM fixed_assets WHERE transaction_id = ?`, [id]);
                 if (existingAsset.length > 0) {
                     await connection.query(
-                        `UPDATE fixed_assets SET name = ?, purchase_date = ?, cost = ?, condition_status = ?, location = ? WHERE id = ?`,
-                        [asset_item.name, transactionDate, finalAmount, asset_item.condition || 'Baik', asset_item.location || 'Masjid', existingAsset[0].id]
+                        `UPDATE fixed_assets SET name = ?, category = ?, purchase_date = ?, cost = ?, condition_status = ?, location = ? WHERE id = ?`,
+                        [asset_item.name, assetCategory, transactionDate, finalAmount, asset_item.condition || 'Baik', asset_item.location || 'Masjid', existingAsset[0].id]
                     );
                 } else {
                     const assetCode = `AST-${Date.now()}`;
                     await connection.query(
-                        `INSERT INTO fixed_assets (asset_code, name, purchase_date, cost, condition_status, location, transaction_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                        [assetCode, asset_item.name, transactionDate, finalAmount, asset_item.condition || 'Baik', asset_item.location || 'Masjid', id]
+                        `INSERT INTO fixed_assets (asset_code, name, category, purchase_date, cost, condition_status, location, transaction_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                        [assetCode, asset_item.name, assetCategory, transactionDate, finalAmount, asset_item.condition || 'Baik', asset_item.location || 'Masjid', id]
                     );
                 }
             } else if (inventory_item && inventory_item.name) {
                 await connection.query(`DELETE FROM fixed_assets WHERE transaction_id = ?`, [id]);
                 const itemCode = `INV-${Date.now()}`;
-                const categoryType = inventory_item.category || 'Pembangunan';
+                const [miRows] = await connection.query(`SELECT category FROM master_items WHERE name = ? LIMIT 1`, [inventory_item.name]);
+                const categoryType = inventory_item.category || miRows[0]?.category || 'Material dan Bahan Lainnya';
                 
                 const [existingItem] = await connection.query(
                     `SELECT id FROM inventory_items WHERE name = ? AND unit = ?`,

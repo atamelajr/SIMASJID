@@ -100,11 +100,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Kategori Peruntukan</label>
-                        <select name="category" class="form-select" required>
-                            <option value="Pembangunan">Material Pembangunan</option>
-                            <option value="Operasional">Operasional Harian</option>
-                            <option value="Peralatan">Peralatan Masjid</option>
-                            <option value="Lainnya">Lainnya</option>
+                        <select name="category" id="add_item_category" class="form-select" required>
                         </select>
                     </div>
                     <div class="mb-3">
@@ -133,7 +129,7 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Tipe Kelompok</label>
-                        <select id="edit_item_type" name="type" class="form-select" required>
+                        <select id="edit_item_type" name="type" class="form-select" required onchange="onEditItemTypeChange()">
                             <option value="Material">Persediaan (Material / Habis Pakai)</option>
                             <option value="Aset">Barang Modal (Aset Tetap)</option>
                         </select>
@@ -158,10 +154,6 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Kategori Peruntukan</label>
                         <select id="edit_item_category" name="category" class="form-select" required>
-                            <option value="Pembangunan">Material Pembangunan</option>
-                            <option value="Operasional">Operasional Harian</option>
-                            <option value="Peralatan">Peralatan Masjid</option>
-                            <option value="Lainnya">Lainnya</option>
                         </select>
                     </div>
                     <div class="mb-3">
@@ -180,10 +172,47 @@
 
 <script>
 const nextCodes = <%- JSON.stringify(nextCodes) %>;
+const assetCategories = [
+    'Tanah & Lahan',
+    'Bangunan & Infrastruktur',
+    'Peralatan & Mesin',
+    'Meubiler & Mebel',
+    'Aset Tetap Lainnya'
+];
+
+const materialCategories = [
+    'Bahan Bangunan',
+    'Bahan & Alat Kebersihan',
+    'Alat Tulis Kantor (ATK)',
+    'Perlengkapan Dapur & Harian',
+    'Material dan Bahan Lainnya'
+];
+
+function populateCategoryDropdown(selectId, itemType, selectedVal = null) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    select.innerHTML = '';
+    const cats = itemType === 'Aset' ? assetCategories : materialCategories;
+    cats.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        if (selectedVal && selectedVal === cat) {
+            opt.selected = true;
+        }
+        select.appendChild(opt);
+    });
+}
 
 function onAddItemTypeChange() {
     const selectedType = document.getElementById('add_item_type').value;
     document.getElementById('add_item_code').value = nextCodes[selectedType] || '';
+    populateCategoryDropdown('add_item_category', selectedType);
+}
+
+function onEditItemTypeChange() {
+    const selectedType = document.getElementById('edit_item_type').value;
+    populateCategoryDropdown('edit_item_category', selectedType);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -203,7 +232,7 @@ function editItem(itm) {
     document.getElementById('edit_item_name').value = itm.name;
     document.getElementById('edit_item_type').value = itm.type;
     document.getElementById('edit_item_unit_id').value = itm.unit_id || '';
-    document.getElementById('edit_item_category').value = itm.category || 'Operasional';
+    populateCategoryDropdown('edit_item_category', itm.type, itm.category);
     document.getElementById('edit_item_description').value = itm.description || '';
     
     new bootstrap.Modal(document.getElementById('modalEditItem')).show();

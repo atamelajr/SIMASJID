@@ -168,6 +168,7 @@ CREATE TABLE fixed_assets (
     name VARCHAR(150) NOT NULL,
     brand VARCHAR(100) NULL,
     model_no_plate VARCHAR(100) NULL,
+    category VARCHAR(50) DEFAULT 'Peralatan & Mesin',
     purchase_date DATE,
     cost DECIMAL(15,2) DEFAULT 0.00,
     condition_status ENUM('Baik', 'Rusak Ringan', 'Rusak Berat') DEFAULT 'Baik',
@@ -184,7 +185,7 @@ CREATE TABLE inventory_items (
     item_code VARCHAR(50) NOT NULL UNIQUE,
     name VARCHAR(150) NOT NULL,
     unit VARCHAR(30) NOT NULL,
-    category ENUM('Pembangunan', 'Operasional') NOT NULL DEFAULT 'Operasional',
+    category VARCHAR(50) DEFAULT 'Material dan Bahan Lainnya',
     stock DECIMAL(10,2) DEFAULT 0.00,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;

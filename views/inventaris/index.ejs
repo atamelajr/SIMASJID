@@ -59,7 +59,10 @@
                                     <tr>
                                         <td class="fw-bold text-primary font-monospace" style="width: 150px;"><%= ast.asset_code %></td>
                                         <td>
-                                            <div class="fw-bold text-dark"><%= ast.name %></div>
+                                            <div class="fw-bold text-dark mb-1">
+                                                <%= ast.name %>
+                                                <span class="badge bg-secondary-subtle text-dark border ms-1"><%= ast.category || 'Peralatan & Mesin' %></span>
+                                            </div>
                                             <% if (ast.brand || ast.model_no_plate) { %>
                                                 <div class="small text-secondary mt-1">
                                                     <% if (ast.brand) { %>
@@ -229,6 +232,16 @@
                             </select>
                         </div>
                         <div class="col-md-6">
+                            <label class="form-label fw-semibold">Kategori Aset</label>
+                            <select name="category" class="form-select" required>
+                                <option value="Tanah & Lahan">Tanah & Lahan</option>
+                                <option value="Bangunan & Infrastruktur">Bangunan & Infrastruktur</option>
+                                <option value="Peralatan & Mesin" selected>Peralatan & Mesin</option>
+                                <option value="Meubiler & Mebel">Meubiler & Mebel</option>
+                                <option value="Aset Tetap Lainnya">Aset Tetap Lainnya</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
                             <label class="form-label fw-semibold">Merk / Brand (Opsional)</label>
                             <input type="text" name="brand" class="form-control" placeholder="Contoh: Panasonic / Sharp / Jepara">
                         </div>
@@ -290,6 +303,16 @@
                                         <option value="<%= catItem.name %>"><%= catItem.code %> - <%= catItem.name %></option>
                                     <% }) %>
                                 <% } %>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Kategori Aset</label>
+                            <select name="category" id="edit_asset_category" class="form-select" required>
+                                <option value="Tanah & Lahan">Tanah & Lahan</option>
+                                <option value="Bangunan & Infrastruktur">Bangunan & Infrastruktur</option>
+                                <option value="Peralatan & Mesin">Peralatan & Mesin</option>
+                                <option value="Meubiler & Mebel">Meubiler & Mebel</option>
+                                <option value="Aset Tetap Lainnya">Aset Tetap Lainnya</option>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -396,6 +419,7 @@
 
         document.getElementById('edit_asset_brand').value = ast.brand || '';
         document.getElementById('edit_asset_model_no_plate').value = ast.model_no_plate || '';
+        document.getElementById('edit_asset_category').value = ast.category || 'Peralatan & Mesin';
         document.getElementById('edit_asset_location').value = ast.location || '';
         document.getElementById('edit_asset_purchase_date').value = ast.purchase_date ? ast.purchase_date.split('T')[0] : '';
         document.getElementById('edit_asset_cost').value = ast.cost || 0;

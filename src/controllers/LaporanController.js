@@ -90,13 +90,14 @@ class LaporanController {
     // 5. Laporan Inventaris & Aset Tetap
     static async inventaris(req, res) {
         try {
-            const { condition, search } = req.query;
-            const data = await LaporanModel.getLaporanInventaris({ condition, search });
+            const { condition, search, category } = req.query;
+            const data = await LaporanModel.getLaporanInventaris({ condition, search, category });
 
             res.render('laporan/inventaris', {
                 title: 'Laporan Inventaris & Aset Tetap',
                 activeSubmenu: 'inventaris',
                 selectedCondition: condition || '',
+                selectedCategory: category || '',
                 search: search || '',
                 ...data
             });

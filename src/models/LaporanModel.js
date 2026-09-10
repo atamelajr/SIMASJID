@@ -256,6 +256,10 @@ class LaporanModel {
             sql += ` AND fa.condition_status = ?`;
             params.push(filters.condition);
         }
+        if (filters.category) {
+            sql += ` AND fa.category = ?`;
+            params.push(filters.category);
+        }
         if (filters.search) {
             sql += ` AND (fa.name LIKE ? OR fa.asset_code LIKE ? OR fa.location LIKE ?)`;
             params.push(`%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`);
