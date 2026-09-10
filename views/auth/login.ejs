@@ -16,9 +16,7 @@
     <div class="card login-card p-4 bg-white">
         <div class="card-body">
             <div class="text-center mb-4">
-                <img src="/images/logo.png" alt="Logo SIMASJID" class="mb-2 img-fluid" style="max-height: 110px; width: auto;">
-                <h4 class="fw-bold text-dark mb-1">SIMASJID</h4>
-                <p class="text-muted small">Sistem Informasi Manajemen Masjid</p>
+                <img src="/images/logo.png" alt="Logo SIMASJID" class="img-fluid" style="max-height: 120px; width: auto;">
             </div>
 
             <% if (typeof error !== 'undefined' && error) { %>
@@ -39,20 +37,30 @@
                     <label class="form-label text-secondary fw-semibold small">Password</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
-                        <input type="password" name="password" class="form-control bg-light border-start-0" placeholder="Masukkan password" required>
+                        <input type="password" name="password" id="passwordInput" class="form-control bg-light border-start-0 border-end-0" placeholder="Masukkan password" required>
+                        <button class="btn btn-outline-secondary bg-light border-start-0 text-muted" type="button" id="togglePassword" title="Tampilkan/Sembunyikan Password">
+                            <i class="bi bi-eye-slash" id="toggleIcon"></i>
+                        </button>
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold shadow-sm">
                     <i class="bi bi-box-arrow-in-right me-1"></i> Masuk Sistem
                 </button>
             </form>
-
-            <div class="mt-4 text-center">
-                <p class="text-muted extra-small" style="font-size: 0.8rem;">
-                    Default Admin: <strong>admin</strong> | Password: <strong>admin123</strong>
-                </p>
-            </div>
         </div>
     </div>
+
+    <script>
+        const togglePassword = document.getElementById('togglePassword');
+        if (togglePassword) {
+            togglePassword.addEventListener('click', function () {
+                const passwordInput = document.getElementById('passwordInput');
+                const toggleIcon = document.getElementById('toggleIcon');
+                const isPassword = passwordInput.getAttribute('type') === 'password';
+                passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+                toggleIcon.className = isPassword ? 'bi bi-eye' : 'bi bi-eye-slash';
+            });
+        }
+    </script>
 </body>
 </html>
