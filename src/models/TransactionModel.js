@@ -386,7 +386,7 @@ class TransactionModel {
                 `UPDATE transactions 
                  SET transaction_date = ?, account_id = ?, category_id = ?, type = ?, payment_mode = ?, is_in_kind = ?, amount = ?, description = ?, donor_name = ?, creditor_name = ?, due_date = ?, debt_status = ?, proof_file = ?
                  WHERE id = ?`,
-                [transactionDate, account_id, category_id, type, paymentMode, isInKind, finalAmount, description, donor_name || 'Hamba Allah', creditor_name || null, due_date || null, debtStatus, proof, id]
+                [transactionDate, account_id, category_id, type, paymentMode, isInKind, finalAmount, description, donor_name || null, creditor_name || null, due_date || null, debtStatus, proof, id]
             );
 
             // 3. Apply new transaction's balance impact
