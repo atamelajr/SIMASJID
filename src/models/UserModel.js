@@ -23,7 +23,7 @@ class UserModel {
 
     static async getAllUsers() {
         const [rows] = await db.query(
-            `SELECT u.id, u.username, u.full_name, u.phone, u.is_active, u.created_at, r.name as role_name 
+            `SELECT u.id, u.username, u.full_name, u.role_id, u.phone, u.is_active, u.created_at, r.name as role_name 
              FROM users u 
              JOIN roles r ON u.role_id = r.id 
              ORDER BY u.id ASC`
@@ -38,6 +38,28 @@ class UserModel {
             [username, hash, full_name, role_id, phone]
         );
         return result.insertId;
+    }
+
+    static async updateUser(id, { username, password, full_name, role_id, phone, is_active }) {
+        if (password && password.trim() !== '') {
+            const hash = await bcrypt.hash(password, 10);
+            await db.query(
+                `UPDATE users SET username=?, password_hash=?, full_name=?, role_id=?, phone=?, is_active=? WHERE id=?`,
+                [username, hash, full_name, role_id, phone, is_active, id]
+            );
+        } else {
+            await db.query(
+                `UPDATE users SET username=?, full_name=?, role_id=?, phone=?, is_active=? WHERE id=?`,
+                [username, full_name, role_id, phone, is_active, id]
+            );
+        }
+    }
+
+    static async toggleUserStatus(id) {
+        await db.query(
+            `UPDATE users SET is_active = IF(is_active = 1, 0, 1) WHERE id = ?`,
+            [id]
+        );
     }
 }
 

@@ -21,6 +21,7 @@
                         <th>Role / Wewenang</th>
                         <th>No. HP</th>
                         <th>Status</th>
+                        <th class="text-end">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -40,7 +41,29 @@
                             </td>
                             <td><%= u.phone || '-' %></td>
                             <td>
-                                <span class="badge bg-success">Aktif</span>
+                                <% if (u.is_active === 1) { %>
+                                    <span class="badge bg-success">Aktif</span>
+                                <% } else { %>
+                                    <span class="badge bg-secondary">Non-Aktif</span>
+                                <% } %>
+                            </td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-warning me-1" onclick="editUser(<%= JSON.stringify(u) %>)" title="Edit Pengguna">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </button>
+                                <% if (user && user.id !== u.id) { %>
+                                    <form action="/settings/users/toggle-status/<%= u.id %>" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin <%= u.is_active === 1 ? 'non-aktifkan' : 'aktifkan' %> user ini?')">
+                                        <% if (u.is_active === 1) { %>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Non-aktifkan Pengguna">
+                                                <i class="bi bi-x-circle"></i> Non-Aktifkan
+                                            </button>
+                                        <% } else { %>
+                                            <button type="submit" class="btn btn-sm btn-outline-success" title="Aktifkan Pengguna">
+                                                <i class="bi bi-check-circle"></i> Aktifkan
+                                            </button>
+                                        <% } %>
+                                    </form>
+                                <% } %>
                             </td>
                         </tr>
                     <% }) %>
@@ -93,3 +116,68 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Edit User -->
+<div class="modal fade" id="modalEditUser" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Edit Data Pengguna</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEditUser" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Username</label>
+                        <input type="text" name="username" id="editUsername" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Password Baru <span class="text-muted fw-normal small">(Opsional)</span></label>
+                        <input type="password" name="password" class="form-control" placeholder="Kosongkan jika tidak ingin merubah password">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nama Lengkap</label>
+                        <input type="text" name="full_name" id="editFullName" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Role / Hak Akses</label>
+                        <select name="role_id" id="editRoleId" class="form-select" required>
+                            <option value="1">Admin (Akses Penuh)</option>
+                            <option value="2">Operator / Bendahara (Input Mutasi Kas & Barang)</option>
+                            <option value="3">Pengurus / Ketua (Read-Only & Laporan)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">No. Telepon</label>
+                        <input type="text" name="phone" id="editPhone" class="form-control" placeholder="0812...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Status Akun</label>
+                        <select name="is_active" id="editIsActive" class="form-select" required>
+                            <option value="1">Aktif</option>
+                            <option value="0">Non-Aktif</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-warning">Update User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function editUser(u) {
+    document.getElementById('formEditUser').action = '/settings/users/update/' + u.id;
+    document.getElementById('editUsername').value = u.username || '';
+    document.getElementById('editFullName').value = u.full_name || '';
+    document.getElementById('editRoleId').value = u.role_id || 1;
+    document.getElementById('editPhone').value = u.phone || '';
+    document.getElementById('editIsActive').value = u.is_active !== undefined ? u.is_active : 1;
+    
+    const modal = new bootstrap.Modal(document.getElementById('modalEditUser'));
+    modal.show();
+}
+</script>

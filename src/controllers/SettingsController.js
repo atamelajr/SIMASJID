@@ -31,6 +31,36 @@ class SettingsController {
             res.redirect('/settings');
         }
     }
+
+    static async updateUser(req, res) {
+        try {
+            const { id } = req.params;
+            const { username, password, full_name, role_id, phone, is_active } = req.body;
+            await UserModel.updateUser(id, {
+                username,
+                password,
+                full_name,
+                role_id: parseInt(role_id),
+                phone,
+                is_active: parseInt(is_active)
+            });
+            res.redirect('/settings');
+        } catch (err) {
+            console.error('Update User Error:', err);
+            res.redirect('/settings');
+        }
+    }
+
+    static async toggleUserStatus(req, res) {
+        try {
+            const { id } = req.params;
+            await UserModel.toggleUserStatus(id);
+            res.redirect('/settings');
+        } catch (err) {
+            console.error('Toggle User Status Error:', err);
+            res.redirect('/settings');
+        }
+    }
 }
 
 module.exports = SettingsController;
