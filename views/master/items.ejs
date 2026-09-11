@@ -100,7 +100,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Kategori Peruntukan</label>
-                        <select name="category" id="add_item_category" class="form-select" required>
+                        <select name="category" id="add_item_category" class="form-select" required onchange="onAddItemCategoryChange()">
                         </select>
                     </div>
                     <div class="mb-3">
@@ -219,10 +219,17 @@ function populateCategoryDropdown(selectId, itemType, selectedVal = null) {
     });
 }
 
+function onAddItemCategoryChange() {
+    const selectedCat = document.getElementById('add_item_category').value;
+    if (nextCodes && nextCodes[selectedCat]) {
+        document.getElementById('add_item_code').value = nextCodes[selectedCat];
+    }
+}
+
 function onAddItemTypeChange() {
     const selectedType = document.getElementById('add_item_type').value;
-    document.getElementById('add_item_code').value = nextCodes[selectedType] || '';
     populateCategoryDropdown('add_item_category', selectedType);
+    onAddItemCategoryChange();
 }
 
 function onEditItemTypeChange() {

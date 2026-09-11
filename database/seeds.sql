@@ -74,16 +74,16 @@ ON DUPLICATE KEY UPDATE name=VALUES(name), type=VALUES(type), description=VALUES
 
 -- Master Katalog Barang & Material Standar
 INSERT INTO master_items (id, code, name, type, unit_id, category, description) VALUES
-(1, 'ITM-AST-01', 'Sound System Yamaha Mixer & Speaker', 'Aset', 10, 'Peralatan & Mesin', 'Set pengeras suara utama masjid'),
-(2, 'ITM-AST-02', 'AC Split 2 PK Daikin', 'Aset', 1, 'Peralatan & Mesin', 'Air Conditioner ruang utama sholat'),
-(3, 'ITM-AST-03', 'Karpet Sajadah Roll Karaba', 'Aset', 7, 'Peralatan & Mesin', 'Karpet sajadah sholat jamaah'),
-(4, 'ITM-AST-04', 'Mimbar Kayu Jati Ukir', 'Aset', 1, 'Meubiler & Mebel', 'Mimbar khutbah jumat'),
-(5, 'ITM-MAT-01', 'Semen Gresik 50kg', 'Material', 2, 'Bahan Bangunan', 'Semen Portland untuk pengecoran & dinding'),
-(6, 'ITM-MAT-02', 'Pasir Pasang Hitam', 'Material', 1, 'Bahan Bangunan', 'Pasir cor & pasang bata'),
-(7, 'ITM-MAT-03', 'Cat Tembok Dulux White 20L', 'Material', 5, 'Bahan Bangunan', 'Cat pelapis dinding luar/dalam'),
-(8, 'ITM-MAT-04', 'Sabun Pembersih Karpet & Pel', 'Material', 8, 'Bahan & Alat Kebersihan', 'Pembersih lantai & karpet harian'),
-(9, 'ITM-MAT-05', 'Alat Pel Gagang Stainless', 'Material', 1, 'Bahan & Alat Kebersihan', 'Perlengkapan alat pel masjid')
-ON DUPLICATE KEY UPDATE name=VALUES(name), category=VALUES(category);
+(1, '1230-001', 'Sound System Yamaha Mixer & Speaker', 'Aset', 10, 'Peralatan & Mesin', 'Set pengeras suara utama masjid'),
+(2, '1230-002', 'AC Split 2 PK Daikin', 'Aset', 1, 'Peralatan & Mesin', 'Air Conditioner ruang utama sholat'),
+(3, '1230-003', 'Karpet Sajadah Roll Karaba', 'Aset', 7, 'Peralatan & Mesin', 'Karpet sajadah sholat jamaah'),
+(4, '1240-001', 'Mimbar Kayu Jati Ukir', 'Aset', 1, 'Meubiler & Mebel', 'Mimbar khutbah jumat'),
+(5, '5021-001', 'Semen Gresik 50kg', 'Material', 2, 'Bahan Bangunan', 'Semen Portland untuk pengecoran & dinding'),
+(6, '5021-002', 'Pasir Pasang Hitam', 'Material', 1, 'Bahan Bangunan', 'Pasir cor & pasang bata'),
+(7, '5021-003', 'Cat Tembok Dulux White 20L', 'Material', 5, 'Bahan Bangunan', 'Cat pelapis dinding luar/dalam'),
+(8, '5031-001', 'Sabun Pembersih Karpet & Pel', 'Material', 8, 'Bahan & Alat Kebersihan', 'Pembersih lantai & karpet harian'),
+(9, '5031-002', 'Alat Pel Gagang Stainless', 'Material', 1, 'Bahan & Alat Kebersihan', 'Perlengkapan alat pel masjid')
+ON DUPLICATE KEY UPDATE code=VALUES(code), name=VALUES(name), category=VALUES(category);
 
 -- Master Donatur & Mustahik
 INSERT INTO donors_mustahik (id, type, name, category, phone, address) VALUES

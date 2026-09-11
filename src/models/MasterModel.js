@@ -110,36 +110,49 @@ class MasterModel {
     }
 
     // === 4. KATALOG BARANG & MATERIAL ===
+    static async getNextCodeForCategory(categoryName) {
+        const [catRows] = await db.query(
+            `SELECT account_code, type FROM item_categories WHERE name = ? LIMIT 1`,
+            [categoryName]
+        );
+
+        let prefix = '1230';
+        if (catRows.length > 0) {
+            prefix = catRows[0].account_code;
+        } else {
+            prefix = categoryName && categoryName.toLowerCase().includes('bahan') ? '5021' : '1230';
+        }
+
+        const [itemRows] = await db.query(
+            `SELECT code FROM master_items WHERE code LIKE ? OR category = ? ORDER BY id DESC`,
+            [`${prefix}-%`, categoryName]
+        );
+
+        let maxSeq = 0;
+        itemRows.forEach(r => {
+            if (r.code && r.code.includes('-')) {
+                const parts = r.code.split('-');
+                const num = parseInt(parts[parts.length - 1]);
+                if (!isNaN(num) && num > maxSeq) {
+                    maxSeq = num;
+                }
+            }
+        });
+
+        const nextSeq = maxSeq + 1;
+        const pad = (n) => String(n).padStart(3, '0');
+        return `${prefix}-${pad(nextSeq)}`;
+    }
+
     static async getNextItemCodes() {
-        const [rowsAset] = await db.query(
-            `SELECT code FROM master_items WHERE type = 'Aset' AND code LIKE 'ITM-AST-%' ORDER BY id DESC LIMIT 1`
-        );
-        const [rowsMaterial] = await db.query(
-            `SELECT code FROM master_items WHERE type = 'Material' AND code LIKE 'ITM-MAT-%' ORDER BY id DESC LIMIT 1`
-        );
+        const itemCategories = await this.getAllItemCategories();
+        const result = {};
 
-        let nextAsetNum = 1;
-        if (rowsAset.length > 0) {
-            const lastCode = rowsAset[0].code;
-            const parts = lastCode.split('-');
-            const num = parseInt(parts[parts.length - 1]);
-            if (!isNaN(num)) nextAsetNum = num + 1;
+        for (const cat of itemCategories) {
+            result[cat.name] = await this.getNextCodeForCategory(cat.name);
         }
 
-        let nextMaterialNum = 1;
-        if (rowsMaterial.length > 0) {
-            const lastCode = rowsMaterial[0].code;
-            const parts = lastCode.split('-');
-            const num = parseInt(parts[parts.length - 1]);
-            if (!isNaN(num)) nextMaterialNum = num + 1;
-        }
-
-        const pad = (n) => String(n).padStart(2, '0');
-
-        return {
-            Aset: `ITM-AST-${pad(nextAsetNum)}`,
-            Material: `ITM-MAT-${pad(nextMaterialNum)}`
-        };
+        return result;
     }
 
     static async getAllMasterItems(typeFilter = null) {
@@ -154,21 +167,20 @@ class MasterModel {
             sql += ` AND m.type = ?`;
             params.push(typeFilter);
         }
-        sql += ` ORDER BY m.type ASC, m.name ASC`;
+        sql += ` ORDER BY m.type ASC, m.code ASC`;
         const [rows] = await db.query(sql, params);
         return rows;
     }
 
     static async createMasterItem({ code, name, type, unit_id, category, description }) {
         let finalCode = code;
-        if (!finalCode || finalCode.trim() === '') {
-            const nextCodes = await this.getNextItemCodes();
-            finalCode = nextCodes[type] || `ITM-${Date.now()}`;
+        if (!finalCode || finalCode.trim() === '' || finalCode.startsWith('ITM-')) {
+            finalCode = await this.getNextCodeForCategory(category);
         }
 
         const [result] = await db.query(
             `INSERT INTO master_items (code, name, type, unit_id, category, description) VALUES (?, ?, ?, ?, ?, ?)`,
-            [finalCode, name, type, unit_id || null, category || 'Operasional', description || '']
+            [finalCode, name, type, unit_id || null, category || 'Material dan Bahan Lainnya', description || '']
         );
         return result.insertId;
     }
