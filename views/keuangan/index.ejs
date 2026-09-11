@@ -147,6 +147,15 @@
                                 <td>
                                     <div class="fw-semibold"><%= trx.category_name %></div>
                                     <span class="badge bg-info-subtle text-info"><%= trx.sub_type %></span>
+                                    <% if (trx.asset_name) { %>
+                                        <div class="extra-small text-primary mt-1 fw-semibold">
+                                            <i class="bi bi-box-seam me-1"></i><%= trx.asset_name %> (<%= trx.asset_qty || 1 %> Unit)
+                                        </div>
+                                    <% } else if (trx.inventory_name) { %>
+                                        <div class="extra-small text-warning-emphasis mt-1 fw-semibold">
+                                            <i class="bi bi-boxes me-1"></i><%= trx.inventory_name %> (<%= trx.inventory_qty || 1 %> <%= trx.inventory_unit || 'pcs' %>)
+                                        </div>
+                                    <% } %>
                                 </td>
                                 <td>
                                     <% if (trx.donor_name) { %>

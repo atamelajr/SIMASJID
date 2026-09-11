@@ -108,19 +108,39 @@ class TransactionModel {
         const [countRows] = await db.query(countSql, params);
         const totalCount = countRows[0]?.total || 0;
 
-        // Fetch paginated data
+        // Fetch paginated data with grouped asset/inventory subqueries to prevent duplicate transaction rows
         let sql = `
             SELECT t.*, c.name as category_name, c.sub_type, ca.name as account_name, pca.name as paid_account_name, u.full_name as created_by_name,
-                   fa.id as asset_id, fa.name as asset_name, fa.condition_status as asset_condition, fa.location as asset_location,
-                   il.id as inventory_log_id, il.qty as inventory_qty, ii.id as inventory_item_id, ii.name as inventory_name, ii.unit as inventory_unit
+                   fa_summary.asset_id, fa_summary.asset_name, fa_summary.asset_qty, fa_summary.asset_condition, fa_summary.asset_location,
+                   il_summary.inventory_log_id, il_summary.inventory_qty, il_summary.inventory_item_id, il_summary.inventory_name, il_summary.inventory_unit
             FROM transactions t
             JOIN categories c ON t.category_id = c.id
             JOIN cash_accounts ca ON t.account_id = ca.id
             JOIN users u ON t.created_by = u.id
             LEFT JOIN cash_accounts pca ON t.paid_account_id = pca.id
-            LEFT JOIN fixed_assets fa ON fa.transaction_id = t.id
-            LEFT JOIN inventory_logs il ON il.transaction_id = t.id
-            LEFT JOIN inventory_items ii ON ii.id = il.item_id
+            LEFT JOIN (
+                SELECT transaction_id, 
+                       MIN(id) as asset_id, 
+                       MAX(name) as asset_name, 
+                       COUNT(*) as asset_qty, 
+                       MAX(condition_status) as asset_condition, 
+                       MAX(location) as asset_location
+                FROM fixed_assets 
+                WHERE transaction_id IS NOT NULL 
+                GROUP BY transaction_id
+            ) fa_summary ON fa_summary.transaction_id = t.id
+            LEFT JOIN (
+                SELECT il.transaction_id, 
+                       MIN(il.id) as inventory_log_id, 
+                       SUM(il.qty) as inventory_qty, 
+                       MIN(ii.id) as inventory_item_id, 
+                       MAX(ii.name) as inventory_name, 
+                       MAX(ii.unit) as inventory_unit
+                FROM inventory_logs il
+                JOIN inventory_items ii ON ii.id = il.item_id
+                WHERE il.transaction_id IS NOT NULL
+                GROUP BY il.transaction_id
+            ) il_summary ON il_summary.transaction_id = t.id
             ${whereSql}
             ORDER BY t.transaction_date DESC, t.id DESC
         `;
