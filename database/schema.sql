@@ -152,8 +152,9 @@ CREATE TABLE transactions (
     transaction_code VARCHAR(50) NOT NULL UNIQUE,
     transaction_date DATE NOT NULL,
     account_id INT NOT NULL,
+    target_account_id INT NULL DEFAULT NULL,
     category_id INT NOT NULL,
-    type ENUM('Penerimaan', 'Pengeluaran') NOT NULL,
+    type ENUM('Penerimaan', 'Pengeluaran', 'Mutasi') NOT NULL,
     payment_mode ENUM('Tunai', 'Non-Tunai', 'Donasi Barang', 'Hutang') NOT NULL DEFAULT 'Tunai', -- 'Tunai', 'Non-Tunai', 'Donasi Barang', 'Hutang'
     is_in_kind TINYINT(1) DEFAULT 0, -- 0 = Uang (Tunai/Non-Tunai/Hutang), 1 = Donasi Barang
     amount DECIMAL(15,2) NOT NULL,
@@ -168,6 +169,7 @@ CREATE TABLE transactions (
     created_by INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (account_id) REFERENCES cash_accounts(id),
+    FOREIGN KEY (target_account_id) REFERENCES cash_accounts(id) ON DELETE SET NULL,
     FOREIGN KEY (paid_account_id) REFERENCES cash_accounts(id) ON DELETE SET NULL,
     FOREIGN KEY (category_id) REFERENCES categories(id),
     FOREIGN KEY (created_by) REFERENCES users(id)

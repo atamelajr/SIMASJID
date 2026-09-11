@@ -156,18 +156,18 @@ class LaporanModel {
         const report = [];
 
         for (const acc of accounts) {
-            // Calculate total mutasi penerimaan tunai/transfer untuk akun ini
+            // Calculate total penerimaan + mutasi masuk untuk akun ini
             const [penerimaanRes] = await db.query(`
                 SELECT IFNULL(SUM(amount), 0) as total
                 FROM transactions t
-                WHERE account_id = ? AND type = 'Penerimaan' AND is_in_kind = 0 ${dateWhere}
-            `, [acc.id, ...params]);
+                WHERE ((account_id = ? AND type = 'Penerimaan') OR (target_account_id = ? AND type = 'Mutasi')) AND is_in_kind = 0 ${dateWhere}
+            `, [acc.id, acc.id, ...params]);
 
-            // Calculate total mutasi pengeluaran tunai/transfer untuk akun ini
+            // Calculate total pengeluaran + mutasi keluar untuk akun ini
             const [pengeluaranRes] = await db.query(`
                 SELECT IFNULL(SUM(amount), 0) as total
                 FROM transactions t
-                WHERE account_id = ? AND type = 'Pengeluaran' AND is_in_kind = 0 ${dateWhere}
+                WHERE account_id = ? AND (type = 'Pengeluaran' OR type = 'Mutasi') AND is_in_kind = 0 ${dateWhere}
             `, [acc.id, ...params]);
 
             const totalIn = parseFloat(penerimaanRes[0].total || 0);
@@ -189,18 +189,19 @@ class LaporanModel {
      */
     static async getLaporanMutasiKas(filters = {}) {
         let sql = `
-            SELECT t.*, c.name as category_name, c.account_code, ca.name as account_name, u.full_name as created_by_name
+            SELECT t.*, c.name as category_name, c.account_code, ca.name as account_name, tca.name as target_account_name, u.full_name as created_by_name
             FROM transactions t
             JOIN categories c ON t.category_id = c.id
             JOIN cash_accounts ca ON t.account_id = ca.id
+            LEFT JOIN cash_accounts tca ON t.target_account_id = tca.id
             JOIN users u ON t.created_by = u.id
             WHERE 1=1
         `;
         const params = [];
 
         if (filters.account_id) {
-            sql += ` AND t.account_id = ?`;
-            params.push(filters.account_id);
+            sql += ` AND (t.account_id = ? OR t.target_account_id = ?)`;
+            params.push(filters.account_id, filters.account_id);
         }
         if (filters.type) {
             sql += ` AND t.type = ?`;
@@ -225,7 +226,15 @@ class LaporanModel {
         const resultWithBalance = rows.map(row => {
             const amount = parseFloat(row.amount || 0);
             if (row.is_in_kind === 0) {
-                if (row.type === 'Penerimaan') {
+                if (row.type === 'Mutasi') {
+                    if (filters.account_id) {
+                        if (row.target_account_id == filters.account_id) {
+                            runningBalance += amount;
+                        } else if (row.account_id == filters.account_id) {
+                            runningBalance -= amount;
+                        }
+                    }
+                } else if (row.type === 'Penerimaan') {
                     runningBalance += amount;
                 } else {
                     runningBalance -= amount;

@@ -75,6 +75,11 @@ class KeuanganController {
                 } : null
             };
 
+            if (req.body.type === 'Mutasi' && req.body.account_id == req.body.target_account_id) {
+                console.error('Create Mutation Error: Rekening Asal dan Rekening Tujuan tidak boleh sama.');
+                return res.redirect('/keuangan');
+            }
+
             await TransactionModel.createTransaction(data, userId);
             res.redirect('/keuangan');
         } catch (err) {

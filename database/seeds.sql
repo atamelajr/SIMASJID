@@ -41,7 +41,8 @@ INSERT INTO categories (id, account_code, name, type, sub_type, description, is_
 (6, '502', 'Belanja Material Pembangunan', 'Pengeluaran', 'Material', 'Pembelian semen, pasir, cat, bata untuk proyek', 1),
 (7, '503', 'Belanja Perlengkapan Operasional', 'Pengeluaran', 'Operasional', 'Pembelian alat kebersihan, perlengkapan kantor', 1),
 (8, '504', 'Honorarium Imam / Khatib / Muadzin', 'Pengeluaran', 'Honor', 'Honor rutin petugas ibadah jumat & harian', 1),
-(9, '505', 'Bayar Tagihan Listrik, Air & Wi-Fi', 'Pengeluaran', 'Utilitas', 'Pembayaran tagihan utilitas harian masjid', 1)
+(9, '505', 'Bayar Tagihan Listrik, Air & Wi-Fi', 'Pengeluaran', 'Utilitas', 'Pembayaran tagihan utilitas harian masjid', 1),
+(10, '100', 'Transfer Internal / Mutasi Kas & Bank', 'Penerimaan', 'Lainnya', 'Kategori khusus untuk transaksi mutasi kas dan bank antar rekening', 1)
 ON DUPLICATE KEY UPDATE name=VALUES(name);
 
 -- Master Satuan Barang

@@ -72,8 +72,8 @@ class TransactionModel {
         const params = [];
 
         if (filters.account_id) {
-            whereSql += ` AND t.account_id = ?`;
-            params.push(filters.account_id);
+            whereSql += ` AND (t.account_id = ? OR t.target_account_id = ?)`;
+            params.push(filters.account_id, filters.account_id);
         }
         if (filters.type) {
             whereSql += ` AND t.type = ?`;
@@ -82,8 +82,10 @@ class TransactionModel {
         if (filters.payment_mode) {
             if (filters.payment_mode === 'Donasi Barang') {
                 whereSql += ` AND (t.payment_mode = 'Donasi Barang' OR t.is_in_kind = 1)`;
+            } else if (filters.payment_mode === 'Mutasi') {
+                whereSql += ` AND t.type = 'Mutasi'`;
             } else {
-                whereSql += ` AND t.payment_mode = ? AND t.is_in_kind = 0`;
+                whereSql += ` AND t.payment_mode = ? AND t.is_in_kind = 0 AND t.type != 'Mutasi'`;
                 params.push(filters.payment_mode);
             }
         }
@@ -110,12 +112,13 @@ class TransactionModel {
 
         // Fetch paginated data with grouped asset/inventory subqueries to prevent duplicate transaction rows
         let sql = `
-            SELECT t.*, c.name as category_name, c.sub_type, ca.name as account_name, pca.name as paid_account_name, u.full_name as created_by_name,
+            SELECT t.*, c.name as category_name, c.sub_type, ca.name as account_name, tca.name as target_account_name, tca.code as target_account_code, pca.name as paid_account_name, u.full_name as created_by_name,
                    fa_summary.asset_id, fa_summary.asset_name, fa_summary.asset_qty, fa_summary.asset_condition, fa_summary.asset_location,
                    il_summary.inventory_log_id, il_summary.inventory_qty, il_summary.inventory_item_id, il_summary.inventory_name, il_summary.inventory_unit
             FROM transactions t
             JOIN categories c ON t.category_id = c.id
             JOIN cash_accounts ca ON t.account_id = ca.id
+            LEFT JOIN cash_accounts tca ON t.target_account_id = tca.id
             JOIN users u ON t.created_by = u.id
             LEFT JOIN cash_accounts pca ON t.paid_account_id = pca.id
             LEFT JOIN (
@@ -195,11 +198,12 @@ class TransactionModel {
             await connection.beginTransaction();
 
             const code = `TRX-${Date.now()}`;
-            let { account_id, category_id, type, amount, description, donor_name, creditor_name, due_date, proof_file, asset_item, inventory_item } = data;
+            let { account_id, target_account_id, category_id, type, amount, description, donor_name, creditor_name, due_date, proof_file, asset_item, inventory_item } = data;
             const transactionDate = data.transaction_date || new Date().toISOString().split('T')[0];
             const isInKind = parseInt(data.is_in_kind || (data.payment_mode === 'Donasi Barang' ? 1 : 0));
-            const paymentMode = isInKind === 1 ? 'Donasi Barang' : (data.payment_mode || 'Tunai');
+            const paymentMode = type === 'Mutasi' ? 'Non-Tunai' : (isInKind === 1 ? 'Donasi Barang' : (data.payment_mode || 'Tunai'));
             const finalAmount = parseFloat(amount || 0);
+            const targetAccountId = target_account_id ? parseInt(target_account_id) : null;
 
             let debtStatus = 'Lunas';
             if (paymentMode === 'Hutang') {
@@ -211,17 +215,33 @@ class TransactionModel {
                 account_id = defaultAccount[0]?.id || 1;
             }
 
+            if (type === 'Mutasi' && !category_id) {
+                const [mutCat] = await connection.query(`SELECT id FROM categories WHERE account_code = '100' OR name LIKE '%Mutasi%' LIMIT 1`);
+                category_id = mutCat[0]?.id || 1;
+            }
+
             // 1. Insert Transaction
             const [trxResult] = await connection.query(
                 `INSERT INTO transactions 
-                 (transaction_code, transaction_date, account_id, category_id, type, payment_mode, is_in_kind, amount, description, donor_name, creditor_name, due_date, debt_status, proof_file, created_by)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [code, transactionDate, account_id, category_id, type, paymentMode, isInKind, finalAmount, description, donor_name || null, creditor_name || null, due_date || null, debtStatus, proof_file || null, userId]
+                 (transaction_code, transaction_date, account_id, target_account_id, category_id, type, payment_mode, is_in_kind, amount, description, donor_name, creditor_name, due_date, debt_status, proof_file, created_by)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [code, transactionDate, account_id, targetAccountId, category_id, type, paymentMode, isInKind, finalAmount, description, donor_name || null, creditor_name || null, due_date || null, debtStatus, proof_file || null, userId]
             );
             const transactionId = trxResult.insertId;
 
-            // 2. Update Account Balance ONLY IF NOT IN-KIND AND NOT HUTANG
-            if (isInKind === 0 && paymentMode !== 'Hutang') {
+            // 2. Update Account Balance
+            if (type === 'Mutasi') {
+                await connection.query(
+                    `UPDATE cash_accounts SET balance = balance - ? WHERE id = ?`,
+                    [finalAmount, account_id]
+                );
+                if (targetAccountId) {
+                    await connection.query(
+                        `UPDATE cash_accounts SET balance = balance + ? WHERE id = ?`,
+                        [finalAmount, targetAccountId]
+                    );
+                }
+            } else if (isInKind === 0 && paymentMode !== 'Hutang') {
                 if (type === 'Penerimaan') {
                     await connection.query(
                         `UPDATE cash_accounts SET balance = balance + ? WHERE id = ?`,
@@ -367,7 +387,20 @@ class TransactionModel {
             const trx = rows[0];
 
             // Reverse Cash Balance ONLY IF NOT IN-KIND AND NOT UNPAID DEBT
-            if (trx.is_in_kind === 0) {
+            if (trx.type === 'Mutasi') {
+                if (trx.account_id) {
+                    await connection.query(
+                        `UPDATE cash_accounts SET balance = balance + ? WHERE id = ?`,
+                        [trx.amount, trx.account_id]
+                    );
+                }
+                if (trx.target_account_id) {
+                    await connection.query(
+                        `UPDATE cash_accounts SET balance = balance - ? WHERE id = ?`,
+                        [trx.amount, trx.target_account_id]
+                    );
+                }
+            } else if (trx.is_in_kind === 0) {
                 if (trx.payment_mode === 'Hutang') {
                     // Jika utang sudah lunas, kembalikan saldo kas pembayar (paid_account_id)
                     if (trx.debt_status === 'Lunas' && trx.paid_account_id) {
@@ -430,7 +463,20 @@ class TransactionModel {
             const oldTrx = rows[0];
 
             // 1. Reverse old transaction's balance impact
-            if (oldTrx.is_in_kind === 0) {
+            if (oldTrx.type === 'Mutasi') {
+                if (oldTrx.account_id) {
+                    await connection.query(
+                        `UPDATE cash_accounts SET balance = balance + ? WHERE id = ?`,
+                        [oldTrx.amount, oldTrx.account_id]
+                    );
+                }
+                if (oldTrx.target_account_id) {
+                    await connection.query(
+                        `UPDATE cash_accounts SET balance = balance - ? WHERE id = ?`,
+                        [oldTrx.amount, oldTrx.target_account_id]
+                    );
+                }
+            } else if (oldTrx.is_in_kind === 0) {
                 if (oldTrx.payment_mode === 'Hutang') {
                     if (oldTrx.debt_status === 'Lunas' && oldTrx.paid_account_id) {
                         await connection.query(
@@ -453,11 +499,12 @@ class TransactionModel {
                 }
             }
 
-            let { account_id, category_id, type, payment_mode, amount, description, donor_name, creditor_name, due_date, proof_file } = data;
+            let { account_id, target_account_id, category_id, type, payment_mode, amount, description, donor_name, creditor_name, due_date, proof_file } = data;
             const transactionDate = data.transaction_date || oldTrx.transaction_date;
             const isInKind = parseInt(data.is_in_kind || (payment_mode === 'Donasi Barang' ? 1 : 0));
-            const paymentMode = isInKind === 1 ? 'Donasi Barang' : (payment_mode || 'Tunai');
+            const paymentMode = type === 'Mutasi' ? 'Non-Tunai' : (isInKind === 1 ? 'Donasi Barang' : (payment_mode || 'Tunai'));
             const finalAmount = parseFloat(amount || 0);
+            const targetAccountId = target_account_id ? parseInt(target_account_id) : oldTrx.target_account_id;
 
             let debtStatus = oldTrx.debt_status || 'Lunas';
             if (paymentMode === 'Hutang' && oldTrx.payment_mode !== 'Hutang') {
@@ -471,18 +518,36 @@ class TransactionModel {
                 account_id = defaultAccount[0]?.id || oldTrx.account_id;
             }
 
+            if (type === 'Mutasi' && !category_id) {
+                const [mutCat] = await connection.query(`SELECT id FROM categories WHERE account_code = '100' OR name LIKE '%Mutasi%' LIMIT 1`);
+                category_id = mutCat[0]?.id || oldTrx.category_id;
+            }
+
             const proof = proof_file || oldTrx.proof_file;
 
             // 2. Update transaction row
             await connection.query(
                 `UPDATE transactions 
-                 SET transaction_date = ?, account_id = ?, category_id = ?, type = ?, payment_mode = ?, is_in_kind = ?, amount = ?, description = ?, donor_name = ?, creditor_name = ?, due_date = ?, debt_status = ?, proof_file = ?
+                 SET transaction_date = ?, account_id = ?, target_account_id = ?, category_id = ?, type = ?, payment_mode = ?, is_in_kind = ?, amount = ?, description = ?, donor_name = ?, creditor_name = ?, due_date = ?, debt_status = ?, proof_file = ?
                  WHERE id = ?`,
-                [transactionDate, account_id, category_id, type, paymentMode, isInKind, finalAmount, description, donor_name || null, creditor_name || null, due_date || null, debtStatus, proof, id]
+                [transactionDate, account_id, targetAccountId, category_id, type, paymentMode, isInKind, finalAmount, description, donor_name || null, creditor_name || null, due_date || null, debtStatus, proof, id]
             );
 
             // 3. Apply new transaction's balance impact
-            if (isInKind === 0) {
+            if (type === 'Mutasi') {
+                if (account_id) {
+                    await connection.query(
+                        `UPDATE cash_accounts SET balance = balance - ? WHERE id = ?`,
+                        [finalAmount, account_id]
+                    );
+                }
+                if (targetAccountId) {
+                    await connection.query(
+                        `UPDATE cash_accounts SET balance = balance + ? WHERE id = ?`,
+                        [finalAmount, targetAccountId]
+                    );
+                }
+            } else if (isInKind === 0) {
                 if (paymentMode === 'Hutang') {
                     if (debtStatus === 'Lunas' && oldTrx.paid_account_id) {
                         await connection.query(

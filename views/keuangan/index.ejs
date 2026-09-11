@@ -4,9 +4,14 @@
         <p class="text-muted small mb-0">Riwayat seluruh transaksi penerimaan (Tunai, Non-Tunai, Donasi Barang) dan pengeluaran kas masjid.</p>
     </div>
     <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
-        <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddTransaction">
-            <i class="bi bi-plus-lg me-1"></i> Tambah Transaksi / Donasi
-        </button>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddMutation">
+                <i class="bi bi-arrow-left-right me-1"></i> Mutasi Kas & Bank
+            </button>
+            <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddTransaction">
+                <i class="bi bi-plus-lg me-1"></i> Tambah Transaksi / Donasi
+            </button>
+        </div>
     <% } %>
 </div>
 
@@ -70,6 +75,7 @@
                     <option value="">-- Semua Tipe --</option>
                     <option value="Penerimaan" <%= filters.type === 'Penerimaan' ? 'selected' : '' %>>Penerimaan</option>
                     <option value="Pengeluaran" <%= filters.type === 'Pengeluaran' ? 'selected' : '' %>>Pengeluaran</option>
+                    <option value="Mutasi" <%= filters.type === 'Mutasi' ? 'selected' : '' %>>Mutasi Kas & Bank</option>
                 </select>
             </div>
             <div class="col-md-2">
@@ -78,6 +84,7 @@
                     <option value="">-- Semua Bentuk --</option>
                     <option value="Tunai" <%= filters.payment_mode === 'Tunai' ? 'selected' : '' %>>Uang (Tunai)</option>
                     <option value="Non-Tunai" <%= filters.payment_mode === 'Non-Tunai' ? 'selected' : '' %>>Uang (Non-Tunai)</option>
+                    <option value="Mutasi" <%= filters.payment_mode === 'Mutasi' ? 'selected' : '' %>>Mutasi Kas & Bank</option>
                     <option value="Donasi Barang" <%= filters.payment_mode === 'Donasi Barang' ? 'selected' : '' %>>Donasi Barang</option>
                     <option value="Hutang" <%= filters.payment_mode === 'Hutang' ? 'selected' : '' %>>Belanja Hutang / Kredit</option>
                 </select>
@@ -120,7 +127,14 @@
                                     <div class="extra-small text-muted" style="font-size:0.75rem;">System Input: <%= formatDate(trx.created_at) %></div>
                                 </td>
                                 <td>
-                                    <% if (trx.payment_mode === 'Hutang') { %>
+                                    <% if (trx.type === 'Mutasi') { %>
+                                        <span class="badge bg-info-subtle text-info border mb-1"><i class="bi bi-arrow-left-right me-1"></i>Mutasi Kas & Bank</span>
+                                        <div class="extra-small">
+                                            <span class="badge bg-danger-subtle text-danger border" title="Rekening Asal"><i class="bi bi-dash-circle me-1"></i><%= trx.account_name %></span>
+                                            <i class="bi bi-arrow-right text-muted mx-1"></i>
+                                            <span class="badge bg-success-subtle text-success border" title="Rekening Tujuan"><i class="bi bi-plus-circle me-1"></i><%= trx.target_account_name || 'Rekening Tujuan' %></span>
+                                        </div>
+                                    <% } else if (trx.payment_mode === 'Hutang') { %>
                                         <% if (trx.debt_status === 'Belum Lunas') { %>
                                             <span class="badge bg-danger-subtle text-danger border mb-1"><i class="bi bi-clock-history me-1"></i>Hutang (Belum Lunas)</span>
                                             <div class="extra-small text-dark fw-semibold"><i class="bi bi-shop me-1"></i><%= trx.creditor_name || 'Supplier/Toko' %></div>
@@ -164,7 +178,9 @@
                                     <div class="small text-muted"><%= trx.description %></div>
                                 </td>
                                 <td>
-                                    <% if (trx.is_in_kind === 1) { %>
+                                    <% if (trx.type === 'Mutasi') { %>
+                                        <span class="fw-bold text-info"><i class="bi bi-arrow-left-right me-1"></i><%= formatRupiah(trx.amount) %></span>
+                                    <% } else if (trx.is_in_kind === 1) { %>
                                         <span class="fw-bold text-primary" title="Nilai Estimasi Barang"><i class="bi bi-tag-fill me-1"></i><%= formatRupiah(trx.amount) %></span>
                                     <% } else if (trx.type === 'Penerimaan') { %>
                                         <span class="fw-bold text-success">+ <%= formatRupiah(trx.amount) %></span>
@@ -970,4 +986,77 @@
             onTypeChange();
         });
     }
+
+    function validateMutationForm(form) {
+        const source = form.querySelector('[name="account_id"]').value;
+        const target = form.querySelector('[name="target_account_id"]').value;
+        if (source && target && source === target) {
+            alert('Rekening Asal dan Rekening Tujuan tidak boleh sama! Silakan pilih rekening yang berbeda.');
+            return false;
+        }
+        return true;
+    }
 </script>
+
+<!-- Modal Tambah Mutasi Kas & Bank -->
+<div class="modal fade" id="modalAddMutation" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="bi bi-arrow-left-right me-2 text-primary"></i>Transfer Internal / Mutasi Kas & Bank</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/keuangan/create" method="POST" enctype="multipart/form-data" onsubmit="return validateMutationForm(this)">
+                <input type="hidden" name="type" value="Mutasi">
+                <div class="modal-body">
+                    <div class="alert alert-info py-2 extra-small mb-3">
+                        <i class="bi bi-info-circle me-1"></i> Transaksi mutasi memindahkan saldo dari <strong>Rekening Asal</strong> ke <strong>Rekening Tujuan</strong>. Total saldo gabungan kas masjid tidak berubah.
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Tanggal Mutasi / Transfer</label>
+                            <input type="date" name="transaction_date" class="form-control" value="<%= new Date().toISOString().split('T')[0] %>" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Jumlah / Nominal Mutasi (Rp)</label>
+                            <div class="input-group">
+                                <span class="input-group-text font-monospace">Rp</span>
+                                <input type="number" name="amount" class="form-control font-monospace" placeholder="0" min="1" step="any" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-danger"><i class="bi bi-dash-circle me-1"></i>Rekening Asal (Kas Berkurang)</label>
+                            <select name="account_id" class="form-select" required>
+                                <option value="">-- Pilih Rekening Asal --</option>
+                                <% accounts.forEach(acc => { %>
+                                    <option value="<%= acc.id %>"><%= acc.name %> (Saldo: <%= formatRupiah(acc.balance) %>)</option>
+                                <% }) %>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-success"><i class="bi bi-plus-circle me-1"></i>Rekening Tujuan (Kas Bertambah)</label>
+                            <select name="target_account_id" class="form-select" required>
+                                <option value="">-- Pilih Rekening Tujuan --</option>
+                                <% accounts.forEach(acc => { %>
+                                    <option value="<%= acc.id %>"><%= acc.name %> (Saldo: <%= formatRupiah(acc.balance) %>)</option>
+                                <% }) %>
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Keterangan / Keperluan Transfer</label>
+                            <textarea name="description" class="form-control" rows="2" placeholder="Contoh: Setor tunai saldo kas jumat ke rekening BSI Pembangunan..." required></textarea>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Upload Bukti Transfer / Resi Setor (Opsional)</label>
+                            <input type="file" name="proof_file" class="form-control" accept="image/*,application/pdf">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i>Simpan Mutasi Kas</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
