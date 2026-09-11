@@ -218,29 +218,34 @@
                 <h5 class="modal-title fw-bold"><i class="bi bi-box-seam me-2"></i>Tambah Barang Aset Tetap Baru</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form action="/inventaris/asset/create" method="POST">
+            <form action="/inventaris/asset/create" method="POST" onsubmit="onAddAssetSubmit(event)">
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Nama Barang Aset (Dari Katalog)</label>
-                            <select name="name" class="form-select" required>
-                                <option value="">-- Pilih Nama Barang Aset --</option>
-                                <% if (typeof assetCatalog !== 'undefined' && assetCatalog.length > 0) { %>
-                                    <% assetCatalog.forEach(catItem => { %>
-                                        <option value="<%= catItem.name %>"><%= catItem.code %> - <%= catItem.name %></option>
+                            <label class="form-label fw-semibold">Kategori Aset</label>
+                            <select name="category" id="add_asset_category" class="form-select" required onchange="filterAddAssetItemsByCategory()">
+                                <option value="">-- Pilih Kategori Aset --</option>
+                                <% if (typeof assetCategories !== 'undefined' && assetCategories.length > 0) { %>
+                                    <% assetCategories.forEach(cat => { %>
+                                        <option value="<%= cat.name %>"><%= cat.name %></option>
                                     <% }) %>
+                                <% } else { %>
+                                    <option value="Peralatan & Mesin">Peralatan & Mesin</option>
+                                    <option value="Meubiler & Mebel">Meubiler & Mebel</option>
+                                    <option value="Tanah & Lahan">Tanah & Lahan</option>
+                                    <option value="Bangunan & Infrastruktur">Bangunan & Infrastruktur</option>
+                                    <option value="Aset Tetap Lainnya">Aset Tetap Lainnya</option>
                                 <% } %>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Kategori Aset</label>
-                            <select name="category" class="form-select" required>
-                                <option value="Tanah & Lahan">Tanah & Lahan</option>
-                                <option value="Bangunan & Infrastruktur">Bangunan & Infrastruktur</option>
-                                <option value="Peralatan & Mesin" selected>Peralatan & Mesin</option>
-                                <option value="Meubiler & Mebel">Meubiler & Mebel</option>
-                                <option value="Aset Tetap Lainnya">Aset Tetap Lainnya</option>
+                            <label class="form-label fw-semibold">Nama Barang Aset (Dari Katalog)</label>
+                            <select name="name" id="add_asset_name" class="form-select" required onchange="onAddAssetNameChange()">
+                                <option value="">-- Pilih Kategori Terlebih Dahulu --</option>
                             </select>
+                            <div id="wrapper_custom_add_asset_name" class="mt-2 d-none">
+                                <input type="text" id="custom_add_asset_name" class="form-control" placeholder="Ketik nama barang aset baru...">
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Merk / Brand (Opsional)</label>
@@ -314,28 +319,34 @@
                 <h5 class="modal-title fw-bold text-dark"><i class="bi bi-pencil-square me-2"></i>Edit Detail & Spesifikasi Aset</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="formEditAsset" action="" method="POST">
+            <form id="formEditAsset" action="" method="POST" onsubmit="onEditAssetSubmit(event)">
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Nama Barang Aset (Dari Katalog)</label>
-                            <select name="name" id="edit_asset_name" class="form-select" required>
-                                <% if (typeof assetCatalog !== 'undefined' && assetCatalog.length > 0) { %>
-                                    <% assetCatalog.forEach(catItem => { %>
-                                        <option value="<%= catItem.name %>"><%= catItem.code %> - <%= catItem.name %></option>
+                            <label class="form-label fw-semibold">Kategori Aset</label>
+                            <select name="category" id="edit_asset_category" class="form-select" required onchange="filterEditAssetItemsByCategory()">
+                                <option value="">-- Pilih Kategori Aset --</option>
+                                <% if (typeof assetCategories !== 'undefined' && assetCategories.length > 0) { %>
+                                    <% assetCategories.forEach(cat => { %>
+                                        <option value="<%= cat.name %>"><%= cat.name %></option>
                                     <% }) %>
+                                <% } else { %>
+                                    <option value="Peralatan & Mesin">Peralatan & Mesin</option>
+                                    <option value="Meubiler & Mebel">Meubiler & Mebel</option>
+                                    <option value="Tanah & Lahan">Tanah & Lahan</option>
+                                    <option value="Bangunan & Infrastruktur">Bangunan & Infrastruktur</option>
+                                    <option value="Aset Tetap Lainnya">Aset Tetap Lainnya</option>
                                 <% } %>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Kategori Aset</label>
-                            <select name="category" id="edit_asset_category" class="form-select" required>
-                                <option value="Tanah & Lahan">Tanah & Lahan</option>
-                                <option value="Bangunan & Infrastruktur">Bangunan & Infrastruktur</option>
-                                <option value="Peralatan & Mesin">Peralatan & Mesin</option>
-                                <option value="Meubiler & Mebel">Meubiler & Mebel</option>
-                                <option value="Aset Tetap Lainnya">Aset Tetap Lainnya</option>
+                            <label class="form-label fw-semibold">Nama Barang Aset (Dari Katalog)</label>
+                            <select name="name" id="edit_asset_name" class="form-select" required onchange="onEditAssetNameChange()">
+                                <option value="">-- Pilih Kategori Terlebih Dahulu --</option>
                             </select>
+                            <div id="wrapper_custom_edit_asset_name" class="mt-2 d-none">
+                                <input type="text" id="custom_edit_asset_name" class="form-control" placeholder="Ketik nama barang aset baru...">
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Merk / Brand (Opsional)</label>
@@ -434,31 +445,163 @@
 </div>
 
 <script>
+    const rawAssetCatalog = <%- JSON.stringify(typeof assetCatalog !== 'undefined' ? assetCatalog : []) %>;
+
+    function filterAddAssetItemsByCategory() {
+        const catSelect = document.getElementById('add_asset_category');
+        const nameSelect = document.getElementById('add_asset_name');
+        const customWrapper = document.getElementById('wrapper_custom_add_asset_name');
+        if (!catSelect || !nameSelect) return;
+
+        const selectedCat = catSelect.value;
+        if (customWrapper) customWrapper.classList.add('d-none');
+
+        if (!selectedCat) {
+            nameSelect.innerHTML = '<option value="">-- Pilih Kategori Terlebih Dahulu --</option>';
+            return;
+        }
+
+        const filteredItems = rawAssetCatalog.filter(item => item.category === selectedCat);
+
+        nameSelect.innerHTML = '';
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = '';
+        defaultOpt.text = filteredItems.length > 0 ? '-- Pilih Nama Barang Aset --' : '-- Belum Ada Barang di Kategori Ini --';
+        nameSelect.appendChild(defaultOpt);
+
+        filteredItems.forEach(item => {
+            const opt = document.createElement('option');
+            opt.value = item.name;
+            opt.text = `${item.code} - ${item.name}`;
+            nameSelect.appendChild(opt);
+        });
+
+        const customOpt = document.createElement('option');
+        customOpt.value = '__NEW__';
+        customOpt.text = '➕ Ketik Nama Barang Baru...';
+        nameSelect.appendChild(customOpt);
+
+        if (filteredItems.length === 1) {
+            nameSelect.selectedIndex = 1;
+        }
+    }
+
+    function onAddAssetNameChange() {
+        const nameSelect = document.getElementById('add_asset_name');
+        const customWrapper = document.getElementById('wrapper_custom_add_asset_name');
+        const customInput = document.getElementById('custom_add_asset_name');
+
+        if (nameSelect && nameSelect.value === '__NEW__') {
+            if (customWrapper) customWrapper.classList.remove('d-none');
+            if (customInput) {
+                customInput.required = true;
+                customInput.focus();
+            }
+        } else {
+            if (customWrapper) customWrapper.classList.add('d-none');
+            if (customInput) {
+                customInput.required = false;
+                customInput.value = '';
+            }
+        }
+    }
+
+    function onAddAssetSubmit(e) {
+        const nameSelect = document.getElementById('add_asset_name');
+        const customInput = document.getElementById('custom_add_asset_name');
+        if (nameSelect && nameSelect.value === '__NEW__') {
+            nameSelect.removeAttribute('name');
+            customInput.name = 'name';
+        }
+    }
+
+    function filterEditAssetItemsByCategory(targetName = null) {
+        const catSelect = document.getElementById('edit_asset_category');
+        const nameSelect = document.getElementById('edit_asset_name');
+        const customWrapper = document.getElementById('wrapper_custom_edit_asset_name');
+        if (!catSelect || !nameSelect) return;
+
+        const selectedCat = catSelect.value;
+        const currentVal = targetName !== null ? targetName : nameSelect.value;
+
+        if (customWrapper) customWrapper.classList.add('d-none');
+
+        if (!selectedCat) {
+            nameSelect.innerHTML = '<option value="">-- Pilih Kategori Terlebih Dahulu --</option>';
+            return;
+        }
+
+        const filteredItems = rawAssetCatalog.filter(item => item.category === selectedCat);
+
+        nameSelect.innerHTML = '';
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = '';
+        defaultOpt.text = filteredItems.length > 0 ? '-- Pilih Nama Barang Aset --' : '-- Belum Ada Barang di Kategori Ini --';
+        nameSelect.appendChild(defaultOpt);
+
+        let found = false;
+        filteredItems.forEach(item => {
+            const opt = document.createElement('option');
+            opt.value = item.name;
+            opt.text = `${item.code} - ${item.name}`;
+            if (item.name === currentVal) {
+                opt.selected = true;
+                found = true;
+            }
+            nameSelect.appendChild(opt);
+        });
+
+        const customOpt = document.createElement('option');
+        customOpt.value = '__NEW__';
+        customOpt.text = '➕ Ketik Nama Barang Baru...';
+        nameSelect.appendChild(customOpt);
+
+        if (!found && currentVal && currentVal !== '__NEW__') {
+            const extraOpt = document.createElement('option');
+            extraOpt.value = currentVal;
+            extraOpt.text = currentVal;
+            extraOpt.selected = true;
+            nameSelect.appendChild(extraOpt);
+        }
+    }
+
+    function onEditAssetNameChange() {
+        const nameSelect = document.getElementById('edit_asset_name');
+        const customWrapper = document.getElementById('wrapper_custom_edit_asset_name');
+        const customInput = document.getElementById('custom_edit_asset_name');
+
+        if (nameSelect && nameSelect.value === '__NEW__') {
+            if (customWrapper) customWrapper.classList.remove('d-none');
+            if (customInput) {
+                customInput.required = true;
+                customInput.focus();
+            }
+        } else {
+            if (customWrapper) customWrapper.classList.add('d-none');
+            if (customInput) {
+                customInput.required = false;
+                customInput.value = '';
+            }
+        }
+    }
+
+    function onEditAssetSubmit(e) {
+        const nameSelect = document.getElementById('edit_asset_name');
+        const customInput = document.getElementById('custom_edit_asset_name');
+        if (nameSelect && nameSelect.value === '__NEW__') {
+            nameSelect.removeAttribute('name');
+            customInput.name = 'name';
+        }
+    }
+
     function openEditAssetModal(ast) {
         document.getElementById('formEditAsset').action = '/inventaris/asset/update/' + ast.id;
         
-        const nameSelect = document.getElementById('edit_asset_name');
-        if (nameSelect) {
-            let found = false;
-            for (let i = 0; i < nameSelect.options.length; i++) {
-                if (nameSelect.options[i].value === ast.name) {
-                    nameSelect.selectedIndex = i;
-                    found = true;
-                    break;
-                }
-            }
-            if (!found && ast.name) {
-                const opt = document.createElement('option');
-                opt.value = ast.name;
-                opt.text = ast.name;
-                opt.selected = true;
-                nameSelect.appendChild(opt);
-            }
-        }
+        document.getElementById('edit_asset_category').value = ast.category || 'Peralatan & Mesin';
+        filterEditAssetItemsByCategory(ast.name);
 
         document.getElementById('edit_asset_brand').value = ast.brand || '';
         document.getElementById('edit_asset_model_no_plate').value = ast.model_no_plate || '';
-        document.getElementById('edit_asset_category').value = ast.category || 'Peralatan & Mesin';
         if (document.getElementById('edit_asset_source_origin')) {
             document.getElementById('edit_asset_source_origin').value = ast.source_origin || 'Pembelian';
         }
@@ -473,4 +616,19 @@
         const modal = new bootstrap.Modal(document.getElementById('modalEditAsset'));
         modal.show();
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const addModalEl = document.getElementById('modalAddAsset');
+        if (addModalEl) {
+            addModalEl.addEventListener('show.bs.modal', function () {
+                const catSelect = document.getElementById('add_asset_category');
+                if (catSelect) {
+                    if (!catSelect.value) {
+                        catSelect.value = 'Peralatan & Mesin';
+                    }
+                    filterAddAssetItemsByCategory();
+                }
+            });
+        }
+    });
 </script>

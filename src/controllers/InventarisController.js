@@ -11,6 +11,7 @@ class InventarisController {
             const masterItems = await MasterModel.getAllMasterItems();
             const locations = await MasterModel.getAllLocations();
             const assetCatalog = masterItems.filter(item => item.type === 'Aset');
+            const assetCategories = await MasterModel.getItemCategoriesByType('Aset');
 
             res.render('inventaris/index', {
                 title: 'Manajemen Aset & Inventaris',
@@ -18,6 +19,7 @@ class InventarisController {
                 items,
                 logs,
                 assetCatalog,
+                assetCategories,
                 masterItems,
                 locations
             });
