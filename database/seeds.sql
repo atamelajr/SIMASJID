@@ -98,8 +98,15 @@ INSERT INTO rab_projects (id, title, target_budget, start_date, target_date, sta
 (1, 'Renovasi & Pembangunan Menara Masjid', 150000000.00, '2026-01-01', '2026-12-31', 'Berjalan')
 ON DUPLICATE KEY UPDATE title=VALUES(title);
 
--- Log Progres Awal
-INSERT INTO project_progress_logs (id, project_id, log_date, percentage, description) VALUES
-(1, 1, '2026-02-15', 25.00, 'Pengecoran pondasi dasar menara masjid selesai.'),
-(2, 1, '2026-03-01', 40.00, 'Pemasangan besi ulir & struktur utama lantai 1 menara.')
-ON DUPLICATE KEY UPDATE percentage=VALUES(percentage);
+-- Master Lokasi Penempatan Barang & Aset
+INSERT INTO asset_locations (id, code, name, description) VALUES
+(1, 'LOC-01', 'Ruang Utama Sholat', 'Area sholat utama jamaah di lantai 1'),
+(2, 'LOC-02', 'Ruang DKM & Sekretariat', 'Kantor pengurus dan administrasi DKM'),
+(3, 'LOC-03', 'Area Wudhu & Toilet', 'Fasilitas tempat wudhu dan toilet jamaah'),
+(4, 'LOC-04', 'Gedung Pembangunan & Menara', 'Area proyek renovasi dan struktur menara'),
+(5, 'LOC-05', 'Gudang Masjid', 'Tempat penyimpanan barang & perlengkapan masjid'),
+(6, 'LOC-06', 'Halaman & Parkir', 'Lahan luar dan area parkir kendaraan'),
+(7, 'LOC-07', 'Lantai 2 / Balkon Sholat', 'Area sholat tambahan di lantai 2'),
+(8, 'LOC-08', 'Masjid Utama', 'Area lingkungan kompleks masjid')
+ON DUPLICATE KEY UPDATE name=VALUES(name), description=VALUES(description);
+

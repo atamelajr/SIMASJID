@@ -22,6 +22,7 @@ class KeuanganController {
             const categories = await TransactionModel.getCategories();
             const masterItems = await MasterModel.getAllMasterItems();
             const units = await MasterModel.getAllUnits();
+            const locations = await MasterModel.getAllLocations();
 
             res.render('keuangan/index', {
                 title: 'Transaksi Keuangan',
@@ -36,6 +37,7 @@ class KeuanganController {
                 categories,
                 masterItems,
                 units,
+                locations,
                 filters,
                 selectedAccount: filters.account_id,
                 selectedType: filters.type
@@ -58,12 +60,14 @@ class KeuanganController {
             const data = {
                 ...req.body,
                 proof_file: proofFile,
-                asset_item: ((isInKind || isHutang) && itemKindType === 'Asset' && req.body.asset_name) ? {
+                asset_item: req.body.asset_name ? {
                     name: req.body.asset_name,
                     condition: req.body.asset_condition,
-                    location: req.body.asset_location
+                    location: req.body.asset_location,
+                    qty: parseInt(req.body.asset_qty) || 1,
+                    source_origin: (req.body.payment_mode === 'Donasi Barang' || req.body.type === 'Penerimaan') ? 'Hibah' : 'Pembelian'
                 } : null,
-                inventory_item: ((isInKind || isHutang) && itemKindType === 'Material' && req.body.inventory_name) ? {
+                inventory_item: ((isInKind || isHutang || itemKindType === 'Material') && req.body.inventory_name) ? {
                     name: req.body.inventory_name,
                     unit: req.body.inventory_unit,
                     category: req.body.inventory_category,
@@ -92,12 +96,14 @@ class KeuanganController {
             const data = {
                 ...req.body,
                 proof_file: proofFile,
-                asset_item: ((isInKind || isHutang) && itemKindType === 'Asset' && req.body.asset_name) ? {
+                asset_item: req.body.asset_name ? {
                     name: req.body.asset_name,
                     condition: req.body.asset_condition,
-                    location: req.body.asset_location
+                    location: req.body.asset_location,
+                    qty: parseInt(req.body.asset_qty) || 1,
+                    source_origin: (req.body.payment_mode === 'Donasi Barang' || req.body.type === 'Penerimaan') ? 'Hibah' : 'Pembelian'
                 } : null,
-                inventory_item: ((isInKind || isHutang) && itemKindType === 'Material' && req.body.inventory_name) ? {
+                inventory_item: ((isInKind || isHutang || itemKindType === 'Material') && req.body.inventory_name) ? {
                     name: req.body.inventory_name,
                     unit: req.body.inventory_unit,
                     category: req.body.inventory_category,

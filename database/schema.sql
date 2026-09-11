@@ -173,7 +173,16 @@ CREATE TABLE transactions (
     FOREIGN KEY (created_by) REFERENCES users(id)
 ) ENGINE=InnoDB;
 
--- 11. Tabel Inventaris Aset Tetap (Barang Modal)
+-- 11. Tabel Master Lokasi Barang & Aset
+CREATE TABLE asset_locations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(20) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(255) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- 12. Tabel Inventaris Aset Tetap (Barang Modal)
 CREATE TABLE fixed_assets (
     id INT AUTO_INCREMENT PRIMARY KEY,
     asset_code VARCHAR(50) NOT NULL UNIQUE,
@@ -181,6 +190,7 @@ CREATE TABLE fixed_assets (
     brand VARCHAR(100) NULL,
     model_no_plate VARCHAR(100) NULL,
     category VARCHAR(50) DEFAULT 'Peralatan & Mesin',
+    source_origin VARCHAR(50) DEFAULT 'Pembelian',
     purchase_date DATE,
     cost DECIMAL(15,2) DEFAULT 0.00,
     condition_status ENUM('Baik', 'Rusak Ringan', 'Rusak Berat') DEFAULT 'Baik',

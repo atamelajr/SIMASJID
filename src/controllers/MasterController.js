@@ -299,6 +299,53 @@ class MasterController {
             res.redirect('/master/item-categories');
         }
     }
+
+    // 7. Lokasi Penempatan Barang & Aset
+    static async locationsIndex(req, res) {
+        try {
+            const locations = await MasterModel.getAllLocations();
+            const nextCode = await MasterModel.getNextLocationCode();
+            res.render('master/locations', {
+                title: 'Master Parameter - Lokasi Barang & Aset',
+                activeSubmenu: 'locations',
+                locations,
+                nextCode
+            });
+        } catch (err) {
+            console.error('Locations Index Error:', err);
+            res.redirect('/dashboard');
+        }
+    }
+
+    static async createLocation(req, res) {
+        try {
+            await MasterModel.createLocation(req.body);
+            res.redirect('/master/locations');
+        } catch (err) {
+            console.error('Create Location Error:', err);
+            res.redirect('/master/locations');
+        }
+    }
+
+    static async updateLocation(req, res) {
+        try {
+            await MasterModel.updateLocation(req.params.id, req.body);
+            res.redirect('/master/locations');
+        } catch (err) {
+            console.error('Update Location Error:', err);
+            res.redirect('/master/locations');
+        }
+    }
+
+    static async deleteLocation(req, res) {
+        try {
+            await MasterModel.deleteLocation(req.params.id);
+            res.redirect('/master/locations');
+        } catch (err) {
+            console.error('Delete Location Error:', err);
+            res.redirect('/master/locations');
+        }
+    }
 }
 
 module.exports = MasterController;

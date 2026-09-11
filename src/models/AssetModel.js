@@ -21,32 +21,39 @@ class AssetModel {
         }
         category = category || 'Peralatan & Mesin';
 
-        let assetCode = data.asset_code || data.code;
-        if (!assetCode || assetCode.startsWith('AST-')) {
-            if (miRows.length > 0 && miRows[0].code) {
-                assetCode = miRows[0].code;
-            } else {
-                assetCode = await MasterModel.getNextCodeForCategory(category);
-            }
+        const sourceOrigin = data.source_origin || 'Pembelian';
+        const qty = Math.max(1, parseInt(data.qty) || 1);
+        const totalCost = parseFloat(data.cost || 0);
+        const unitCost = qty > 0 ? (totalCost / qty) : totalCost;
+
+        let firstInsertId = null;
+
+        for (let i = 0; i < qty; i++) {
+            let assetCode = await MasterModel.getNextCodeForCategory(category);
+
+            const [result] = await db.query(
+                `INSERT INTO fixed_assets (asset_code, name, brand, model_no_plate, category, source_origin, purchase_date, cost, condition_status, location, description, transaction_id)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    assetCode, 
+                    data.name, 
+                    data.brand || null, 
+                    data.model_no_plate || null, 
+                    category,
+                    sourceOrigin,
+                    data.purchase_date || new Date(), 
+                    unitCost, 
+                    data.condition_status || 'Baik', 
+                    data.location || 'Masjid',
+                    data.description || null,
+                    data.transaction_id || null
+                ]
+            );
+
+            if (i === 0) firstInsertId = result.insertId;
         }
 
-        const [result] = await db.query(
-            `INSERT INTO fixed_assets (asset_code, name, brand, model_no_plate, category, purchase_date, cost, condition_status, location, description)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-                assetCode, 
-                data.name, 
-                data.brand || null, 
-                data.model_no_plate || null, 
-                category,
-                data.purchase_date || new Date(), 
-                data.cost || 0, 
-                data.condition_status || 'Baik', 
-                data.location || 'Masjid',
-                data.description || null
-            ]
-        );
-        return result.insertId;
+        return firstInsertId;
     }
 
     static async updateCondition(id, condition_status) {
@@ -66,13 +73,14 @@ class AssetModel {
 
         await db.query(
             `UPDATE fixed_assets 
-             SET name = ?, brand = ?, model_no_plate = ?, category = ?, purchase_date = ?, cost = ?, condition_status = ?, location = ?, description = ?
+             SET name = ?, brand = ?, model_no_plate = ?, category = ?, source_origin = ?, purchase_date = ?, cost = ?, condition_status = ?, location = ?, description = ?
              WHERE id = ?`,
             [
                 data.name,
                 data.brand || null,
                 data.model_no_plate || null,
                 category,
+                data.source_origin || 'Pembelian',
                 data.purchase_date || null,
                 data.cost || 0,
                 data.condition_status || 'Baik',

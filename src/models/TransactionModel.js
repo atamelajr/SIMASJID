@@ -193,15 +193,18 @@ class TransactionModel {
             if ((subType === 'Modal' || asset_item) && asset_item && asset_item.name) {
                 const [miRows] = await connection.query(`SELECT code, category FROM master_items WHERE name = ? LIMIT 1`, [asset_item.name]);
                 const assetCategory = miRows[0]?.category || asset_item.category || 'Peralatan & Mesin';
-                let assetCode = asset_item.code;
-                if (!assetCode || assetCode.startsWith('AST-')) {
-                    assetCode = miRows[0]?.code || await MasterModel.getNextCodeForCategory(assetCategory);
+                const assetQty = Math.max(1, parseInt(asset_item.qty) || 1);
+                const unitCost = assetQty > 0 ? (finalAmount / assetQty) : finalAmount;
+                const sourceOrigin = asset_item.source_origin || (isInKind === 1 || type === 'Penerimaan' ? 'Hibah' : 'Pembelian');
+
+                for (let i = 0; i < assetQty; i++) {
+                    let assetCode = await MasterModel.getNextCodeForCategory(assetCategory);
+                    await connection.query(
+                        `INSERT INTO fixed_assets (asset_code, name, category, source_origin, purchase_date, cost, condition_status, location, transaction_id)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        [assetCode, asset_item.name || description, assetCategory, sourceOrigin, transactionDate, unitCost, asset_item.condition || 'Baik', asset_item.location || 'Masjid', transactionId]
+                    );
                 }
-                await connection.query(
-                    `INSERT INTO fixed_assets (asset_code, name, category, purchase_date, cost, condition_status, location, transaction_id)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [assetCode, asset_item.name || description, assetCategory, transactionDate, finalAmount, asset_item.condition || 'Baik', asset_item.location || 'Masjid', transactionId]
-                );
             }
 
             if ((subType === 'Material' || inventory_item) && inventory_item && inventory_item.name) {

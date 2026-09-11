@@ -364,7 +364,7 @@
                         <div id="sectionAsset" class="col-12 border p-3 rounded bg-light d-none">
                             <h6 class="fw-bold text-primary mb-2"><i class="bi bi-box-fill me-1"></i>Detail Barang Aset Tetap</h6>
                             <div class="row g-2">
-                                <div class="col-md-6">
+                                <div class="col-md-5">
                                     <label class="form-label extra-small fw-bold">Pilih Barang Aset (Dari Katalog)</label>
                                     <select name="asset_name" id="asset_select" class="form-select form-select-sm" onchange="onAssetItemSelect()">
                                         <option value="">-- Pilih dari Katalog Aset --</option>
@@ -373,7 +373,11 @@
                                         <% }) %>
                                     </select>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
+                                    <label class="form-label extra-small fw-bold">Jumlah (Qty)</label>
+                                    <input type="number" name="asset_qty" class="form-control form-control-sm fw-bold" value="1" min="1" placeholder="Jumlah unit">
+                                </div>
+                                <div class="col-md-2">
                                     <label class="form-label extra-small fw-bold">Kondisi Barang</label>
                                     <select name="asset_condition" class="form-select form-select-sm">
                                         <option value="Baik">Kondisi: Baik</option>
@@ -382,7 +386,16 @@
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label extra-small fw-bold">Lokasi Penempatan</label>
-                                    <input type="text" name="asset_location" class="form-control form-control-sm" placeholder="Lokasi (cth: Ruang Utama)">
+                                    <select name="asset_location" class="form-select form-select-sm">
+                                        <% if (typeof locations !== 'undefined' && locations.length > 0) { %>
+                                            <% locations.forEach(loc => { %>
+                                                <option value="<%= loc.name %>"><%= loc.name %></option>
+                                            <% }) %>
+                                        <% } else { %>
+                                            <option value="Ruang Utama Sholat">Ruang Utama Sholat</option>
+                                            <option value="Masjid">Masjid</option>
+                                        <% } %>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -542,7 +555,7 @@
                         <div id="edit_sectionAsset" class="col-12 border p-3 rounded bg-light d-none">
                             <h6 class="fw-bold text-primary mb-2"><i class="bi bi-box-fill me-1"></i>Detail Barang Aset Tetap</h6>
                             <div class="row g-2">
-                                <div class="col-md-6">
+                                <div class="col-md-5">
                                     <label class="form-label extra-small fw-bold">Pilih Barang Aset (Dari Katalog)</label>
                                     <select name="asset_name" id="edit_asset_select" class="form-select form-select-sm">
                                         <option value="">-- Pilih dari Katalog Aset --</option>
@@ -551,7 +564,11 @@
                                         <% }) %>
                                     </select>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
+                                    <label class="form-label extra-small fw-bold">Jumlah (Qty)</label>
+                                    <input type="number" name="asset_qty" id="edit_asset_qty" class="form-control form-control-sm fw-bold" value="1" min="1">
+                                </div>
+                                <div class="col-md-2">
                                     <label class="form-label extra-small fw-bold">Kondisi Barang</label>
                                     <select name="asset_condition" id="edit_asset_condition" class="form-select form-select-sm">
                                         <option value="Baik">Kondisi: Baik</option>
@@ -560,7 +577,16 @@
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label extra-small fw-bold">Lokasi Penempatan</label>
-                                    <input type="text" name="asset_location" id="edit_asset_location" class="form-control form-control-sm" placeholder="Lokasi (cth: Ruang Utama)">
+                                    <select name="asset_location" id="edit_asset_location" class="form-select form-select-sm">
+                                        <% if (typeof locations !== 'undefined' && locations.length > 0) { %>
+                                            <% locations.forEach(loc => { %>
+                                                <option value="<%= loc.name %>"><%= loc.name %></option>
+                                            <% }) %>
+                                        <% } else { %>
+                                            <option value="Ruang Utama Sholat">Ruang Utama Sholat</option>
+                                            <option value="Masjid">Masjid</option>
+                                        <% } %>
+                                    </select>
                                 </div>
                             </div>
                         </div>

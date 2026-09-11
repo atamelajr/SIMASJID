@@ -1,0 +1,127 @@
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div>
+        <h4 class="fw-bold text-dark mb-1"><i class="bi bi-geo-alt text-primary me-2"></i>Master Lokasi Penempatan Barang & Aset</h4>
+        <p class="text-muted small mb-0">Daftar lokasi penempatan aset tetap dan stok persediaan di lingkungan masjid.</p>
+    </div>
+    <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddLocation">
+        <i class="bi bi-plus-lg me-1"></i> Tambah Lokasi Baru
+    </button>
+</div>
+
+<div class="card card-custom p-3">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 140px;">Kode Lokasi</th>
+                        <th>Nama Lokasi Penempatan</th>
+                        <th>Deskripsi / Area Detail</th>
+                        <th class="text-end">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (locations && locations.length > 0) { %>
+                        <% locations.forEach(loc => { %>
+                            <tr>
+                                <td class="fw-bold text-primary font-monospace"><code><%= loc.code %></code></td>
+                                <td class="fw-bold text-dark"><i class="bi bi-geo-alt-fill text-danger me-2"></i><%= loc.name %></td>
+                                <td class="small text-muted"><%= loc.description || '-' %></td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-warning me-1" 
+                                            onclick='editLocation(<%- JSON.stringify(loc) %>)' title="Edit Lokasi">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </button>
+                                    <% if (user.role_name === 'Admin') { %>
+                                        <form action="/master/locations/delete/<%= loc.id %>" method="POST" class="d-inline" onsubmit="return confirm('Hapus lokasi penempatan ini?')">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Lokasi"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">Belum ada lokasi penempatan terdaftar.</td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah Lokasi -->
+<div class="modal fade" id="modalAddLocation" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Tambah Lokasi Penempatan Baru</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/master/locations/create" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Kode Lokasi (Otomatis)</label>
+                        <input type="text" name="code" class="form-control fw-bold font-monospace bg-light text-primary" value="<%= nextCode %>" required readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nama Lokasi Penempatan</label>
+                        <input type="text" name="name" class="form-control" placeholder="Contoh: Ruang Utama Sholat / Gudang Masjid" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Deskripsi / Detail Area</label>
+                        <textarea name="description" class="form-control" rows="2" placeholder="Contoh: Area sholat jamaah di lantai 1"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Lokasi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit Lokasi -->
+<div class="modal fade" id="modalEditLocation" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Edit Lokasi Penempatan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEditLocation" action="" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Kode Lokasi</label>
+                        <input type="text" id="edit_loc_code" name="code" class="form-control fw-bold font-monospace" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nama Lokasi Penempatan</label>
+                        <input type="text" id="edit_loc_name" name="name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Deskripsi / Detail Area</label>
+                        <textarea id="edit_loc_description" name="description" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-warning">Update Lokasi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function editLocation(loc) {
+    document.getElementById('formEditLocation').action = '/master/locations/update/' + loc.id;
+    document.getElementById('edit_loc_code').value = loc.code;
+    document.getElementById('edit_loc_name').value = loc.name;
+    document.getElementById('edit_loc_description').value = loc.description || '';
+    
+    new bootstrap.Modal(document.getElementById('modalEditLocation')).show();
+}
+</script>

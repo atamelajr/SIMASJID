@@ -110,8 +110,9 @@ class MasterModel {
     }
 
     // === 4. KATALOG BARANG & MATERIAL ===
-    static async getNextCodeForCategory(categoryName) {
-        const [catRows] = await db.query(
+    static async getNextCodeForCategory(categoryName, dbConn = null) {
+        const queryDb = dbConn || db;
+        const [catRows] = await queryDb.query(
             `SELECT account_code, type FROM item_categories WHERE name = ? LIMIT 1`,
             [categoryName]
         );
@@ -123,13 +124,23 @@ class MasterModel {
             prefix = categoryName && categoryName.toLowerCase().includes('bahan') ? '5021' : '1230';
         }
 
-        const [itemRows] = await db.query(
-            `SELECT code FROM master_items WHERE code LIKE ? OR category = ? ORDER BY id DESC`,
+        const [itemRows] = await queryDb.query(
+            `SELECT code FROM master_items WHERE code LIKE ? OR category = ?`,
+            [`${prefix}-%`, categoryName]
+        );
+        const [assetRows] = await queryDb.query(
+            `SELECT asset_code as code FROM fixed_assets WHERE asset_code LIKE ? OR category = ?`,
+            [`${prefix}-%`, categoryName]
+        );
+        const [invRows] = await queryDb.query(
+            `SELECT item_code as code FROM inventory_items WHERE item_code LIKE ? OR category = ?`,
             [`${prefix}-%`, categoryName]
         );
 
+        const allRows = [...itemRows, ...assetRows, ...invRows];
+
         let maxSeq = 0;
-        itemRows.forEach(r => {
+        allRows.forEach(r => {
             if (r.code && r.code.includes('-')) {
                 const parts = r.code.split('-');
                 const num = parseInt(parts[parts.length - 1]);
@@ -344,6 +355,47 @@ class MasterModel {
 
     static async deleteItemCategory(id) {
         await db.query(`DELETE FROM item_categories WHERE id = ?`, [id]);
+    }
+
+    // === 7. LOKASI BARANG & ASET ===
+    static async getAllLocations() {
+        const [rows] = await db.query(`SELECT * FROM asset_locations ORDER BY code ASC`);
+        return rows;
+    }
+
+    static async getNextLocationCode() {
+        const [rows] = await db.query(`SELECT code FROM asset_locations WHERE code LIKE 'LOC-%' ORDER BY id DESC LIMIT 1`);
+        let maxNum = 0;
+        if (rows.length > 0 && rows[0].code) {
+            const num = parseInt(rows[0].code.replace('LOC-', ''));
+            if (!isNaN(num)) maxNum = num;
+        }
+        const nextNum = maxNum + 1;
+        return `LOC-${String(nextNum).padStart(2, '0')}`;
+    }
+
+    static async createLocation({ code, name, description }) {
+        let finalCode = code;
+        if (!finalCode || finalCode.trim() === '') {
+            finalCode = await this.getNextLocationCode();
+        }
+
+        const [result] = await db.query(
+            `INSERT INTO asset_locations (code, name, description) VALUES (?, ?, ?)`,
+            [finalCode, name, description || '']
+        );
+        return result.insertId;
+    }
+
+    static async updateLocation(id, { code, name, description }) {
+        await db.query(
+            `UPDATE asset_locations SET code = ?, name = ?, description = ? WHERE id = ?`,
+            [code, name, description || '', id]
+        );
+    }
+
+    static async deleteLocation(id) {
+        await db.query(`DELETE FROM asset_locations WHERE id = ?`, [id]);
     }
 }
 

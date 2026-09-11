@@ -187,7 +187,7 @@
 
                 <!-- Master Data & Parameter Menu Section -->
                 <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
-                    <% const isMasterActive = typeof activeSubmenu !== 'undefined' && ['categories', 'accounts', 'item-categories', 'items', 'units', 'donors-mustahik'].includes(activeSubmenu); %>
+                    <% const isMasterActive = typeof activeSubmenu !== 'undefined' && ['categories', 'accounts', 'item-categories', 'items', 'locations', 'units', 'donors-mustahik'].includes(activeSubmenu); %>
                     <li class="nav-item">
                         <a href="#masterSubmenu" data-bs-toggle="collapse" class="nav-link d-flex align-items-center justify-content-between <%= isMasterActive ? '' : 'collapsed' %>" aria-expanded="<%= isMasterActive ? 'true' : 'false' %>">
                             <span><i class="bi bi-sliders"></i> Master & Parameter</span>
@@ -213,6 +213,11 @@
                                 <li>
                                     <a href="/master/items" class="nav-link <%= typeof activeSubmenu !== 'undefined' && activeSubmenu === 'items' ? 'active' : '' %>">
                                         <i class="bi bi-boxes"></i> Katalog Barang/Material
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="/master/locations" class="nav-link <%= typeof activeSubmenu !== 'undefined' && activeSubmenu === 'locations' ? 'active' : '' %>">
+                                        <i class="bi bi-geo-alt"></i> Lokasi Penempatan
                                     </a>
                                 </li>
                                 <li>

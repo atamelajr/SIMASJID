@@ -37,4 +37,10 @@ router.post('/item-categories/create', checkAuth, checkRole('Admin', 'Operator')
 router.post('/item-categories/update/:id', checkAuth, checkRole('Admin', 'Operator'), MasterController.updateItemCategory);
 router.post('/item-categories/delete/:id', checkAuth, checkRole('Admin'), MasterController.deleteItemCategory);
 
+// Locations (Lokasi Barang & Aset)
+router.get('/locations', checkAuth, checkRole('Admin', 'Operator'), MasterController.locationsIndex);
+router.post('/locations/create', checkAuth, checkRole('Admin', 'Operator'), MasterController.createLocation);
+router.post('/locations/update/:id', checkAuth, checkRole('Admin', 'Operator'), MasterController.updateLocation);
+router.post('/locations/delete/:id', checkAuth, checkRole('Admin'), MasterController.deleteLocation);
+
 module.exports = router;

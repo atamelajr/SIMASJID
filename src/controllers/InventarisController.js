@@ -9,6 +9,7 @@ class InventarisController {
             const items = await InventoryModel.getAllItems();
             const logs = await InventoryModel.getLogs();
             const masterItems = await MasterModel.getAllMasterItems();
+            const locations = await MasterModel.getAllLocations();
             const assetCatalog = masterItems.filter(item => item.type === 'Aset');
 
             res.render('inventaris/index', {
@@ -17,7 +18,8 @@ class InventarisController {
                 items,
                 logs,
                 assetCatalog,
-                masterItems
+                masterItems,
+                locations
             });
         } catch (err) {
             console.error('Inventaris Error:', err);
@@ -46,16 +48,18 @@ class InventarisController {
 
     static async createAsset(req, res) {
         try {
-            const { name, brand, model_no_plate, purchase_date, cost, condition_status, location, description } = req.body;
+            const { name, brand, model_no_plate, source_origin, purchase_date, cost, condition_status, location, description, qty } = req.body;
             await AssetModel.createAsset({
                 name,
                 brand,
                 model_no_plate,
+                source_origin,
                 purchase_date,
                 cost: parseFloat(cost || 0),
                 condition_status,
                 location,
-                description
+                description,
+                qty: parseInt(qty) || 1
             });
             res.redirect('/inventaris');
         } catch (err) {
@@ -79,11 +83,12 @@ class InventarisController {
     static async updateAssetDetail(req, res) {
         try {
             const { id } = req.params;
-            const { name, brand, model_no_plate, purchase_date, cost, condition_status, location, description } = req.body;
+            const { name, brand, model_no_plate, source_origin, purchase_date, cost, condition_status, location, description } = req.body;
             await AssetModel.updateAssetDetail(id, {
                 name,
                 brand,
                 model_no_plate,
+                source_origin,
                 purchase_date,
                 cost: parseFloat(cost || 0),
                 condition_status,
