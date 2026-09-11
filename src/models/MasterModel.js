@@ -172,6 +172,21 @@ class MasterModel {
             params.push(`%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`);
         }
 
+        // Check if pagination is explicitly requested
+        const isPaginated = filters.paginate === true || filters.page !== undefined || filters.limit !== undefined;
+
+        if (!isPaginated) {
+            let sql = `
+                SELECT m.*, u.code as unit_code, u.name as unit_name 
+                FROM master_items m 
+                LEFT JOIN units u ON m.unit_id = u.id 
+                ${whereSql}
+                ORDER BY m.type ASC, m.code ASC
+            `;
+            const [rows] = await db.query(sql, params);
+            return rows;
+        }
+
         // Count Total Records matching filters
         const countSql = `SELECT COUNT(*) as total FROM master_items m ${whereSql}`;
         const [countRows] = await db.query(countSql, params);
