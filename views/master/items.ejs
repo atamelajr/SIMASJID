@@ -172,6 +172,8 @@
 
 <script>
 const nextCodes = <%- JSON.stringify(nextCodes) %>;
+const dbItemCategories = <%- typeof itemCategories !== 'undefined' ? JSON.stringify(itemCategories) : '[]' %>;
+
 const assetCategories = [
     'Tanah & Lahan',
     'Bangunan & Infrastruktur',
@@ -192,12 +194,25 @@ function populateCategoryDropdown(selectId, itemType, selectedVal = null) {
     const select = document.getElementById(selectId);
     if (!select) return;
     select.innerHTML = '';
-    const cats = itemType === 'Aset' ? assetCategories : materialCategories;
+
+    let cats = [];
+    if (dbItemCategories && dbItemCategories.length > 0) {
+        cats = dbItemCategories.filter(c => c.type === itemType).map(c => ({
+            name: c.name,
+            code: c.account_code
+        }));
+    }
+    
+    if (cats.length === 0) {
+        const defaultList = itemType === 'Aset' ? assetCategories : materialCategories;
+        cats = defaultList.map(name => ({ name, code: '' }));
+    }
+
     cats.forEach(cat => {
         const opt = document.createElement('option');
-        opt.value = cat;
-        opt.textContent = cat;
-        if (selectedVal && selectedVal === cat) {
+        opt.value = cat.name;
+        opt.textContent = cat.code ? `${cat.code} - ${cat.name}` : cat.name;
+        if (selectedVal && selectedVal === cat.name) {
             opt.selected = true;
         }
         select.appendChild(opt);

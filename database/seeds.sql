@@ -58,6 +58,20 @@ INSERT INTO units (id, code, name) VALUES
 (10, 'set', 'Set')
 ON DUPLICATE KEY UPDATE name=VALUES(name);
 
+-- Master Kategori Barang & Aset (Standar COA ISAK 35)
+INSERT INTO item_categories (id, account_code, name, type, description) VALUES
+(1, '1210', 'Tanah & Lahan', 'Aset', 'Tanah Bangunan Masjid, Lahan Parkir, Tanah Wakaf Pemakaman'),
+(2, '1220', 'Bangunan & Infrastruktur', 'Aset', 'Gedung Main Hall Sholat, Menara Masjid, Area Wudhu & Toilet, Gazebo'),
+(3, '1230', 'Peralatan & Mesin', 'Aset', 'Sound System, AC Split, Projector, Genset, Jam Digital Running Text'),
+(4, '1240', 'Meubiler & Mebel', 'Aset', 'Mimbar Jati, Karpet Sajadah Roll, Lemari Al-Qur\'an, Meja Rapat DKM'),
+(5, '1290', 'Aset Tetap Lainnya', 'Aset', 'Aset tetap modal fisik masjid lainnya'),
+(6, '5021', 'Bahan Bangunan', 'Material', 'Semen, Pasir, Besi, Cat, Keramik untuk proyek/renovasi'),
+(7, '5031', 'Bahan & Alat Kebersihan', 'Material', 'Cairan pembersih lantai, sabun, kain pel, sapu, trash bag'),
+(8, '5032', 'Alat Tulis Kantor (ATK)', 'Material', 'Kertas A4, pulpen, tinta printer, amplop infaq, buku kas'),
+(9, '5033', 'Perlengkapan Dapur & Harian', 'Material', 'Kopi, gula, tissue, gelas plastik, gas LPG'),
+(10, '5039', 'Material dan Bahan Lainnya', 'Material', 'Persediaan material operasional habis pakai lainnya')
+ON DUPLICATE KEY UPDATE name=VALUES(name), type=VALUES(type), description=VALUES(description);
+
 -- Master Katalog Barang & Material Standar
 INSERT INTO master_items (id, code, name, type, unit_id, category, description) VALUES
 (1, 'ITM-AST-01', 'Sound System Yamaha Mixer & Speaker', 'Aset', 10, 'Peralatan & Mesin', 'Set pengeras suara utama masjid'),

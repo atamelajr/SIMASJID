@@ -5,6 +5,7 @@ USE simasjid_db;
 
 -- Drop Tables in reverse dependency order
 SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS item_categories;
 DROP TABLE IF EXISTS master_items;
 DROP TABLE IF EXISTS sessions;
 DROP TABLE IF EXISTS activity_logs;
@@ -109,14 +110,25 @@ CREATE TABLE units (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
--- 8. Tabel Master Katalog Barang & Material
+-- 8. Tabel Master Kategori Barang & Aset (COA ISAK 35)
+CREATE TABLE item_categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    account_code VARCHAR(20) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    type ENUM('Aset', 'Material') NOT NULL DEFAULT 'Aset',
+    description TEXT NULL,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- 9. Tabel Master Katalog Barang & Material
 CREATE TABLE master_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
     code VARCHAR(50) NOT NULL UNIQUE,
     name VARCHAR(150) NOT NULL,
     type ENUM('Aset', 'Material') NOT NULL DEFAULT 'Material', -- 'Aset' (Barang Modal) / 'Material' (Persediaan)
     unit_id INT NULL,
-    category VARCHAR(50) DEFAULT 'Operasional', -- 'Pembangunan', 'Operasional', 'Peralatan', 'Lainnya'
+    category VARCHAR(50) DEFAULT 'Material dan Bahan Lainnya',
     description TEXT,
     is_active TINYINT(1) DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

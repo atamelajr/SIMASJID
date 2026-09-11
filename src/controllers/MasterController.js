@@ -143,12 +143,14 @@ class MasterController {
         try {
             const items = await MasterModel.getAllMasterItems();
             const units = await MasterModel.getAllUnits();
+            const itemCategories = await MasterModel.getAllItemCategories();
             const nextCodes = await MasterModel.getNextItemCodes();
             res.render('master/items', {
                 title: 'Master Parameter - Katalog Barang & Material',
                 activeSubmenu: 'items',
                 items,
                 units,
+                itemCategories,
                 nextCodes
             });
         } catch (err) {
@@ -231,6 +233,53 @@ class MasterController {
         } catch (err) {
             console.error('Delete Donor/Mustahik Error:', err);
             res.redirect('/master/donors-mustahik');
+        }
+    }
+
+    // 6. Kategori Barang & Aset (COA ISAK 35)
+    static async itemCategoriesIndex(req, res) {
+        try {
+            const itemCategories = await MasterModel.getAllItemCategories();
+            const nextCodes = await MasterModel.getNextItemCategoryCodes();
+            res.render('master/item_categories', {
+                title: 'Master Parameter - Kategori Barang & Aset (ISAK 35)',
+                activeSubmenu: 'item-categories',
+                itemCategories,
+                nextCodes
+            });
+        } catch (err) {
+            console.error('Master Item Categories Error:', err);
+            res.redirect('/dashboard');
+        }
+    }
+
+    static async createItemCategory(req, res) {
+        try {
+            await MasterModel.createItemCategory(req.body);
+            res.redirect('/master/item-categories');
+        } catch (err) {
+            console.error('Create Item Category Error:', err);
+            res.redirect('/master/item-categories');
+        }
+    }
+
+    static async updateItemCategory(req, res) {
+        try {
+            await MasterModel.updateItemCategory(req.params.id, req.body);
+            res.redirect('/master/item-categories');
+        } catch (err) {
+            console.error('Update Item Category Error:', err);
+            res.redirect('/master/item-categories');
+        }
+    }
+
+    static async deleteItemCategory(req, res) {
+        try {
+            await MasterModel.deleteItemCategory(req.params.id);
+            res.redirect('/master/item-categories');
+        } catch (err) {
+            console.error('Delete Item Category Error:', err);
+            res.redirect('/master/item-categories');
         }
     }
 }

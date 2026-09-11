@@ -31,6 +31,10 @@ router.post('/items/delete/:id', checkAuth, checkRole('Admin'), MasterController
 router.get('/donors-mustahik', checkAuth, checkRole('Admin', 'Operator'), MasterController.donorsMustahikIndex);
 router.post('/donors-mustahik/create', checkAuth, checkRole('Admin', 'Operator'), MasterController.createDonorMustahik);
 router.post('/donors-mustahik/update/:id', checkAuth, checkRole('Admin', 'Operator'), MasterController.updateDonorMustahik);
-router.post('/donors-mustahik/delete/:id', checkAuth, checkRole('Admin'), MasterController.deleteDonorMustahik);
+// Item Categories & COA (Aset & Material)
+router.get('/item-categories', checkAuth, checkRole('Admin', 'Operator'), MasterController.itemCategoriesIndex);
+router.post('/item-categories/create', checkAuth, checkRole('Admin', 'Operator'), MasterController.createItemCategory);
+router.post('/item-categories/update/:id', checkAuth, checkRole('Admin', 'Operator'), MasterController.updateItemCategory);
+router.post('/item-categories/delete/:id', checkAuth, checkRole('Admin'), MasterController.deleteItemCategory);
 
 module.exports = router;

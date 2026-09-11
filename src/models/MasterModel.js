@@ -215,6 +215,68 @@ class MasterModel {
     static async deleteDonorMustahik(id) {
         await db.query(`DELETE FROM donors_mustahik WHERE id=?`, [id]);
     }
+
+    // === 6. KATEGORI BARANG & ASET (ISAK 35) ===
+    static async getNextItemCategoryCodes() {
+        const [rowsAset] = await db.query(
+            `SELECT account_code FROM item_categories WHERE type = 'Aset' AND account_code REGEXP '^[0-9]+$' ORDER BY CAST(account_code AS UNSIGNED) DESC LIMIT 1`
+        );
+        const [rowsMaterial] = await db.query(
+            `SELECT account_code FROM item_categories WHERE type = 'Material' AND account_code REGEXP '^[0-9]+$' ORDER BY CAST(account_code AS UNSIGNED) DESC LIMIT 1`
+        );
+
+        let nextAset = 1210;
+        if (rowsAset.length > 0) {
+            const num = parseInt(rowsAset[0].account_code);
+            if (!isNaN(num)) nextAset = num + 10;
+        }
+
+        let nextMaterial = 5021;
+        if (rowsMaterial.length > 0) {
+            const num = parseInt(rowsMaterial[0].account_code);
+            if (!isNaN(num)) nextMaterial = num + 1;
+        }
+
+        return {
+            Aset: String(nextAset),
+            Material: String(nextMaterial)
+        };
+    }
+
+    static async getAllItemCategories() {
+        const [rows] = await db.query(`SELECT * FROM item_categories ORDER BY type ASC, account_code ASC`);
+        return rows;
+    }
+
+    static async getItemCategoriesByType(type) {
+        const [rows] = await db.query(`SELECT * FROM item_categories WHERE type = ? AND is_active = 1 ORDER BY account_code ASC`, [type]);
+        return rows;
+    }
+
+    static async createItemCategory({ account_code, name, type, description }) {
+        let finalCode = account_code;
+        if (!finalCode || finalCode.trim() === '') {
+            const nextCodes = await this.getNextItemCategoryCodes();
+            finalCode = nextCodes[type] || '1210';
+        }
+
+        const [result] = await db.query(
+            `INSERT INTO item_categories (account_code, name, type, description) VALUES (?, ?, ?, ?)`,
+            [finalCode, name, type, description || '']
+        );
+        return result.insertId;
+    }
+
+    static async updateItemCategory(id, { account_code, name, type, description }) {
+        await db.query(
+            `UPDATE item_categories SET account_code = ?, name = ?, type = ?, description = ? WHERE id = ?`,
+            [account_code, name, type, description || '', id]
+        );
+    }
+
+    static async deleteItemCategory(id) {
+        await db.query(`DELETE FROM item_categories WHERE id = ?`, [id]);
+    }
 }
 
 module.exports = MasterModel;

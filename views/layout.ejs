@@ -187,7 +187,7 @@
 
                 <!-- Master Data & Parameter Menu Section -->
                 <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
-                    <% const isMasterActive = typeof activeSubmenu !== 'undefined' && ['categories', 'accounts', 'items', 'units', 'donors-mustahik'].includes(activeSubmenu); %>
+                    <% const isMasterActive = typeof activeSubmenu !== 'undefined' && ['categories', 'accounts', 'item-categories', 'items', 'units', 'donors-mustahik'].includes(activeSubmenu); %>
                     <li class="nav-item">
                         <a href="#masterSubmenu" data-bs-toggle="collapse" class="nav-link d-flex align-items-center justify-content-between <%= isMasterActive ? '' : 'collapsed' %>" aria-expanded="<%= isMasterActive ? 'true' : 'false' %>">
                             <span><i class="bi bi-sliders"></i> Master & Parameter</span>
@@ -197,7 +197,12 @@
                             <ul class="nav flex-column sub-menu ps-2">
                                 <li>
                                     <a href="/master/categories" class="nav-link <%= typeof activeSubmenu !== 'undefined' && activeSubmenu === 'categories' ? 'active' : '' %>">
-                                        <i class="bi bi-diagram-3"></i> Kategori & COA
+                                        <i class="bi bi-diagram-3"></i> Kategori Transaksi & COA
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="/master/item-categories" class="nav-link <%= typeof activeSubmenu !== 'undefined' && activeSubmenu === 'item-categories' ? 'active' : '' %>">
+                                        <i class="bi bi-tags"></i> Kategori Barang & Aset
                                     </a>
                                 </li>
                                 <li>
