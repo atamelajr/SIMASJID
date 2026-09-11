@@ -2,6 +2,35 @@ const db = require('../../config/database');
 const MasterModel = require('./MasterModel');
 
 class TransactionModel {
+    /**
+     * Pembagian Nilai Perolehan Aset Tetap:
+     * Nilai barang dibulatkan ke ribuan terdekat (tanpa desimal),
+     * sisa selisih pembagian ditambahkan ke unit barang terakhir.
+     */
+    static calculateUnitCosts(totalCost, qty) {
+        const numQty = Math.max(1, parseInt(qty) || 1);
+        const cost = parseFloat(totalCost || 0);
+
+        let baseUnitCost;
+        if (cost >= 1000 * numQty) {
+            baseUnitCost = Math.floor((cost / numQty) / 1000) * 1000;
+        } else {
+            baseUnitCost = Math.floor(cost / numQty);
+        }
+
+        const totalAllocated = baseUnitCost * numQty;
+        const remainder = cost - totalAllocated;
+
+        const costs = [];
+        for (let i = 0; i < numQty; i++) {
+            if (i === numQty - 1) {
+                costs.push(baseUnitCost + remainder);
+            } else {
+                costs.push(baseUnitCost);
+            }
+        }
+        return costs;
+    }
     static async getDashboardSummary() {
         const [cashRows] = await db.query(
             `SELECT SUM(balance) as total_saldo FROM cash_accounts`
@@ -191,13 +220,23 @@ class TransactionModel {
             const subType = catRows[0]?.sub_type;
 
             if ((subType === 'Modal' || asset_item) && asset_item && asset_item.name) {
-                const [miRows] = await connection.query(`SELECT code, category FROM master_items WHERE name = ? LIMIT 1`, [asset_item.name]);
+                let [miRows] = await connection.query(`SELECT code, category FROM master_items WHERE name = ? LIMIT 1`, [asset_item.name]);
                 const assetCategory = miRows[0]?.category || asset_item.category || 'Peralatan & Mesin';
-                const assetQty = Math.max(1, parseInt(asset_item.qty) || 1);
-                const unitCost = assetQty > 0 ? (finalAmount / assetQty) : finalAmount;
-                const sourceOrigin = asset_item.source_origin || (isInKind === 1 || type === 'Penerimaan' ? 'Hibah' : 'Pembelian');
+                let baseSku;
 
-                let baseSku = miRows.length > 0 ? miRows[0].code : await MasterModel.getNextCodeForCategory(assetCategory, connection);
+                if (miRows.length > 0) {
+                    baseSku = miRows[0].code;
+                } else {
+                    baseSku = await MasterModel.getNextCodeForCategory(assetCategory, connection);
+                    await connection.query(
+                        `INSERT INTO master_items (code, name, type, category, description) VALUES (?, ?, 'Aset', ?, ?)`,
+                        [baseSku, asset_item.name, assetCategory, 'Auto-registered from Transaction']
+                    );
+                }
+
+                const assetQty = Math.max(1, parseInt(asset_item.qty) || 1);
+                const sourceOrigin = asset_item.source_origin || (isInKind === 1 || type === 'Penerimaan' ? 'Hibah' : 'Pembelian');
+                const unitCosts = this.calculateUnitCosts(finalAmount, assetQty);
 
                 const [regRows] = await connection.query(
                     `SELECT MAX(register_no) as max_reg FROM fixed_assets WHERE name = ? OR asset_code LIKE ?`,
@@ -208,6 +247,7 @@ class TransactionModel {
                 for (let i = 0; i < assetQty; i++) {
                     const regNo = startReg + 1 + i;
                     const assetCode = `${baseSku}.${String(regNo).padStart(3, '0')}`;
+                    const unitCost = unitCosts[i];
 
                     await connection.query(
                         `INSERT INTO fixed_assets (asset_code, register_no, name, category, source_origin, purchase_date, cost, condition_status, location, transaction_id)
@@ -218,11 +258,20 @@ class TransactionModel {
             }
 
             if ((subType === 'Material' || inventory_item) && inventory_item && inventory_item.name) {
-                const [miRows] = await connection.query(`SELECT code, category FROM master_items WHERE name = ? LIMIT 1`, [inventory_item.name]);
+                let [miRows] = await connection.query(`SELECT code, category FROM master_items WHERE name = ? LIMIT 1`, [inventory_item.name]);
                 const categoryType = inventory_item.category || miRows[0]?.category || 'Material dan Bahan Lainnya';
                 let itemCode = inventory_item.code;
-                if (!itemCode || itemCode.startsWith('INV-')) {
-                    itemCode = miRows[0]?.code || await MasterModel.getNextCodeForCategory(categoryType);
+
+                if (miRows.length > 0) {
+                    itemCode = miRows[0].code;
+                } else {
+                    if (!itemCode || itemCode.startsWith('INV-')) {
+                        itemCode = await MasterModel.getNextCodeForCategory(categoryType, connection);
+                    }
+                    await connection.query(
+                        `INSERT INTO master_items (code, name, type, category, description) VALUES (?, ?, 'Material', ?, ?)`,
+                        [itemCode, inventory_item.name, categoryType, 'Auto-registered from Transaction']
+                    );
                 }
                 
                 const [existingItem] = await connection.query(
@@ -443,9 +492,19 @@ class TransactionModel {
 
             if (asset_item && asset_item.name) {
                 await connection.query(`DELETE FROM inventory_logs WHERE transaction_id = ?`, [id]);
-                const [miRows] = await connection.query(`SELECT code, category FROM master_items WHERE name = ? LIMIT 1`, [asset_item.name]);
+                let [miRows] = await connection.query(`SELECT code, category FROM master_items WHERE name = ? LIMIT 1`, [asset_item.name]);
                 const assetCategory = miRows[0]?.category || asset_item.category || 'Peralatan & Mesin';
-                let baseSku = miRows.length > 0 ? miRows[0].code : await MasterModel.getNextCodeForCategory(assetCategory, connection);
+                let baseSku;
+
+                if (miRows.length > 0) {
+                    baseSku = miRows[0].code;
+                } else {
+                    baseSku = await MasterModel.getNextCodeForCategory(assetCategory, connection);
+                    await connection.query(
+                        `INSERT INTO master_items (code, name, type, category, description) VALUES (?, ?, 'Aset', ?, ?)`,
+                        [baseSku, asset_item.name, assetCategory, 'Auto-registered from Transaction Edit']
+                    );
+                }
 
                 const [existingAsset] = await connection.query(`SELECT id, asset_code, register_no FROM fixed_assets WHERE transaction_id = ?`, [id]);
                 if (existingAsset.length > 0) {
@@ -469,9 +528,19 @@ class TransactionModel {
                 }
             } else if (inventory_item && inventory_item.name) {
                 await connection.query(`DELETE FROM fixed_assets WHERE transaction_id = ?`, [id]);
-                const [miRows] = await connection.query(`SELECT code, category FROM master_items WHERE name = ? LIMIT 1`, [inventory_item.name]);
+                let [miRows] = await connection.query(`SELECT code, category FROM master_items WHERE name = ? LIMIT 1`, [inventory_item.name]);
                 const categoryType = inventory_item.category || miRows[0]?.category || 'Material dan Bahan Lainnya';
-                let itemCode = miRows[0]?.code || await MasterModel.getNextCodeForCategory(categoryType);
+                let itemCode;
+
+                if (miRows.length > 0) {
+                    itemCode = miRows[0].code;
+                } else {
+                    itemCode = await MasterModel.getNextCodeForCategory(categoryType, connection);
+                    await connection.query(
+                        `INSERT INTO master_items (code, name, type, category, description) VALUES (?, ?, 'Material', ?, ?)`,
+                        [itemCode, inventory_item.name, categoryType, 'Auto-registered from Transaction Edit']
+                    );
+                }
                 
                 const [existingItem] = await connection.query(
                     `SELECT id FROM inventory_items WHERE name = ? AND unit = ?`,

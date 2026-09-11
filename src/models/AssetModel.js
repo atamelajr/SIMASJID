@@ -2,6 +2,31 @@ const db = require('../../config/database');
 const MasterModel = require('./MasterModel');
 
 class AssetModel {
+    static calculateUnitCosts(totalCost, qty) {
+        const numQty = Math.max(1, parseInt(qty) || 1);
+        const cost = parseFloat(totalCost || 0);
+
+        let baseUnitCost;
+        if (cost >= 1000 * numQty) {
+            baseUnitCost = Math.floor((cost / numQty) / 1000) * 1000;
+        } else {
+            baseUnitCost = Math.floor(cost / numQty);
+        }
+
+        const totalAllocated = baseUnitCost * numQty;
+        const remainder = cost - totalAllocated;
+
+        const costs = [];
+        for (let i = 0; i < numQty; i++) {
+            if (i === numQty - 1) {
+                costs.push(baseUnitCost + remainder);
+            } else {
+                costs.push(baseUnitCost);
+            }
+        }
+        return costs;
+    }
+
     static async getAllAssets() {
         const [rows] = await db.query(
             `SELECT a.*, mi.code as master_sku, t.transaction_code 
@@ -15,18 +40,25 @@ class AssetModel {
 
     static async createAsset(data) {
         let category = data.category;
-        const [miRows] = await db.query(`SELECT code, category FROM master_items WHERE name = ? LIMIT 1`, [data.name]);
+        let [miRows] = await db.query(`SELECT code, category FROM master_items WHERE name = ? LIMIT 1`, [data.name]);
+
+        let baseSku;
         if (miRows.length > 0) {
+            baseSku = miRows[0].code;
             category = category || miRows[0].category;
+        } else {
+            baseSku = await MasterModel.getNextCodeForCategory(category || 'Peralatan & Mesin');
+            await db.query(
+                `INSERT INTO master_items (code, name, type, category, description) VALUES (?, ?, 'Aset', ?, ?)`,
+                [baseSku, data.name, category || 'Peralatan & Mesin', data.description || 'Auto-registered from Aset Input']
+            );
         }
         category = category || 'Peralatan & Mesin';
-
-        let baseSku = miRows.length > 0 ? miRows[0].code : await MasterModel.getNextCodeForCategory(category);
 
         const sourceOrigin = data.source_origin || 'Pembelian';
         const qty = Math.max(1, parseInt(data.qty) || 1);
         const totalCost = parseFloat(data.cost || 0);
-        const unitCost = qty > 0 ? (totalCost / qty) : totalCost;
+        const unitCosts = this.calculateUnitCosts(totalCost, qty);
 
         const [regRows] = await db.query(
             `SELECT MAX(register_no) as max_reg FROM fixed_assets WHERE name = ? OR asset_code LIKE ?`,
@@ -39,6 +71,7 @@ class AssetModel {
         for (let i = 0; i < qty; i++) {
             const regNo = startReg + 1 + i;
             const assetCode = `${baseSku}.${String(regNo).padStart(3, '0')}`;
+            const unitCost = unitCosts[i];
 
             const [result] = await db.query(
                 `INSERT INTO fixed_assets (asset_code, register_no, name, brand, model_no_plate, category, source_origin, purchase_date, cost, condition_status, location, description, transaction_id)
@@ -75,9 +108,15 @@ class AssetModel {
 
     static async updateAssetDetail(id, data) {
         let category = data.category;
-        if (!category && data.name) {
-            const [miRows] = await db.query(`SELECT category FROM master_items WHERE name = ? LIMIT 1`, [data.name]);
-            category = miRows[0]?.category;
+        let [miRows] = await db.query(`SELECT code, category FROM master_items WHERE name = ? LIMIT 1`, [data.name]);
+        if (miRows.length > 0) {
+            category = category || miRows[0].category;
+        } else if (data.name) {
+            let baseSku = await MasterModel.getNextCodeForCategory(category || 'Peralatan & Mesin');
+            await db.query(
+                `INSERT INTO master_items (code, name, type, category, description) VALUES (?, ?, 'Aset', ?, ?)`,
+                [baseSku, data.name, category || 'Peralatan & Mesin', data.description || 'Auto-registered from Aset Edit']
+            );
         }
         category = category || 'Peralatan & Mesin';
 
