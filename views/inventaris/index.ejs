@@ -18,25 +18,70 @@
 <!-- Tabs Navigation -->
 <ul class="nav nav-tabs mb-4" id="inventarisTab" role="tablist">
     <li class="nav-item" role="presentation">
-        <button class="nav-link active fw-semibold" id="aset-tab" data-bs-toggle="tab" data-bs-target="#aset" type="button" role="tab">
-            <i class="bi bi-box-seam me-1"></i> Aset Tetap (Modal) (<%= assets.length %>)
+        <button class="nav-link <%= activeTab === 'aset' ? 'active' : '' %> fw-semibold" id="aset-tab" data-bs-toggle="tab" data-bs-target="#aset" type="button" role="tab">
+            <i class="bi bi-box-seam me-1"></i> Aset Tetap (Modal) (<%= assetPagination.totalCount %>)
         </button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link fw-semibold" id="persediaan-tab" data-bs-toggle="tab" data-bs-target="#persediaan" type="button" role="tab">
-            <i class="bi bi-boxes me-1"></i> Persediaan & Material (<%= items.length %>)
+        <button class="nav-link <%= activeTab === 'persediaan' ? 'active' : '' %> fw-semibold" id="persediaan-tab" data-bs-toggle="tab" data-bs-target="#persediaan" type="button" role="tab">
+            <i class="bi bi-boxes me-1"></i> Persediaan & Material (<%= inventoryPagination.totalCount %>)
         </button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link fw-semibold" id="logs-tab" data-bs-toggle="tab" data-bs-target="#logs" type="button" role="tab">
-            <i class="bi bi-clock-history me-1"></i> Log Masuk / Keluar (<%= logs.length %>)
+        <button class="nav-link <%= activeTab === 'logs' ? 'active' : '' %> fw-semibold" id="logs-tab" data-bs-toggle="tab" data-bs-target="#logs" type="button" role="tab">
+            <i class="bi bi-clock-history me-1"></i> Log Masuk / Keluar (<%= logPagination.totalCount %>)
         </button>
     </li>
 </ul>
 
 <div class="tab-content" id="inventarisTabContent">
     <!-- Tab 1: Aset Tetap -->
-    <div class="tab-pane fade show active" id="aset" role="tabpanel">
+    <div class="tab-pane fade <%= activeTab === 'aset' ? 'show active' : '' %>" id="aset" role="tabpanel">
+        <!-- Filter Card Aset Tetap -->
+        <div class="card card-custom mb-3 p-3 bg-light-subtle">
+            <form method="GET" action="/inventaris" class="row g-2 align-items-center">
+                <input type="hidden" name="tab" value="aset">
+                <div class="col-md-3">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" name="asset_search" class="form-control" placeholder="Cari Nama / Kode / Merk / Model..." value="<%= assetFilters.search || '' %>">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="asset_category" class="form-select form-select-sm">
+                        <option value="">-- Semua Kategori --</option>
+                        <% if (typeof assetCategories !== 'undefined' && assetCategories.length > 0) { %>
+                            <% assetCategories.forEach(cat => { %>
+                                <option value="<%= cat.name %>" <%= assetFilters.category === cat.name ? 'selected' : '' %>><%= cat.name %></option>
+                            <% }) %>
+                        <% } %>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="asset_condition" class="form-select form-select-sm">
+                        <option value="">-- Semua Kondisi --</option>
+                        <option value="Baik" <%= assetFilters.condition === 'Baik' ? 'selected' : '' %>>Baik</option>
+                        <option value="Rusak Ringan" <%= assetFilters.condition === 'Rusak Ringan' ? 'selected' : '' %>>Rusak Ringan</option>
+                        <option value="Rusak Berat" <%= assetFilters.condition === 'Rusak Berat' ? 'selected' : '' %>>Rusak Berat</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="asset_location" class="form-select form-select-sm">
+                        <option value="">-- Semua Lokasi --</option>
+                        <% if (typeof locations !== 'undefined' && locations.length > 0) { %>
+                            <% locations.forEach(loc => { %>
+                                <option value="<%= loc.name %>" <%= assetFilters.location === loc.name ? 'selected' : '' %>><%= loc.name %></option>
+                            <% }) %>
+                        <% } %>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex gap-1">
+                    <button type="submit" class="btn btn-sm btn-primary flex-fill"><i class="bi bi-funnel me-1"></i>Filter</button>
+                    <a href="/inventaris?tab=aset" class="btn btn-sm btn-outline-secondary" title="Reset Filter"><i class="bi bi-arrow-counterclockwise"></i></a>
+                </div>
+            </form>
+        </div>
+
         <div class="card card-custom p-3">
             <div class="card-body">
                 <h5 class="fw-bold text-dark mb-3">Daftar Barang Aset Tetap Masjid</h5>
@@ -115,12 +160,76 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Pagination Bar for Aset Tetap -->
+                <div class="d-flex flex-wrap align-items-center justify-content-between pt-3 border-top mt-3 gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="small text-muted">Tampilkan:</span>
+                        <select class="form-select form-select-sm" style="width: 90px;" onchange="location = this.value;">
+                            <% ['10', '25', '50', '100', 'all'].forEach(l => { %>
+                                <option value="/inventaris?tab=aset&asset_limit=<%= l %>&asset_search=<%= encodeURIComponent(assetFilters.search || '') %>&asset_category=<%= encodeURIComponent(assetFilters.category || '') %>&asset_condition=<%= encodeURIComponent(assetFilters.condition || '') %>&asset_location=<%= encodeURIComponent(assetFilters.location || '') %>" <%= assetPagination.limit == l ? 'selected' : '' %>>
+                                    <%= l === 'all' ? 'Semua' : l %>
+                                </option>
+                            <% }) %>
+                        </select>
+                        <span class="small text-muted ms-2">
+                            Showing <%= assetPagination.totalCount > 0 ? (assetPagination.page - 1) * (assetPagination.limit === 'all' ? assetPagination.totalCount : parseInt(assetPagination.limit)) + 1 : 0 %> 
+                            to <%= assetPagination.limit === 'all' ? assetPagination.totalCount : Math.min(assetPagination.page * parseInt(assetPagination.limit), assetPagination.totalCount) %> 
+                            of <%= assetPagination.totalCount %> items
+                        </span>
+                    </div>
+                    
+                    <% if (assetPagination.totalPages > 1 && assetPagination.limit !== 'all') { %>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item <%= assetPagination.page <= 1 ? 'disabled' : '' %>">
+                                    <a class="page-link" href="/inventaris?tab=aset&asset_page=<%= assetPagination.page - 1 %>&asset_limit=<%= assetPagination.limit %>&asset_search=<%= encodeURIComponent(assetFilters.search || '') %>&asset_category=<%= encodeURIComponent(assetFilters.category || '') %>&asset_condition=<%= encodeURIComponent(assetFilters.condition || '') %>&asset_location=<%= encodeURIComponent(assetFilters.location || '') %>">Previous</a>
+                                </li>
+                                <% for (let p = 1; p <= assetPagination.totalPages; p++) { %>
+                                    <li class="page-item <%= assetPagination.page === p ? 'active' : '' %>">
+                                        <a class="page-link" href="/inventaris?tab=aset&asset_page=<%= p %>&asset_limit=<%= assetPagination.limit %>&asset_search=<%= encodeURIComponent(assetFilters.search || '') %>&asset_category=<%= encodeURIComponent(assetFilters.category || '') %>&asset_condition=<%= encodeURIComponent(assetFilters.condition || '') %>&asset_location=<%= encodeURIComponent(assetFilters.location || '') %>"><%= p %></a>
+                                    </li>
+                                <% } %>
+                                <li class="page-item <%= assetPagination.page >= assetPagination.totalPages ? 'disabled' : '' %>">
+                                    <a class="page-link" href="/inventaris?tab=aset&asset_page=<%= assetPagination.page + 1 %>&asset_limit=<%= assetPagination.limit %>&asset_search=<%= encodeURIComponent(assetFilters.search || '') %>&asset_category=<%= encodeURIComponent(assetFilters.category || '') %>&asset_condition=<%= encodeURIComponent(assetFilters.condition || '') %>&asset_location=<%= encodeURIComponent(assetFilters.location || '') %>">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    <% } %>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Tab 2: Persediaan -->
-    <div class="tab-pane fade" id="persediaan" role="tabpanel">
+    <div class="tab-pane fade <%= activeTab === 'persediaan' ? 'show active' : '' %>" id="persediaan" role="tabpanel">
+        <!-- Filter Card Persediaan -->
+        <div class="card card-custom mb-3 p-3 bg-light-subtle">
+            <form method="GET" action="/inventaris" class="row g-2 align-items-center">
+                <input type="hidden" name="tab" value="persediaan">
+                <div class="col-md-5">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" name="inv_search" class="form-control" placeholder="Cari Nama / Kode Barang Persediaan..." value="<%= inventoryFilters.search || '' %>">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <select name="inv_category" class="form-select form-select-sm">
+                        <option value="">-- Semua Kategori --</option>
+                        <% if (typeof inventoryCategories !== 'undefined' && inventoryCategories.length > 0) { %>
+                            <% inventoryCategories.forEach(cat => { %>
+                                <option value="<%= cat.name %>" <%= inventoryFilters.category === cat.name ? 'selected' : '' %>><%= cat.name %></option>
+                            <% }) %>
+                        <% } %>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex gap-1">
+                    <button type="submit" class="btn btn-sm btn-primary flex-fill"><i class="bi bi-funnel me-1"></i>Filter</button>
+                    <a href="/inventaris?tab=persediaan" class="btn btn-sm btn-outline-secondary" title="Reset Filter"><i class="bi bi-arrow-counterclockwise"></i></a>
+                </div>
+            </form>
+        </div>
+
         <div class="card card-custom p-3">
             <div class="card-body">
                 <h5 class="fw-bold text-dark mb-3">Stok Barang Persediaan (Habis Pakai)</h5>
@@ -162,12 +271,79 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Pagination Bar for Persediaan -->
+                <div class="d-flex flex-wrap align-items-center justify-content-between pt-3 border-top mt-3 gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="small text-muted">Tampilkan:</span>
+                        <select class="form-select form-select-sm" style="width: 90px;" onchange="location = this.value;">
+                            <% ['10', '25', '50', '100', 'all'].forEach(l => { %>
+                                <option value="/inventaris?tab=persediaan&inv_limit=<%= l %>&inv_search=<%= encodeURIComponent(inventoryFilters.search || '') %>&inv_category=<%= encodeURIComponent(inventoryFilters.category || '') %>" <%= inventoryPagination.limit == l ? 'selected' : '' %>>
+                                    <%= l === 'all' ? 'Semua' : l %>
+                                </option>
+                            <% }) %>
+                        </select>
+                        <span class="small text-muted ms-2">
+                            Showing <%= inventoryPagination.totalCount > 0 ? (inventoryPagination.page - 1) * (inventoryPagination.limit === 'all' ? inventoryPagination.totalCount : parseInt(inventoryPagination.limit)) + 1 : 0 %> 
+                            to <%= inventoryPagination.limit === 'all' ? inventoryPagination.totalCount : Math.min(inventoryPagination.page * parseInt(inventoryPagination.limit), inventoryPagination.totalCount) %> 
+                            of <%= inventoryPagination.totalCount %> items
+                        </span>
+                    </div>
+                    
+                    <% if (inventoryPagination.totalPages > 1 && inventoryPagination.limit !== 'all') { %>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item <%= inventoryPagination.page <= 1 ? 'disabled' : '' %>">
+                                    <a class="page-link" href="/inventaris?tab=persediaan&inv_page=<%= inventoryPagination.page - 1 %>&inv_limit=<%= inventoryPagination.limit %>&inv_search=<%= encodeURIComponent(inventoryFilters.search || '') %>&inv_category=<%= encodeURIComponent(inventoryFilters.category || '') %>">Previous</a>
+                                </li>
+                                <% for (let p = 1; p <= inventoryPagination.totalPages; p++) { %>
+                                    <li class="page-item <%= inventoryPagination.page === p ? 'active' : '' %>">
+                                        <a class="page-link" href="/inventaris?tab=persediaan&inv_page=<%= p %>&inv_limit=<%= inventoryPagination.limit %>&inv_search=<%= encodeURIComponent(inventoryFilters.search || '') %>&inv_category=<%= encodeURIComponent(inventoryFilters.category || '') %>"><%= p %></a>
+                                    </li>
+                                <% } %>
+                                <li class="page-item <%= inventoryPagination.page >= inventoryPagination.totalPages ? 'disabled' : '' %>">
+                                    <a class="page-link" href="/inventaris?tab=persediaan&inv_page=<%= inventoryPagination.page + 1 %>&inv_limit=<%= inventoryPagination.limit %>&inv_search=<%= encodeURIComponent(inventoryFilters.search || '') %>&inv_category=<%= encodeURIComponent(inventoryFilters.category || '') %>">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    <% } %>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Tab 3: Logs -->
-    <div class="tab-pane fade" id="logs" role="tabpanel">
+    <div class="tab-pane fade <%= activeTab === 'logs' ? 'show active' : '' %>" id="logs" role="tabpanel">
+        <!-- Filter Card Log Masuk/Keluar -->
+        <div class="card card-custom mb-3 p-3 bg-light-subtle">
+            <form method="GET" action="/inventaris" class="row g-2 align-items-center">
+                <input type="hidden" name="tab" value="logs">
+                <div class="col-md-3">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" name="log_search" class="form-control" placeholder="Cari Nama Barang / Catatan..." value="<%= logFilters.search || '' %>">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <input type="date" name="log_start_date" class="form-control form-control-sm" value="<%= logFilters.start_date || '' %>" title="Tanggal Mulai">
+                </div>
+                <div class="col-md-2">
+                    <input type="date" name="log_end_date" class="form-control form-control-sm" value="<%= logFilters.end_date || '' %>" title="Tanggal Akhir">
+                </div>
+                <div class="col-md-3">
+                    <select name="log_type" class="form-select form-select-sm">
+                        <option value="">-- Semua Tipe Mutasi --</option>
+                        <option value="Masuk" <%= logFilters.type === 'Masuk' ? 'selected' : '' %>>Masuk (Pengadaan / Donasi)</option>
+                        <option value="Keluar" <%= logFilters.type === 'Keluar' ? 'selected' : '' %>>Keluar (Pemakaian)</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex gap-1">
+                    <button type="submit" class="btn btn-sm btn-primary flex-fill"><i class="bi bi-funnel me-1"></i>Filter</button>
+                    <a href="/inventaris?tab=logs" class="btn btn-sm btn-outline-secondary" title="Reset Filter"><i class="bi bi-arrow-counterclockwise"></i></a>
+                </div>
+            </form>
+        </div>
+
         <div class="card card-custom p-3">
             <div class="card-body">
                 <h5 class="fw-bold text-dark mb-3">Riwayat Mutasi Persediaan</h5>
@@ -204,6 +380,43 @@
                             <% } %>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Pagination Bar for Logs -->
+                <div class="d-flex flex-wrap align-items-center justify-content-between pt-3 border-top mt-3 gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="small text-muted">Tampilkan:</span>
+                        <select class="form-select form-select-sm" style="width: 90px;" onchange="location = this.value;">
+                            <% ['10', '25', '50', '100', 'all'].forEach(l => { %>
+                                <option value="/inventaris?tab=logs&log_limit=<%= l %>&log_search=<%= encodeURIComponent(logFilters.search || '') %>&log_start_date=<%= encodeURIComponent(logFilters.start_date || '') %>&log_end_date=<%= encodeURIComponent(logFilters.end_date || '') %>&log_type=<%= encodeURIComponent(logFilters.type || '') %>" <%= logPagination.limit == l ? 'selected' : '' %>>
+                                    <%= l === 'all' ? 'Semua' : l %>
+                                </option>
+                            <% }) %>
+                        </select>
+                        <span class="small text-muted ms-2">
+                            Showing <%= logPagination.totalCount > 0 ? (logPagination.page - 1) * (logPagination.limit === 'all' ? logPagination.totalCount : parseInt(logPagination.limit)) + 1 : 0 %> 
+                            to <%= logPagination.limit === 'all' ? logPagination.totalCount : Math.min(logPagination.page * parseInt(logPagination.limit), logPagination.totalCount) %> 
+                            of <%= logPagination.totalCount %> items
+                        </span>
+                    </div>
+                    
+                    <% if (logPagination.totalPages > 1 && logPagination.limit !== 'all') { %>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item <%= logPagination.page <= 1 ? 'disabled' : '' %>">
+                                    <a class="page-link" href="/inventaris?tab=logs&log_page=<%= logPagination.page - 1 %>&log_limit=<%= logPagination.limit %>&log_search=<%= encodeURIComponent(logFilters.search || '') %>&log_start_date=<%= encodeURIComponent(logFilters.start_date || '') %>&log_end_date=<%= encodeURIComponent(logFilters.end_date || '') %>&log_type=<%= encodeURIComponent(logFilters.type || '') %>">Previous</a>
+                                </li>
+                                <% for (let p = 1; p <= logPagination.totalPages; p++) { %>
+                                    <li class="page-item <%= logPagination.page === p ? 'active' : '' %>">
+                                        <a class="page-link" href="/inventaris?tab=logs&log_page=<%= p %>&log_limit=<%= logPagination.limit %>&log_search=<%= encodeURIComponent(logFilters.search || '') %>&log_start_date=<%= encodeURIComponent(logFilters.start_date || '') %>&log_end_date=<%= encodeURIComponent(logFilters.end_date || '') %>&log_type=<%= encodeURIComponent(logFilters.type || '') %>"><%= p %></a>
+                                    </li>
+                                <% } %>
+                                <li class="page-item <%= logPagination.page >= logPagination.totalPages ? 'disabled' : '' %>">
+                                    <a class="page-link" href="/inventaris?tab=logs&log_page=<%= logPagination.page + 1 %>&log_limit=<%= logPagination.limit %>&log_search=<%= encodeURIComponent(logFilters.search || '') %>&log_start_date=<%= encodeURIComponent(logFilters.start_date || '') %>&log_end_date=<%= encodeURIComponent(logFilters.end_date || '') %>&log_type=<%= encodeURIComponent(logFilters.type || '') %>">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    <% } %>
                 </div>
             </div>
         </div>
@@ -630,5 +843,19 @@
                 }
             });
         }
+
+        const tabEls = document.querySelectorAll('#inventarisTab button[data-bs-toggle="tab"]');
+        tabEls.forEach(tabEl => {
+            tabEl.addEventListener('shown.bs.tab', function(e) {
+                const targetId = e.target.getAttribute('data-bs-target');
+                let tabParam = 'aset';
+                if (targetId === '#persediaan') tabParam = 'persediaan';
+                if (targetId === '#logs') tabParam = 'logs';
+                
+                const url = new URL(window.location);
+                url.searchParams.set('tab', tabParam);
+                window.history.replaceState(null, '', url.toString());
+            });
+        });
     });
 </script>

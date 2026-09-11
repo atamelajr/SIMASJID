@@ -38,6 +38,72 @@ class AssetModel {
         return rows;
     }
 
+    static async getPaginatedAssets(filters = {}, page = 1, limit = '10') {
+        let whereSql = ` WHERE 1=1`;
+        const params = [];
+
+        if (filters.search) {
+            whereSql += ` AND (a.name LIKE ? OR a.asset_code LIKE ? OR mi.code LIKE ? OR a.brand LIKE ? OR a.model_no_plate LIKE ?)`;
+            params.push(`%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`);
+        }
+        if (filters.category) {
+            whereSql += ` AND a.category = ?`;
+            params.push(filters.category);
+        }
+        if (filters.condition) {
+            whereSql += ` AND a.condition_status = ?`;
+            params.push(filters.condition);
+        }
+        if (filters.location) {
+            whereSql += ` AND a.location = ?`;
+            params.push(filters.location);
+        }
+
+        const countSql = `
+            SELECT COUNT(*) as total
+            FROM fixed_assets a
+            LEFT JOIN master_items mi ON a.name = mi.name
+            ${whereSql}
+        `;
+        const [countRows] = await db.query(countSql, params);
+        const totalCount = countRows[0]?.total || 0;
+
+        let sql = `
+            SELECT a.*, mi.code as master_sku, t.transaction_code 
+            FROM fixed_assets a 
+            LEFT JOIN master_items mi ON a.name = mi.name
+            LEFT JOIN transactions t ON a.transaction_id = t.id 
+            ${whereSql}
+            ORDER BY a.created_at DESC, a.id DESC
+        `;
+
+        let pageNum = parseInt(page) || 1;
+        let limitStr = (limit || '10').toString();
+        let limitNum = limitStr === 'all' ? (totalCount || 1) : (parseInt(limitStr) || 10);
+        if (limitNum <= 0) limitNum = 10;
+        
+        let totalPages = limitStr === 'all' ? 1 : Math.ceil(totalCount / limitNum);
+        if (totalPages === 0) totalPages = 1;
+
+        if (limitStr !== 'all') {
+            const offset = (pageNum - 1) * limitNum;
+            sql += ` LIMIT ? OFFSET ?`;
+            params.push(limitNum, offset);
+        }
+
+        const [assets] = await db.query(sql, params);
+
+        return {
+            assets,
+            pagination: {
+                totalCount,
+                page: pageNum,
+                limit: limitStr,
+                totalPages
+            }
+        };
+    }
+
     static async createAsset(data) {
         let category = data.category;
         let [miRows] = await db.query(`SELECT code, category FROM master_items WHERE name = ? LIMIT 1`, [data.name]);

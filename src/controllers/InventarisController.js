@@ -5,21 +5,86 @@ const MasterModel = require('../models/MasterModel');
 class InventarisController {
     static async index(req, res) {
         try {
-            const assets = await AssetModel.getAllAssets();
-            const items = await InventoryModel.getAllItems();
-            const logs = await InventoryModel.getLogs();
+            const {
+                tab = 'aset',
+                // Aset filters
+                asset_search = '',
+                asset_category = '',
+                asset_condition = '',
+                asset_location = '',
+                asset_page = 1,
+                asset_limit = '10',
+                // Inventory filters
+                inv_search = '',
+                inv_category = '',
+                inv_page = 1,
+                inv_limit = '10',
+                // Log filters
+                log_search = '',
+                log_start_date = '',
+                log_end_date = '',
+                log_type = '',
+                log_page = 1,
+                log_limit = '10'
+            } = req.query;
+
+            const assetData = await AssetModel.getPaginatedAssets({
+                search: asset_search,
+                category: asset_category,
+                condition: asset_condition,
+                location: asset_location
+            }, asset_page, asset_limit);
+
+            const inventoryData = await InventoryModel.getPaginatedItems({
+                search: inv_search,
+                category: inv_category
+            }, inv_page, inv_limit);
+
+            const logData = await InventoryModel.getPaginatedLogs({
+                search: log_search,
+                type: log_type,
+                start_date: log_start_date,
+                end_date: log_end_date
+            }, log_page, log_limit);
+
             const masterItems = await MasterModel.getAllMasterItems();
             const locations = await MasterModel.getAllLocations();
             const assetCatalog = masterItems.filter(item => item.type === 'Aset');
             const assetCategories = await MasterModel.getItemCategoriesByType('Aset');
+            const inventoryCategories = await MasterModel.getItemCategoriesByType('Material');
 
             res.render('inventaris/index', {
                 title: 'Manajemen Aset & Inventaris',
-                assets,
-                items,
-                logs,
+                activeTab: tab,
+                // Aset Tetap data
+                assets: assetData.assets,
+                assetPagination: assetData.pagination,
+                assetFilters: {
+                    search: asset_search,
+                    category: asset_category,
+                    condition: asset_condition,
+                    location: asset_location
+                },
+                // Persediaan data
+                items: inventoryData.items,
+                inventoryPagination: inventoryData.pagination,
+                inventoryFilters: {
+                    search: inv_search,
+                    category: inv_category
+                },
+                // Logs data
+                logs: logData.logs,
+                logPagination: logData.pagination,
+                logFilters: {
+                    search: log_search,
+                    start_date: log_start_date,
+                    end_date: log_end_date,
+                    type: log_type
+                },
+                // Parameters & dropdowns
                 assetCatalog,
                 assetCategories,
+                inventoryCategories,
                 masterItems,
                 locations
             });
