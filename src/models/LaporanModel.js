@@ -245,7 +245,7 @@ class LaporanModel {
      */
     static async getLaporanInventaris(filters = {}) {
         let sql = `
-            SELECT fa.*, COALESCE(mi.code, fa.asset_code) as asset_code, t.transaction_code, t.donor_name
+            SELECT fa.*, mi.code as master_sku, t.transaction_code, t.donor_name
             FROM fixed_assets fa
             LEFT JOIN master_items mi ON fa.name = mi.name
             LEFT JOIN transactions t ON fa.transaction_id = t.id

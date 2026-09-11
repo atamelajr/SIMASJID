@@ -186,6 +186,7 @@ CREATE TABLE asset_locations (
 CREATE TABLE fixed_assets (
     id INT AUTO_INCREMENT PRIMARY KEY,
     asset_code VARCHAR(50) NOT NULL UNIQUE,
+    register_no INT DEFAULT 1,
     name VARCHAR(150) NOT NULL,
     brand VARCHAR(100) NULL,
     model_no_plate VARCHAR(100) NULL,

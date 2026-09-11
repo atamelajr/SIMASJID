@@ -197,12 +197,22 @@ class TransactionModel {
                 const unitCost = assetQty > 0 ? (finalAmount / assetQty) : finalAmount;
                 const sourceOrigin = asset_item.source_origin || (isInKind === 1 || type === 'Penerimaan' ? 'Hibah' : 'Pembelian');
 
+                let baseSku = miRows.length > 0 ? miRows[0].code : await MasterModel.getNextCodeForCategory(assetCategory, connection);
+
+                const [regRows] = await connection.query(
+                    `SELECT MAX(register_no) as max_reg FROM fixed_assets WHERE name = ? OR asset_code LIKE ?`,
+                    [asset_item.name, `${baseSku}.%`]
+                );
+                let startReg = regRows[0]?.max_reg || 0;
+
                 for (let i = 0; i < assetQty; i++) {
-                    let assetCode = await MasterModel.getNextCodeForCategory(assetCategory);
+                    const regNo = startReg + 1 + i;
+                    const assetCode = `${baseSku}.${String(regNo).padStart(3, '0')}`;
+
                     await connection.query(
-                        `INSERT INTO fixed_assets (asset_code, name, category, source_origin, purchase_date, cost, condition_status, location, transaction_id)
-                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                        [assetCode, asset_item.name || description, assetCategory, sourceOrigin, transactionDate, unitCost, asset_item.condition || 'Baik', asset_item.location || 'Masjid', transactionId]
+                        `INSERT INTO fixed_assets (asset_code, register_no, name, category, source_origin, purchase_date, cost, condition_status, location, transaction_id)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        [assetCode, regNo, asset_item.name || description, assetCategory, sourceOrigin, transactionDate, unitCost, asset_item.condition || 'Baik', asset_item.location || 'Masjid', transactionId]
                     );
                 }
             }
@@ -435,17 +445,26 @@ class TransactionModel {
                 await connection.query(`DELETE FROM inventory_logs WHERE transaction_id = ?`, [id]);
                 const [miRows] = await connection.query(`SELECT code, category FROM master_items WHERE name = ? LIMIT 1`, [asset_item.name]);
                 const assetCategory = miRows[0]?.category || asset_item.category || 'Peralatan & Mesin';
-                let assetCode = miRows[0]?.code || await MasterModel.getNextCodeForCategory(assetCategory);
-                const [existingAsset] = await connection.query(`SELECT id FROM fixed_assets WHERE transaction_id = ?`, [id]);
+                let baseSku = miRows.length > 0 ? miRows[0].code : await MasterModel.getNextCodeForCategory(assetCategory, connection);
+
+                const [existingAsset] = await connection.query(`SELECT id, asset_code, register_no FROM fixed_assets WHERE transaction_id = ?`, [id]);
                 if (existingAsset.length > 0) {
+                    let regNo = existingAsset[0].register_no || 1;
+                    let assetCode = `${baseSku}.${String(regNo).padStart(3, '0')}`;
                     await connection.query(
-                        `UPDATE fixed_assets SET name = ?, asset_code = COALESCE(?, asset_code), category = ?, purchase_date = ?, cost = ?, condition_status = ?, location = ? WHERE id = ?`,
+                        `UPDATE fixed_assets SET name = ?, asset_code = ?, category = ?, purchase_date = ?, cost = ?, condition_status = ?, location = ? WHERE id = ?`,
                         [asset_item.name, assetCode, assetCategory, transactionDate, finalAmount, asset_item.condition || 'Baik', asset_item.location || 'Masjid', existingAsset[0].id]
                     );
                 } else {
+                    const [regRows] = await connection.query(
+                        `SELECT MAX(register_no) as max_reg FROM fixed_assets WHERE name = ? OR asset_code LIKE ?`,
+                        [asset_item.name, `${baseSku}.%`]
+                    );
+                    let regNo = (regRows[0]?.max_reg || 0) + 1;
+                    let assetCode = `${baseSku}.${String(regNo).padStart(3, '0')}`;
                     await connection.query(
-                        `INSERT INTO fixed_assets (asset_code, name, category, purchase_date, cost, condition_status, location, transaction_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                        [assetCode, asset_item.name, assetCategory, transactionDate, finalAmount, asset_item.condition || 'Baik', asset_item.location || 'Masjid', id]
+                        `INSERT INTO fixed_assets (asset_code, register_no, name, category, purchase_date, cost, condition_status, location, transaction_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        [assetCode, regNo, asset_item.name, assetCategory, transactionDate, finalAmount, asset_item.condition || 'Baik', asset_item.location || 'Masjid', id]
                     );
                 }
             } else if (inventory_item && inventory_item.name) {

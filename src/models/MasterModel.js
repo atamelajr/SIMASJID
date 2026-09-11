@@ -143,7 +143,8 @@ class MasterModel {
         allRows.forEach(r => {
             if (r.code && r.code.includes('-')) {
                 const parts = r.code.split('-');
-                const num = parseInt(parts[parts.length - 1]);
+                const rawSeq = parts[parts.length - 1].split('.')[0];
+                const num = parseInt(rawSeq);
                 if (!isNaN(num) && num > maxSeq) {
                     maxSeq = num;
                 }

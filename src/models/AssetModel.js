@@ -4,7 +4,7 @@ const MasterModel = require('./MasterModel');
 class AssetModel {
     static async getAllAssets() {
         const [rows] = await db.query(
-            `SELECT a.*, COALESCE(mi.code, a.asset_code) as asset_code, t.transaction_code 
+            `SELECT a.*, mi.code as master_sku, t.transaction_code 
              FROM fixed_assets a 
              LEFT JOIN master_items mi ON a.name = mi.name
              LEFT JOIN transactions t ON a.transaction_id = t.id 
@@ -21,21 +21,31 @@ class AssetModel {
         }
         category = category || 'Peralatan & Mesin';
 
+        let baseSku = miRows.length > 0 ? miRows[0].code : await MasterModel.getNextCodeForCategory(category);
+
         const sourceOrigin = data.source_origin || 'Pembelian';
         const qty = Math.max(1, parseInt(data.qty) || 1);
         const totalCost = parseFloat(data.cost || 0);
         const unitCost = qty > 0 ? (totalCost / qty) : totalCost;
 
+        const [regRows] = await db.query(
+            `SELECT MAX(register_no) as max_reg FROM fixed_assets WHERE name = ? OR asset_code LIKE ?`,
+            [data.name, `${baseSku}.%`]
+        );
+        let startReg = regRows[0]?.max_reg || 0;
+
         let firstInsertId = null;
 
         for (let i = 0; i < qty; i++) {
-            let assetCode = await MasterModel.getNextCodeForCategory(category);
+            const regNo = startReg + 1 + i;
+            const assetCode = `${baseSku}.${String(regNo).padStart(3, '0')}`;
 
             const [result] = await db.query(
-                `INSERT INTO fixed_assets (asset_code, name, brand, model_no_plate, category, source_origin, purchase_date, cost, condition_status, location, description, transaction_id)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                `INSERT INTO fixed_assets (asset_code, register_no, name, brand, model_no_plate, category, source_origin, purchase_date, cost, condition_status, location, description, transaction_id)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
-                    assetCode, 
+                    assetCode,
+                    regNo,
                     data.name, 
                     data.brand || null, 
                     data.model_no_plate || null, 
