@@ -17,7 +17,7 @@
                     <tr>
                         <th style="width: 140px;">Kode Rekening</th>
                         <th>Kategori Utama</th>
-                        <th>Tipe Kelompok</th>
+                        <th>Kelompok</th>
                         <th>Contoh Barang / Deskripsi Sub-Kategori</th>
                         <th class="text-end">Aksi</th>
                     </tr>
@@ -69,7 +69,7 @@
             <form action="/master/item-categories/create" method="POST">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Tipe Kelompok</label>
+                        <label class="form-label fw-semibold">Kelompok</label>
                         <select name="type" id="add_cat_type" class="form-select" required onchange="onAddCatTypeChange()">
                             <option value="Aset">Barang Modal (Aset Tetap)</option>
                             <option value="Material">Persediaan (Material / Habis Pakai)</option>
@@ -111,7 +111,7 @@
             <form id="formEditItemCategory" action="" method="POST">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Tipe Kelompok</label>
+                        <label class="form-label fw-semibold">Kelompok</label>
                         <select name="type" id="edit_cat_type" class="form-select" required>
                             <option value="Aset">Barang Modal (Aset Tetap)</option>
                             <option value="Material">Persediaan (Material / Habis Pakai)</option>

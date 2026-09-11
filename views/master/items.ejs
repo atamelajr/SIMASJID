@@ -17,15 +17,15 @@
                 <input type="text" name="search" class="form-control form-control-sm" placeholder="Cari nama barang, kode 1230-001, dll..." value="<%= filters.search %>">
             </div>
             <div class="col-md-3">
-                <label class="form-label small fw-semibold">Tipe Kelompok</label>
+                <label class="form-label small fw-semibold">Kelompok</label>
                 <select name="type" class="form-select form-select-sm">
-                    <option value="">-- Semua Tipe --</option>
+                    <option value="">-- Semua Kelompok --</option>
                     <option value="Aset" <%= filters.type === 'Aset' ? 'selected' : '' %>>Barang Modal (Aset)</option>
                     <option value="Material" <%= filters.type === 'Material' ? 'selected' : '' %>>Persediaan (Material)</option>
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label small fw-semibold">Kategori Barang</label>
+                <label class="form-label small fw-semibold">Kategori</label>
                 <select name="category" class="form-select form-select-sm">
                     <option value="">-- Semua Kategori --</option>
                     <% if (typeof itemCategories !== 'undefined' && itemCategories.length > 0) { %>
@@ -53,7 +53,7 @@
                     <tr>
                         <th>Kode Barang</th>
                         <th>Nama Barang / Material</th>
-                        <th>Tipe</th>
+                        <th>Kelompok</th>
                         <th>Satuan Standar</th>
                         <th>Kategori</th>
                         <th>Keterangan</th>
@@ -172,10 +172,15 @@
             <form action="/master/items/create" method="POST">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Tipe Kelompok Barang</label>
+                        <label class="form-label fw-semibold">Kelompok</label>
                         <select name="type" id="add_item_type" class="form-select" required onchange="onAddItemTypeChange()">
                             <option value="Material">Persediaan (Material / Habis Pakai)</option>
                             <option value="Aset">Barang Modal (Aset Tetap)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Kategori</label>
+                        <select name="category" id="add_item_category" class="form-select" required onchange="onAddItemCategoryChange()">
                         </select>
                     </div>
                     <div class="mb-3">
@@ -196,11 +201,6 @@
                             <% units.forEach(u => { %>
                                 <option value="<%= u.id %>"><%= u.name %> (<%= u.code %>)</option>
                             <% }) %>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Kategori Peruntukan</label>
-                        <select name="category" id="add_item_category" class="form-select" required onchange="onAddItemCategoryChange()">
                         </select>
                     </div>
                     <div class="mb-3">
@@ -228,10 +228,15 @@
             <form id="formEditItem" action="" method="POST">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Tipe Kelompok</label>
+                        <label class="form-label fw-semibold">Kelompok</label>
                         <select id="edit_item_type" name="type" class="form-select" required onchange="onEditItemTypeChange()">
                             <option value="Material">Persediaan (Material / Habis Pakai)</option>
                             <option value="Aset">Barang Modal (Aset Tetap)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Kategori</label>
+                        <select id="edit_item_category" name="category" class="form-select" required>
                         </select>
                     </div>
                     <div class="mb-3">
@@ -249,11 +254,6 @@
                             <% units.forEach(u => { %>
                                 <option value="<%= u.id %>"><%= u.name %> (<%= u.code %>)</option>
                             <% }) %>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Kategori Peruntukan</label>
-                        <select id="edit_item_category" name="category" class="form-select" required>
                         </select>
                     </div>
                     <div class="mb-3">
