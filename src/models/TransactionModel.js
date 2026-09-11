@@ -1,4 +1,5 @@
 const db = require('../../config/database');
+const MasterModel = require('./MasterModel');
 
 class TransactionModel {
     static async getDashboardSummary() {
@@ -190,9 +191,12 @@ class TransactionModel {
             const subType = catRows[0]?.sub_type;
 
             if ((subType === 'Modal' || asset_item) && asset_item && asset_item.name) {
-                const assetCode = `AST-${Date.now()}`;
-                const [miRows] = await connection.query(`SELECT category FROM master_items WHERE name = ? LIMIT 1`, [asset_item.name]);
-                const assetCategory = miRows[0]?.category || 'Peralatan & Mesin';
+                const [miRows] = await connection.query(`SELECT code, category FROM master_items WHERE name = ? LIMIT 1`, [asset_item.name]);
+                const assetCategory = miRows[0]?.category || asset_item.category || 'Peralatan & Mesin';
+                let assetCode = asset_item.code;
+                if (!assetCode || assetCode.startsWith('AST-')) {
+                    assetCode = miRows[0]?.code || await MasterModel.getNextCodeForCategory(assetCategory);
+                }
                 await connection.query(
                     `INSERT INTO fixed_assets (asset_code, name, category, purchase_date, cost, condition_status, location, transaction_id)
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -201,9 +205,12 @@ class TransactionModel {
             }
 
             if ((subType === 'Material' || inventory_item) && inventory_item && inventory_item.name) {
-                const itemCode = `INV-${Date.now()}`;
-                const [miRows] = await connection.query(`SELECT category FROM master_items WHERE name = ? LIMIT 1`, [inventory_item.name]);
+                const [miRows] = await connection.query(`SELECT code, category FROM master_items WHERE name = ? LIMIT 1`, [inventory_item.name]);
                 const categoryType = inventory_item.category || miRows[0]?.category || 'Material dan Bahan Lainnya';
+                let itemCode = inventory_item.code;
+                if (!itemCode || itemCode.startsWith('INV-')) {
+                    itemCode = miRows[0]?.code || await MasterModel.getNextCodeForCategory(categoryType);
+                }
                 
                 const [existingItem] = await connection.query(
                     `SELECT id FROM inventory_items WHERE name = ? AND unit = ?`,
@@ -214,8 +221,8 @@ class TransactionModel {
                 if (existingItem.length > 0) {
                     itemId = existingItem[0].id;
                     await connection.query(
-                        `UPDATE inventory_items SET stock = stock + ? WHERE id = ?`,
-                        [inventory_item.qty, itemId]
+                        `UPDATE inventory_items SET stock = stock + ?, item_code = COALESCE(?, item_code) WHERE id = ?`,
+                        [inventory_item.qty, itemCode, itemId]
                     );
                 } else {
                     const [invResult] = await connection.query(
@@ -423,16 +430,16 @@ class TransactionModel {
 
             if (asset_item && asset_item.name) {
                 await connection.query(`DELETE FROM inventory_logs WHERE transaction_id = ?`, [id]);
-                const [miRows] = await connection.query(`SELECT category FROM master_items WHERE name = ? LIMIT 1`, [asset_item.name]);
-                const assetCategory = miRows[0]?.category || 'Peralatan & Mesin';
+                const [miRows] = await connection.query(`SELECT code, category FROM master_items WHERE name = ? LIMIT 1`, [asset_item.name]);
+                const assetCategory = miRows[0]?.category || asset_item.category || 'Peralatan & Mesin';
+                let assetCode = miRows[0]?.code || await MasterModel.getNextCodeForCategory(assetCategory);
                 const [existingAsset] = await connection.query(`SELECT id FROM fixed_assets WHERE transaction_id = ?`, [id]);
                 if (existingAsset.length > 0) {
                     await connection.query(
-                        `UPDATE fixed_assets SET name = ?, category = ?, purchase_date = ?, cost = ?, condition_status = ?, location = ? WHERE id = ?`,
-                        [asset_item.name, assetCategory, transactionDate, finalAmount, asset_item.condition || 'Baik', asset_item.location || 'Masjid', existingAsset[0].id]
+                        `UPDATE fixed_assets SET name = ?, asset_code = COALESCE(?, asset_code), category = ?, purchase_date = ?, cost = ?, condition_status = ?, location = ? WHERE id = ?`,
+                        [asset_item.name, assetCode, assetCategory, transactionDate, finalAmount, asset_item.condition || 'Baik', asset_item.location || 'Masjid', existingAsset[0].id]
                     );
                 } else {
-                    const assetCode = `AST-${Date.now()}`;
                     await connection.query(
                         `INSERT INTO fixed_assets (asset_code, name, category, purchase_date, cost, condition_status, location, transaction_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
                         [assetCode, asset_item.name, assetCategory, transactionDate, finalAmount, asset_item.condition || 'Baik', asset_item.location || 'Masjid', id]
@@ -440,9 +447,9 @@ class TransactionModel {
                 }
             } else if (inventory_item && inventory_item.name) {
                 await connection.query(`DELETE FROM fixed_assets WHERE transaction_id = ?`, [id]);
-                const itemCode = `INV-${Date.now()}`;
-                const [miRows] = await connection.query(`SELECT category FROM master_items WHERE name = ? LIMIT 1`, [inventory_item.name]);
+                const [miRows] = await connection.query(`SELECT code, category FROM master_items WHERE name = ? LIMIT 1`, [inventory_item.name]);
                 const categoryType = inventory_item.category || miRows[0]?.category || 'Material dan Bahan Lainnya';
+                let itemCode = miRows[0]?.code || await MasterModel.getNextCodeForCategory(categoryType);
                 
                 const [existingItem] = await connection.query(
                     `SELECT id FROM inventory_items WHERE name = ? AND unit = ?`,
@@ -452,6 +459,10 @@ class TransactionModel {
                 let itemId;
                 if (existingItem.length > 0) {
                     itemId = existingItem[0].id;
+                    await connection.query(
+                        `UPDATE inventory_items SET item_code = COALESCE(?, item_code) WHERE id = ?`,
+                        [itemCode, itemId]
+                    );
                 } else {
                     const [invResult] = await connection.query(
                         `INSERT INTO inventory_items (item_code, name, unit, category, stock) VALUES (?, ?, ?, ?, ?)`,

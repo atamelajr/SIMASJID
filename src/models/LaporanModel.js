@@ -245,8 +245,9 @@ class LaporanModel {
      */
     static async getLaporanInventaris(filters = {}) {
         let sql = `
-            SELECT fa.*, t.transaction_code, t.donor_name
+            SELECT fa.*, COALESCE(mi.code, fa.asset_code) as asset_code, t.transaction_code, t.donor_name
             FROM fixed_assets fa
+            LEFT JOIN master_items mi ON fa.name = mi.name
             LEFT JOIN transactions t ON fa.transaction_id = t.id
             WHERE 1=1
         `;
@@ -261,8 +262,8 @@ class LaporanModel {
             params.push(filters.category);
         }
         if (filters.search) {
-            sql += ` AND (fa.name LIKE ? OR fa.asset_code LIKE ? OR fa.location LIKE ?)`;
-            params.push(`%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`);
+            sql += ` AND (fa.name LIKE ? OR fa.asset_code LIKE ? OR mi.code LIKE ? OR fa.location LIKE ?)`;
+            params.push(`%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`);
         }
 
         sql += ` ORDER BY fa.purchase_date DESC, fa.id DESC`;
@@ -282,10 +283,11 @@ class LaporanModel {
      */
     static async getLaporanPersediaan(filters = {}) {
         let sql = `
-            SELECT ii.*, 
+            SELECT ii.*, COALESCE(mi.code, ii.item_code) as item_code,
                 (SELECT IFNULL(SUM(qty), 0) FROM inventory_logs WHERE item_id = ii.id AND type = 'Masuk') as total_masuk,
                 (SELECT IFNULL(SUM(qty), 0) FROM inventory_logs WHERE item_id = ii.id AND type = 'Keluar') as total_keluar
             FROM inventory_items ii
+            LEFT JOIN master_items mi ON ii.name = mi.name
             WHERE 1=1
         `;
         const params = [];
@@ -295,8 +297,8 @@ class LaporanModel {
             params.push(filters.category);
         }
         if (filters.search) {
-            sql += ` AND (ii.name LIKE ? OR ii.item_code LIKE ?)`;
-            params.push(`%${filters.search}%`, `%${filters.search}%`);
+            sql += ` AND (ii.name LIKE ? OR ii.item_code LIKE ? OR mi.code LIKE ?)`;
+            params.push(`%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`);
         }
 
         sql += ` ORDER BY ii.name ASC`;

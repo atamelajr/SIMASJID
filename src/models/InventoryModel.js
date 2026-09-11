@@ -3,7 +3,10 @@ const db = require('../../config/database');
 class InventoryModel {
     static async getAllItems() {
         const [rows] = await db.query(
-            `SELECT * FROM inventory_items ORDER BY category ASC, name ASC`
+            `SELECT ii.*, COALESCE(mi.code, ii.item_code) as item_code 
+             FROM inventory_items ii
+             LEFT JOIN master_items mi ON ii.name = mi.name
+             ORDER BY ii.category ASC, ii.name ASC`
         );
         return rows;
     }

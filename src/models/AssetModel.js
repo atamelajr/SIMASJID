@@ -1,10 +1,12 @@
 const db = require('../../config/database');
+const MasterModel = require('./MasterModel');
 
 class AssetModel {
     static async getAllAssets() {
         const [rows] = await db.query(
-            `SELECT a.*, t.transaction_code 
+            `SELECT a.*, COALESCE(mi.code, a.asset_code) as asset_code, t.transaction_code 
              FROM fixed_assets a 
+             LEFT JOIN master_items mi ON a.name = mi.name
              LEFT JOIN transactions t ON a.transaction_id = t.id 
              ORDER BY a.created_at DESC`
         );
@@ -12,13 +14,21 @@ class AssetModel {
     }
 
     static async createAsset(data) {
-        const assetCode = `AST-${Date.now()}`;
         let category = data.category;
-        if (!category && data.name) {
-            const [miRows] = await db.query(`SELECT category FROM master_items WHERE name = ? LIMIT 1`, [data.name]);
-            category = miRows[0]?.category;
+        const [miRows] = await db.query(`SELECT code, category FROM master_items WHERE name = ? LIMIT 1`, [data.name]);
+        if (miRows.length > 0) {
+            category = category || miRows[0].category;
         }
         category = category || 'Peralatan & Mesin';
+
+        let assetCode = data.asset_code || data.code;
+        if (!assetCode || assetCode.startsWith('AST-')) {
+            if (miRows.length > 0 && miRows[0].code) {
+                assetCode = miRows[0].code;
+            } else {
+                assetCode = await MasterModel.getNextCodeForCategory(category);
+            }
+        }
 
         const [result] = await db.query(
             `INSERT INTO fixed_assets (asset_code, name, brand, model_no_plate, category, purchase_date, cost, condition_status, location, description)
