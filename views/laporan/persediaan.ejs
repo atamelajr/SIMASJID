@@ -1,7 +1,10 @@
 <div class="container-fluid p-4">
     <!-- Header Cetak Resmi (Hanya Tampil Saat Print) -->
     <div class="print-header">
-        <h3 class="fw-bold mb-1">MASJID AL-IKHLAS</h3>
+        <h3 class="fw-bold mb-1 text-uppercase"><%= typeof masjidProfile !== 'undefined' && masjidProfile.name ? masjidProfile.name : 'NAMA MASJID' %></h3>
+        <% if (typeof masjidProfile !== 'undefined' && masjidProfile.address) { %>
+            <p class="mb-1 text-muted small"><%= masjidProfile.address %></p>
+        <% } %>
         <h5 class="fw-bold text-uppercase mb-1">LAPORAN STOK PERSEDIAAN & MATERIAL HABIS PAKAI</h5>
         <p class="mb-0 text-muted">Per Tanggal: <%= formatDate(new Date()) %></p>
         <hr style="border-top: 2px double #000;" class="my-2">
@@ -135,6 +138,27 @@
                         <% } %>
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lembar Pengesahan / Signature Block (Print Only) -->
+    <% 
+    const members = typeof dkmMembers !== 'undefined' ? dkmMembers : [];
+    const ketua = members.find(m => (m.position || '').toLowerCase().includes('ketua')) || { name: '........................', position: 'Ketua DKM' };
+    const bendahara = members.find(m => (m.position || '').toLowerCase().includes('bendahara') || (m.position || '').toLowerCase().includes('keuangan')) || { name: '........................', position: 'Bendahara DKM' };
+    %>
+    <div class="print-signature">
+        <div class="d-flex justify-content-between text-center px-4" style="margin-top: 40px;">
+            <div class="text-center" style="min-width: 200px;">
+                <p class="mb-1">Dibuat Oleh,</p>
+                <p class="fw-semibold text-uppercase mb-5"><%= bendahara.position %></p>
+                <p class="fw-bold text-decoration-underline mb-0"><%= bendahara.name %></p>
+            </div>
+            <div class="text-center" style="min-width: 200px;">
+                <p class="mb-1">Mengetahui,</p>
+                <p class="fw-semibold text-uppercase mb-5"><%= ketua.position %></p>
+                <p class="fw-bold text-decoration-underline mb-0"><%= ketua.name %></p>
             </div>
         </div>
     </div>

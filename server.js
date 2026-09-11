@@ -47,8 +47,9 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.set('layout', 'layout');
 
-// Global View Variables (Currency Formatter, User Session)
-app.use((req, res, next) => {
+// Global View Variables (Currency Formatter, User Session, Dynamic Mosque Profile)
+const MasjidModel = require('./src/models/MasjidModel');
+app.use(async (req, res, next) => {
     res.locals.user = req.session.user || null;
     res.locals.formatRupiah = (number) => {
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number || 0);
@@ -57,6 +58,15 @@ app.use((req, res, next) => {
         if (!dateStr) return '-';
         return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
     };
+    try {
+        const profile = await MasjidModel.getProfile();
+        const dkmMembers = await MasjidModel.getDkmMembers();
+        res.locals.masjidProfile = profile || { name: 'SIMASJID', address: '' };
+        res.locals.dkmMembers = dkmMembers || [];
+    } catch (err) {
+        res.locals.masjidProfile = { name: 'SIMASJID', address: '' };
+        res.locals.dkmMembers = [];
+    }
     next();
 });
 
