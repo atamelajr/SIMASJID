@@ -141,17 +141,34 @@ class MasterController {
     // 4. Katalog Barang & Material
     static async masterItemsIndex(req, res) {
         try {
-            const items = await MasterModel.getAllMasterItems();
+            const { search, type, category, page, limit } = req.query;
+            const currentLimit = limit || '10';
+
+            const { items, pagination } = await MasterModel.getAllMasterItems({
+                search,
+                type,
+                category,
+                page,
+                limit: currentLimit
+            });
+
             const units = await MasterModel.getAllUnits();
             const itemCategories = await MasterModel.getAllItemCategories();
             const nextCodes = await MasterModel.getNextItemCodes();
+
             res.render('master/items', {
                 title: 'Master Parameter - Katalog Barang & Material',
                 activeSubmenu: 'items',
                 items,
                 units,
                 itemCategories,
-                nextCodes
+                nextCodes,
+                filters: {
+                    search: search || '',
+                    type: type || '',
+                    category: category || ''
+                },
+                pagination
             });
         } catch (err) {
             console.error('Master Items Error:', err);

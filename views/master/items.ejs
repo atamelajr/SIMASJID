@@ -8,6 +8,43 @@
     </button>
 </div>
 
+<!-- Filter & Search Card -->
+<div class="card card-custom mb-4 no-print">
+    <div class="card-body">
+        <form action="/master/items" method="GET" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Pencarian Nama / Kode / SKU</label>
+                <input type="text" name="search" class="form-control form-control-sm" placeholder="Cari nama barang, kode 1230-001, dll..." value="<%= filters.search %>">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Tipe Kelompok</label>
+                <select name="type" class="form-select form-select-sm">
+                    <option value="">-- Semua Tipe --</option>
+                    <option value="Aset" <%= filters.type === 'Aset' ? 'selected' : '' %>>Barang Modal (Aset)</option>
+                    <option value="Material" <%= filters.type === 'Material' ? 'selected' : '' %>>Persediaan (Material)</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Kategori Barang</label>
+                <select name="category" class="form-select form-select-sm">
+                    <option value="">-- Semua Kategori --</option>
+                    <% if (typeof itemCategories !== 'undefined' && itemCategories.length > 0) { %>
+                        <% itemCategories.forEach(cat => { %>
+                            <option value="<%= cat.name %>" <%= filters.category === cat.name ? 'selected' : '' %>><%= cat.account_code %> - <%= cat.name %> (<%= cat.type %>)</option>
+                        <% }) %>
+                    <% } %>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm flex-fill">
+                    <i class="bi bi-filter me-1"></i> Filter
+                </button>
+                <a href="/master/items" class="btn btn-light btn-sm border">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="card card-custom p-3">
     <div class="card-body">
         <div class="table-responsive">
@@ -27,7 +64,7 @@
                     <% if (items.length > 0) { %>
                         <% items.forEach(itm => { %>
                             <tr>
-                                <td class="fw-bold text-primary"><code><%= itm.code %></code></td>
+                                <td class="fw-bold text-primary font-monospace"><code><%= itm.code %></code></td>
                                 <td class="fw-semibold"><%= itm.name %></td>
                                 <td>
                                     <span class="badge <%= itm.type === 'Aset' ? 'bg-primary' : 'bg-warning text-dark' %>">
@@ -52,12 +89,75 @@
                         <% }) %>
                     <% } else { %>
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">Belum ada katalog barang/material terdaftar.</td>
+                            <td colspan="7" class="text-center text-muted py-4">Belum ada katalog barang/material yang sesuai filter.</td>
                         </tr>
                     <% } %>
                 </tbody>
             </table>
         </div>
+
+        <!-- Pagination Bar -->
+        <% if (pagination && pagination.totalCount > 0) { 
+            const startItem = pagination.limit === 'all' ? 1 : Math.min((pagination.page - 1) * parseInt(pagination.limit) + 1, pagination.totalCount);
+            const endItem = pagination.limit === 'all' ? pagination.totalCount : Math.min(pagination.page * parseInt(pagination.limit), pagination.totalCount);
+            
+            const queryParams = new URLSearchParams();
+            if (filters.search) queryParams.set('search', filters.search);
+            if (filters.type) queryParams.set('type', filters.type);
+            if (filters.category) queryParams.set('category', filters.category);
+            queryParams.set('limit', pagination.limit);
+        %>
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-3 pt-3 border-top gap-2">
+                <!-- Row Limit Selector & Total Summary -->
+                <div class="d-flex align-items-center gap-2">
+                    <span class="small text-muted">Tampilkan:</span>
+                    <form action="/master/items" method="GET" class="d-inline-block">
+                        <% if (filters.search) { %><input type="hidden" name="search" value="<%= filters.search %>"><% } %>
+                        <% if (filters.type) { %><input type="hidden" name="type" value="<%= filters.type %>"><% } %>
+                        <% if (filters.category) { %><input type="hidden" name="category" value="<%= filters.category %>"><% } %>
+                        
+                        <select name="limit" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+                            <option value="10" <%= pagination.limit === '10' ? 'selected' : '' %>>10</option>
+                            <option value="25" <%= pagination.limit === '25' ? 'selected' : '' %>>25</option>
+                            <option value="50" <%= pagination.limit === '50' ? 'selected' : '' %>>50</option>
+                            <option value="100" <%= pagination.limit === '100' ? 'selected' : '' %>>100</option>
+                            <option value="all" <%= pagination.limit === 'all' ? 'selected' : '' %>>Semua (<%= pagination.totalCount %>)</option>
+                        </select>
+                    </form>
+                    <span class="small text-muted ms-2">
+                        Menampilkan <strong><%= startItem %></strong> - <strong><%= endItem %></strong> dari <strong><%= pagination.totalCount %></strong> barang
+                    </span>
+                </div>
+
+                <!-- Page Navigation Links -->
+                <% if (pagination.limit !== 'all' && pagination.totalPages > 1) { %>
+                    <nav aria-label="Navigasi Halaman">
+                        <ul class="pagination pagination-sm mb-0">
+                            <!-- Previous Page -->
+                            <li class="page-item <%= pagination.page <= 1 ? 'disabled' : '' %>">
+                                <% queryParams.set('page', pagination.page - 1); %>
+                                <a class="page-link" href="/master/items?<%= queryParams.toString() %>">Sebelumnya</a>
+                            </li>
+
+                            <!-- Page Numbers -->
+                            <% for (let p = 1; p <= pagination.totalPages; p++) { 
+                                queryParams.set('page', p);
+                            %>
+                                <li class="page-item <%= p === pagination.page ? 'active' : '' %>">
+                                    <a class="page-link" href="/master/items?<%= queryParams.toString() %>"><%= p %></a>
+                                </li>
+                            <% } %>
+
+                            <!-- Next Page -->
+                            <li class="page-item <%= pagination.page >= pagination.totalPages ? 'disabled' : '' %>">
+                                <% queryParams.set('page', pagination.page + 1); %>
+                                <a class="page-link" href="/master/items?<%= queryParams.toString() %>">Selanjutnya</a>
+                            </li>
+                        </ul>
+                    </nav>
+                <% } %>
+            </div>
+        <% } %>
     </div>
 </div>
 

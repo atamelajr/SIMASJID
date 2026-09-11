@@ -155,21 +155,62 @@ class MasterModel {
         return result;
     }
 
-    static async getAllMasterItems(typeFilter = null) {
+    static async getAllMasterItems(filters = {}) {
+        let whereSql = ` WHERE m.is_active = 1`;
+        const params = [];
+
+        if (filters.type) {
+            whereSql += ` AND m.type = ?`;
+            params.push(filters.type);
+        }
+        if (filters.category) {
+            whereSql += ` AND m.category = ?`;
+            params.push(filters.category);
+        }
+        if (filters.search) {
+            whereSql += ` AND (m.name LIKE ? OR m.code LIKE ? OR m.description LIKE ?)`;
+            params.push(`%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`);
+        }
+
+        // Count Total Records matching filters
+        const countSql = `SELECT COUNT(*) as total FROM master_items m ${whereSql}`;
+        const [countRows] = await db.query(countSql, params);
+        const totalCount = countRows[0]?.total || 0;
+
+        // Build SELECT Query
         let sql = `
             SELECT m.*, u.code as unit_code, u.name as unit_name 
             FROM master_items m 
             LEFT JOIN units u ON m.unit_id = u.id 
-            WHERE m.is_active = 1
+            ${whereSql}
+            ORDER BY m.type ASC, m.code ASC
         `;
-        const params = [];
-        if (typeFilter) {
-            sql += ` AND m.type = ?`;
-            params.push(typeFilter);
+
+        let pageNum = parseInt(filters.page) || 1;
+        let limitStr = (filters.limit || '10').toString();
+        let limitNum = limitStr === 'all' ? (totalCount || 1) : (parseInt(limitStr) || 10);
+        if (limitNum <= 0) limitNum = 10;
+        
+        let totalPages = limitStr === 'all' ? 1 : Math.ceil(totalCount / limitNum);
+        if (totalPages === 0) totalPages = 1;
+
+        if (limitStr !== 'all') {
+            const offset = (pageNum - 1) * limitNum;
+            sql += ` LIMIT ? OFFSET ?`;
+            params.push(limitNum, offset);
         }
-        sql += ` ORDER BY m.type ASC, m.code ASC`;
-        const [rows] = await db.query(sql, params);
-        return rows;
+
+        const [items] = await db.query(sql, params);
+
+        return {
+            items,
+            pagination: {
+                totalCount,
+                page: pageNum,
+                limit: limitStr,
+                totalPages
+            }
+        };
     }
 
     static async createMasterItem({ code, name, type, unit_id, category, description }) {
