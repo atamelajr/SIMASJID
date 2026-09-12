@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
+const publicRoutes = require('./public');
 const authRoutes = require('./auth');
 const dashboardRoutes = require('./dashboard');
 const keuanganRoutes = require('./keuangan');
@@ -11,6 +12,7 @@ const laporanRoutes = require('./laporan');
 const settingsRoutes = require('./settings');
 const masterRoutes = require('./master');
 
+// Back Office Routes
 router.use('/auth', authRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/keuangan', keuanganRoutes);
@@ -21,8 +23,7 @@ router.use('/laporan', laporanRoutes);
 router.use('/settings', settingsRoutes);
 router.use('/master', masterRoutes);
 
-router.get('/', (req, res) => {
-    res.redirect('/dashboard');
-});
+// Public Portal Routes (Beranda, Jadwal Sholat, Transparansi, Proyek Donasi, TV Masjid)
+router.use('/', publicRoutes);
 
 module.exports = router;

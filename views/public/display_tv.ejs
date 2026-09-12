@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Display TV - <%= masjidProfile.name || 'SIMASJID' %></title>
+    <link rel="icon" type="image/png" href="/logo.png">
+    
+    <!-- Bootstrap 5 CSS & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --card-dark: #131b2e;
+            --emerald: #10b981;
+            --amber: #f59e0b;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #ffffff;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .font-mono {
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        /* Top Header */
+        .tv-header {
+            background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
+            border-bottom: 3px solid var(--emerald);
+            padding: 15px 30px;
+        }
+
+        .mosque-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: #ffffff;
+        }
+
+        .live-clock-tv {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: var(--amber);
+            line-height: 1;
+        }
+
+        /* Prayer Cards Grid */
+        .prayer-card {
+            background-color: var(--card-dark);
+            border: 2px solid #1e293b;
+            border-radius: 16px;
+            padding: 20px 10px;
+            text-center: center;
+            transition: all 0.3s ease;
+        }
+
+        .prayer-card.active-prayer {
+            border-color: var(--amber);
+            background: linear-gradient(180deg, #1e293b 0%, #312e81 100%);
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.4);
+            transform: scale(1.03);
+        }
+
+        .prayer-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
+
+        .prayer-card.active-prayer .prayer-name {
+            color: var(--amber);
+        }
+
+        .prayer-time {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        /* Bottom Running Text */
+        .marquee-footer {
+            background-color: #0f172a;
+            border-top: 2px solid var(--emerald);
+            padding: 12px 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #cbd5e1;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Section -->
+    <header class="tv-header d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-3">
+            <img src="/logo.png" alt="Logo" height="55" onerror="this.style.display='none'">
+            <div>
+                <div class="mosque-title"><%= masjidProfile.name || 'SIMASJID' %></div>
+                <div class="small text-emerald fw-semibold">
+                    <i class="bi bi-geo-alt-fill me-1"></i> <%= masjidProfile.address || 'Pusat Ibadah Umat' %>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-end">
+            <div class="live-clock-tv font-mono" id="tv-clock">00:00:00</div>
+            <div class="fw-bold text-slate-300 small" id="tv-date">-</div>
+        </div>
+    </header>
+
+    <!-- Main Content Body -->
+    <main class="container-fluid px-4 py-3 flex-grow-1 d-flex flex-column justify-content-center">
+        <!-- Banner Next Prayer Countdown -->
+        <div class="text-center mb-4">
+            <span class="badge bg-amber text-dark fs-6 px-4 py-2 rounded-pill fw-bold" style="background-color: var(--amber);">
+                <i class="bi bi-hourglass-split me-1"></i> MENUNJU SHOLAT <span id="tv-next-name">SUBUH</span>: <span id="tv-next-countdown" class="font-mono fs-5">00:00:00</span>
+            </span>
+        </div>
+
+        <!-- 5 Waktu Sholat Grid -->
+        <div class="row g-3 px-2">
+            <div class="col">
+                <div class="prayer-card" id="card-subuh">
+                    <div class="prayer-name">SUBUH</div>
+                    <div class="prayer-time font-mono" id="tv-subuh">04:35</div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="prayer-card" id="card-dzuhur">
+                    <div class="prayer-name">DZUHUR</div>
+                    <div class="prayer-time font-mono" id="tv-dzuhur">11:54</div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="prayer-card" id="card-ashar">
+                    <div class="prayer-name">ASHAR</div>
+                    <div class="prayer-time font-mono" id="tv-ashar">15:10</div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="prayer-card" id="card-maghrib">
+                    <div class="prayer-name">MAGHRIB</div>
+                    <div class="prayer-time font-mono" id="tv-maghrib">17:56</div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="prayer-card" id="card-isya">
+                    <div class="prayer-name">ISYA</div>
+                    <div class="prayer-time font-mono" id="tv-isya">19:05</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Running Text Footer -->
+    <footer class="marquee-footer">
+        <marquee behavior="scroll" direction="left" scrollamount="6">
+            <span class="me-5"><i class="bi bi-broadcast text-warning me-2"></i> Mohon menonaktifkan/mengheningkan nada dering Handphone saat berada di dalam ruang utama sholat.</span>
+            <span class="me-5"><i class="bi bi-wallet2 text-emerald me-2"></i> Total Saldo Kas Terkini: <strong><%= formatRupiah(summary.totalSaldo) %></strong></span>
+            <span class="me-5"><i class="bi bi-heart-fill text-danger me-2"></i> Terimakasih atas Infaq dan Shadaqah Bapak/Ibu/Saudara jamaah sekalian. Jazakumullah Khairan Katsiran.</span>
+        </marquee>
+    </footer>
+
+    <!-- JavaScript Clock & Prayer Sync -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Update Clock
+            setInterval(() => {
+                const now = new Date();
+                document.getElementById('tv-clock').innerText = now.toLocaleTimeString('id-ID');
+                document.getElementById('tv-date').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            }, 1000);
+
+            // Fetch Prayer Times
+            fetch('https://api.aladhan.com/v1/timingsByCity?city=Jakarta&country=Indonesia&method=2')
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.data && data.data.timings) {
+                        const t = data.data.timings;
+                        document.getElementById('tv-subuh').innerText = t.Fajr;
+                        document.getElementById('tv-dzuhur').innerText = t.Dhuhr;
+                        document.getElementById('tv-ashar').innerText = t.Asr;
+                        document.getElementById('tv-maghrib').innerText = t.Maghrib;
+                        document.getElementById('tv-isya').innerText = t.Isha;
+
+                        const parseMins = str => {
+                            const [h, m] = str.split(':').map(Number);
+                            return h * 60 + m;
+                        };
+
+                        const prayers = [
+                            { id: 'card-subuh', name: 'SUBUH', time: t.Fajr, mins: parseMins(t.Fajr) },
+                            { id: 'card-dzuhur', name: 'DZUHUR', time: t.Dhuhr, mins: parseMins(t.Dhuhr) },
+                            { id: 'card-ashar', name: 'ASHAR', time: t.Asr, mins: parseMins(t.Asr) },
+                            { id: 'card-maghrib', name: 'MAGHRIB', time: t.Maghrib, mins: parseMins(t.Maghrib) },
+                            { id: 'card-isya', name: 'ISYA', time: t.Isha, mins: parseMins(t.Isha) }
+                        ];
+
+                        const now = new Date();
+                        const currentMins = now.getHours() * 60 + now.getMinutes();
+                        let nextP = prayers.find(p => p.mins > currentMins) || prayers[0];
+
+                        // Highlight next prayer card
+                        prayers.forEach(p => {
+                            const el = document.getElementById(p.id);
+                            if (p.id === nextP.id) {
+                                el.classList.add('active-prayer');
+                            } else {
+                                el.classList.remove('active-prayer');
+                            }
+                        });
+
+                        document.getElementById('tv-next-name').innerText = nextP.name;
+                    }
+                })
+                .catch(err => console.log('Error Aladhan TV:', err));
+        });
+    </script>
+</body>
+</html>

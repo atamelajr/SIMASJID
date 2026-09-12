@@ -1,0 +1,170 @@
+<div class="bg-dark text-white py-5 mb-5" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+    <div class="container text-center">
+        <h1 class="fw-extrabold display-5 mb-2"><i class="bi bi-clock-history text-warning me-2"></i> Jadwal Sholat & Imsakiyah</h1>
+        <p class="lead opacity-75 max-w-xl mx-auto">
+            Jadwal presisi waktu sholat 5 waktu, Syuruq, dan Imsak untuk wilayah <%= masjidProfile.name || 'Masjid' %> dan sekitarnya.
+        </p>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <div class="row g-4">
+        <!-- Live Clock & Countdown Card -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 text-center bg-white mb-4">
+                <span class="text-muted fw-bold text-uppercase small">Jam Digital Realtime</span>
+                <div class="display-3 fw-extrabold my-2 text-teal" style="color: #0f766e;" id="live-clock">00:00:00</div>
+                <div class="badge bg-light text-dark border px-3 py-2 rounded-pill small" id="live-date">-</div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4 p-4 text-center text-white" style="background-color: #0d9488;">
+                <h6 class="text-white-50 fw-bold mb-2">SHOLAT BERIKUTNYA</h6>
+                <h3 class="fw-extrabold mb-1" id="next-prayer-title">Subuh</h3>
+                <div class="fs-4 fw-bold text-warning mb-3" id="next-prayer-clock">00:00</div>
+                <div class="p-2 rounded bg-white bg-opacity-10 small" id="countdown-timer">
+                    Menghitung mundur...
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabel Jadwal 5 Waktu + Imsak -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white mb-4">
+                <div class="card-header bg-white p-4 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold m-0 text-slate-800"><i class="bi bi-calendar-check text-emerald me-2"></i> Waktu Sholat Hari Ini</h5>
+                    <span class="badge bg-emerald text-white" style="background-color: #0d9488;">DKI Jakarta & Sekitarnya</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 text-center">
+                            <thead class="bg-light text-muted">
+                                <tr>
+                                    <th class="py-3">WAKTU</th>
+                                    <th class="py-3">JAM (WIB)</th>
+                                    <th class="py-3">KETERANGAN</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="fw-bold text-secondary">IMSAK</td>
+                                    <td class="fs-5 fw-bold text-dark" id="t-imsak">04:25</td>
+                                    <td><span class="badge bg-light text-muted border">Batas Sahur</span></td>
+                                </tr>
+                                <tr class="table-success">
+                                    <td class="fw-bold text-emerald" style="color: #0d9488;">SUBUH</td>
+                                    <td class="fs-4 fw-extrabold text-emerald" style="color: #0d9488;" id="t-subuh">04:35</td>
+                                    <td><span class="badge bg-emerald text-white" style="background-color: #0d9488;">2 Rakaat</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold text-secondary">SYURUQ</td>
+                                    <td class="fs-5 fw-bold text-dark" id="t-syuruq">05:48</td>
+                                    <td><span class="badge bg-light text-muted border">Terbit Matahari</span></td>
+                                </tr>
+                                <tr class="table-success">
+                                    <td class="fw-bold text-emerald" style="color: #0d9488;">DZUHUR</td>
+                                    <td class="fs-4 fw-extrabold text-emerald" style="color: #0d9488;" id="t-dzuhur">11:54</td>
+                                    <td><span class="badge bg-emerald text-white" style="background-color: #0d9488;">4 Rakaat</span></td>
+                                </tr>
+                                <tr class="table-success">
+                                    <td class="fw-bold text-emerald" style="color: #0d9488;">ASHAR</td>
+                                    <td class="fs-4 fw-extrabold text-emerald" style="color: #0d9488;" id="t-ashar">15:10</td>
+                                    <td><span class="badge bg-emerald text-white" style="background-color: #0d9488;">4 Rakaat</span></td>
+                                </tr>
+                                <tr class="table-success">
+                                    <td class="fw-bold text-emerald" style="color: #0d9488;">MAGHRIB</td>
+                                    <td class="fs-4 fw-extrabold text-emerald" style="color: #0d9488;" id="t-maghrib">17:56</td>
+                                    <td><span class="badge bg-emerald text-white" style="background-color: #0d9488;">3 Rakaat</span></td>
+                                </tr>
+                                <tr class="table-success">
+                                    <td class="fw-bold text-emerald" style="color: #0d9488;">ISYA</td>
+                                    <td class="fs-4 fw-extrabold text-emerald" style="color: #0d9488;" id="t-isya">19:05</td>
+                                    <td><span class="badge bg-emerald text-white" style="background-color: #0d9488;">4 Rakaat</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Petugas Sholat Jumat -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                <h5 class="fw-bold mb-3 text-slate-800"><i class="bi bi-people-fill text-warning me-2"></i> Petugas Sholat Jumat Minggu Ini</h5>
+                <div class="row g-3 text-center">
+                    <div class="col-md-4">
+                        <div class="p-3 rounded-3 bg-light border">
+                            <div class="small text-muted fw-bold">KHATIB</div>
+                            <div class="fw-bold text-dark mt-1">Ustadz Drs. H. Ahmad Dahlan</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 rounded-3 bg-light border">
+                            <div class="small text-muted fw-bold">IMAM</div>
+                            <div class="fw-bold text-dark mt-1">Ust. Muhammad Ridwan, S.Pd.I</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 rounded-3 bg-light border">
+                            <div class="small text-muted fw-bold">MUADZIN & BILAL</div>
+                            <div class="fw-bold text-dark mt-1">Akang Abdullah</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Update Live Clock
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('live-clock').innerText = now.toLocaleTimeString('id-ID');
+            document.getElementById('live-date').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }, 1000);
+
+        // Fetch Aladhan API
+        fetch('https://api.aladhan.com/v1/timingsByCity?city=Jakarta&country=Indonesia&method=2')
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.data && data.data.timings) {
+                    const t = data.data.timings;
+                    document.getElementById('t-imsak').innerText = t.Imsak;
+                    document.getElementById('t-subuh').innerText = t.Fajr;
+                    document.getElementById('t-syuruq').innerText = t.Sunrise;
+                    document.getElementById('t-dzuhur').innerText = t.Dhuhr;
+                    document.getElementById('t-ashar').innerText = t.Asr;
+                    document.getElementById('t-maghrib').innerText = t.Maghrib;
+                    document.getElementById('t-isya').innerText = t.Isha;
+
+                    // Next prayer setup
+                    const now = new Date();
+                    const currentMins = now.getHours() * 60 + now.getMinutes();
+                    const parseMins = str => {
+                        const [h, m] = str.split(':').map(Number);
+                        return h * 60 + m;
+                    };
+
+                    const prayers = [
+                        { name: 'Subuh', time: t.Fajr, mins: parseMins(t.Fajr) },
+                        { name: 'Dzuhur', time: t.Dhuhr, mins: parseMins(t.Dhuhr) },
+                        { name: 'Ashar', time: t.Asr, mins: parseMins(t.Asr) },
+                        { name: 'Maghrib', time: t.Maghrib, mins: parseMins(t.Maghrib) },
+                        { name: 'Isya', time: t.Isha, mins: parseMins(t.Isha) }
+                    ];
+
+                    let nextP = prayers.find(p => p.mins > currentMins) || prayers[0];
+                    document.getElementById('next-prayer-title').innerText = nextP.name;
+                    document.getElementById('next-prayer-clock').innerText = nextP.time;
+
+                    // Countdown text
+                    let diffMins = nextP.mins - currentMins;
+                    if (diffMins < 0) diffMins += 24 * 60;
+                    const hRemaining = Math.floor(diffMins / 60);
+                    const mRemaining = diffMins % 60;
+                    document.getElementById('countdown-timer').innerText = `Kurang lebih ${hRemaining} jam ${mRemaining} menit lagi`;
+                }
+            })
+            .catch(err => console.log(err));
+    });
+</script>

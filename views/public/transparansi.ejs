@@ -1,0 +1,87 @@
+<div class="bg-dark text-white py-5 mb-5" style="background: linear-gradient(135deg, #0f766e 0%, #064e3b 100%);">
+    <div class="container text-center">
+        <h1 class="fw-extrabold display-5 mb-2"><i class="bi bi-wallet2 text-warning me-2"></i> Transparansi Keuangan Masjid</h1>
+        <p class="lead opacity-75 max-w-xl mx-auto">
+            Keterbukaan informasi pengelolaan kas, infaq, shadaqah, dan donasi jamaah <%= masjidProfile.name || 'Masjid' %>.
+        </p>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <!-- Rekening Kas & Bank -->
+    <div class="row g-4 mb-5">
+        <% if (cashAccounts && cashAccounts.length > 0) { %>
+            <% cashAccounts.forEach(acc => { %>
+                <div class="col-lg-4 col-md-6">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100 border-top border-4" style="border-color: #0d9488 !important;">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="badge bg-light text-dark border fw-bold"><%= acc.bank_name %></span>
+                            <i class="bi bi-bank fs-4 text-emerald" style="color: #0d9488;"></i>
+                        </div>
+                        <h6 class="text-muted fw-bold mb-1"><%= acc.name %></h6>
+                        <h3 class="fw-extrabold mb-2" style="color: #0f766e;"><%= formatRupiah(acc.balance) %></h3>
+                        <% if (acc.account_number && acc.account_number !== '-') { %>
+                            <div class="small text-secondary font-monospace">No. Rek: <strong><%= acc.account_number %></strong></div>
+                            <div class="small text-secondary">a.n. <%= acc.account_holder %></div>
+                        <% } %>
+                    </div>
+                </div>
+            <% }); %>
+        <% } %>
+    </div>
+
+    <!-- Mutasi Transaksi Terbaru -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+        <div class="card-header bg-white p-4 border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold m-0 text-slate-800"><i class="bi bi-list-stars text-emerald me-2"></i> Mutasi Transaksi Kas Terbaru</h5>
+            <span class="badge bg-light text-dark border">Transparan & Terbuka</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-muted">
+                        <tr>
+                            <th class="py-3 px-4">TANGGAL</th>
+                            <th class="py-3">KODE / URAIAN</th>
+                            <th class="py-3">KATEGORI</th>
+                            <th class="py-3">JENIS</th>
+                            <th class="py-3 text-end px-4">JUMLAH (RP)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (recentTransactions && recentTransactions.length > 0) { %>
+                            <% recentTransactions.forEach(t => { %>
+                                <tr>
+                                    <td class="px-4 text-secondary small"><%= formatDate(t.transaction_date) %></td>
+                                    <td>
+                                        <div class="fw-bold text-dark"><%= t.description || 'Transaksi Kas' %></div>
+                                        <small class="text-muted"><%= t.donor_name ? 'Dari/Kepada: ' + t.donor_name : '' %></small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border"><%= t.category_name || 'Kas' %></span>
+                                    </td>
+                                    <td>
+                                        <% if (t.type === 'Penerimaan') { %>
+                                            <span class="badge bg-success-subtle text-success border border-success px-3 py-1">Penerimaan</span>
+                                        <% } else if (t.type === 'Pengeluaran') { %>
+                                            <span class="badge bg-danger-subtle text-danger border border-danger px-3 py-1">Pengeluaran</span>
+                                        <% } else { %>
+                                            <span class="badge bg-info-subtle text-info border border-info px-3 py-1">Mutasi</span>
+                                        <% } %>
+                                    </td>
+                                    <td class="text-end px-4 fw-extrabold <%= t.type === 'Penerimaan' ? 'text-success' : 'text-danger' %>">
+                                        <%= t.type === 'Penerimaan' ? '+' : '-' %> <%= formatRupiah(t.amount) %>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">Belum ada transaksi kas yang dicatat.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
