@@ -19,14 +19,18 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
-            fontSrc: ["'self'", "https://cdn.jsdelivr.net"],
-            imgSrc: ["'self'", "data:", "blob:"],
-            frameAncestors: ["'none'"] // Mencegah website dimasukkan ke dalam iframe oleh domain lain
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net"],
+            scriptSrcAttr: ["'unsafe-inline'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com"],
+            fontSrc: ["'self'", "https://cdn.jsdelivr.net", "https://fonts.gstatic.com"],
+            imgSrc: ["'self'", "data:", "blob:", "https:"],
+            connectSrc: ["'self'", "https://api.aladhan.com", "https://cdn.jsdelivr.net"],
+            frameAncestors: ["'none'"],
+            upgradeInsecureRequests: null // Mencegah browser memaksa redirect HTTP ke HTTPS jika belum ada SSL
         }
     },
-    crossOriginEmbedderPolicy: false
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: false
 }));
 
 // Global Rate Limiter (ISO/IEC 27001 A.8.20 Anti-DDoS / Traffic Throttling)
@@ -74,7 +78,7 @@ app.use(session({
     cookie: { 
         httpOnly: true, // Proteksi XSS (Mencegah pencurian cookie via JavaScript)
         sameSite: 'lax', // Proteksi CSRF
-        secure: process.env.NODE_ENV === 'production', // Wajib HTTPS di mode produksi
+        secure: process.env.COOKIE_SECURE === 'true', // Hanya gunakan SSL jika diatur COOKIE_SECURE=true
         maxAge: 24 * 60 * 60 * 1000 // Cookie berlaku 24 jam
     }
 }));
