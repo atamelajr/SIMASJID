@@ -14,6 +14,7 @@ DROP TABLE IF EXISTS rab_projects;
 DROP TABLE IF EXISTS inventory_logs;
 DROP TABLE IF EXISTS inventory_items;
 DROP TABLE IF EXISTS fixed_assets;
+DROP TABLE IF EXISTS asset_locations;
 DROP TABLE IF EXISTS transactions;
 DROP TABLE IF EXISTS donors_mustahik;
 DROP TABLE IF EXISTS units;
@@ -176,7 +177,7 @@ CREATE TABLE transactions (
 ) ENGINE=InnoDB;
 
 -- 11. Tabel Master Lokasi Barang & Aset
-CREATE TABLE asset_locations (
+CREATE TABLE IF NOT EXISTS asset_locations (
     id INT AUTO_INCREMENT PRIMARY KEY,
     code VARCHAR(20) NOT NULL UNIQUE,
     name VARCHAR(100) NOT NULL,
