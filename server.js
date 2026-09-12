@@ -2,6 +2,8 @@ const express = require('express');
 const expressLayouts = require('express-ejs-layouts');
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const path = require('path');
 require('dotenv').config();
 
@@ -10,6 +12,42 @@ const routes = require('./src/routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Security HTTP Headers (ISO/IEC 27001 A.8.28 & Clickjacking Protection)
+app.use(helmet({
+    frameguard: { action: 'deny' }, // Clickjacking protection (X-Frame-Options: DENY)
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+            fontSrc: ["'self'", "https://cdn.jsdelivr.net"],
+            imgSrc: ["'self'", "data:", "blob:"],
+            frameAncestors: ["'none'"] // Mencegah website dimasukkan ke dalam iframe oleh domain lain
+        }
+    },
+    crossOriginEmbedderPolicy: false
+}));
+
+// Global Rate Limiter (ISO/IEC 27001 A.8.20 Anti-DDoS / Traffic Throttling)
+const generalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 menit
+    max: 300, // maksimal 300 request per IP per 15 menit
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: 'Terlalu banyak permintaan dari IP ini, silakan coba lagi nanti.'
+});
+app.use(generalLimiter);
+
+// Rate Limiter khusus Login (ISO/IEC 27001 A.8.5 Anti Brute-Force)
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 menit
+    max: 10, // maksimal 10 percobaan login per IP per 15 menit
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: 'Terlalu banyak percobaan login gagal dari IP ini. Silakan coba lagi setelah 15 menit.'
+});
+app.use('/auth/login', loginLimiter);
 
 // Body Parser Middleware
 app.use(express.json());
@@ -26,7 +64,7 @@ const sessionStore = new MySQLStore({
     }
 }, pool);
 
-// Session Middleware
+// Session Middleware (Hardened Sesuai ISO/IEC 27001 A.8.5)
 app.use(session({
     key: 'simasjid_session_cookie',
     secret: process.env.SESSION_SECRET || 'simasjid_secret_key_2026',
@@ -34,6 +72,9 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: { 
+        httpOnly: true, // Proteksi XSS (Mencegah pencurian cookie via JavaScript)
+        sameSite: 'lax', // Proteksi CSRF
+        secure: process.env.NODE_ENV === 'production', // Wajib HTTPS di mode produksi
         maxAge: 24 * 60 * 60 * 1000 // Cookie berlaku 24 jam
     }
 }));
