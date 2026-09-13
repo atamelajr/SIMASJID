@@ -28,19 +28,20 @@ async function createDbUser() {
         await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`);
         console.log(`✅ Database '${dbName}' dipastikan ada.`);
 
-        // 2. Buat User Baru di localhost dan 127.0.0.1
+        // 2. Buat User Baru di localhost, 127.0.0.1, dan % (Docker Network Bridge)
         await connection.query(`CREATE USER IF NOT EXISTS '${newDbUser}'@'localhost' IDENTIFIED BY '${newDbPass}';`);
         await connection.query(`ALTER USER '${newDbUser}'@'localhost' IDENTIFIED BY '${newDbPass}';`);
 
         await connection.query(`CREATE USER IF NOT EXISTS '${newDbUser}'@'127.0.0.1' IDENTIFIED BY '${newDbPass}';`);
         await connection.query(`ALTER USER '${newDbUser}'@'127.0.0.1' IDENTIFIED BY '${newDbPass}';`);
 
-        // 3. Berikan Hak Akses Khusus (Least-Privilege) pada simasjid_db
-        const grantQuery = `GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, ALTER, INDEX ON \`${dbName}\`.* TO '${newDbUser}'@'localhost';`;
-        const grantQueryIp = `GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, ALTER, INDEX ON \`${dbName}\`.* TO '${newDbUser}'@'127.0.0.1';`;
+        await connection.query(`CREATE USER IF NOT EXISTS '${newDbUser}'@'%' IDENTIFIED BY '${newDbPass}';`);
+        await connection.query(`ALTER USER '${newDbUser}'@'%' IDENTIFIED BY '${newDbPass}';`);
 
-        await connection.query(grantQuery);
-        await connection.query(grantQueryIp);
+        // 3. Berikan Hak Akses Khusus (Least-Privilege) pada simasjid_db
+        await connection.query(`GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, ALTER, INDEX ON \`${dbName}\`.* TO '${newDbUser}'@'localhost';`);
+        await connection.query(`GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, ALTER, INDEX ON \`${dbName}\`.* TO '${newDbUser}'@'127.0.0.1';`);
+        await connection.query(`GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, ALTER, INDEX ON \`${dbName}\`.* TO '${newDbUser}'@'%';`);
         await connection.query('FLUSH PRIVILEGES;');
 
         console.log(`🎉 User Database '${newDbUser}' berhasil dibuat dan diberi hak akses terisolasi pada '${dbName}'!`);
