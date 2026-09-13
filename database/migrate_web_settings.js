@@ -28,7 +28,16 @@ async function migrateWebSettings() {
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS hero_title VARCHAR(255) NULL`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS hero_subtitle TEXT NULL`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS maps_embed TEXT NULL`,
-            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS running_text TEXT NULL`
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS running_text TEXT NULL`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS prayer_city VARCHAR(100) DEFAULT 'Jakarta'`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS prayer_country VARCHAR(100) DEFAULT 'Indonesia'`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS timezone VARCHAR(50) DEFAULT 'Asia/Jakarta'`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS calculation_method INT DEFAULT 20`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS subuh_offset INT DEFAULT 0`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS dzuhur_offset INT DEFAULT 0`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS ashar_offset INT DEFAULT 0`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS maghrib_offset INT DEFAULT 0`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS isya_offset INT DEFAULT 0`
         ];
 
         for (const query of alterProfileQueries) {

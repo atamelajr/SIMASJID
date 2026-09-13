@@ -263,16 +263,39 @@
         const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         document.getElementById('current-date-badge').innerText = new Date().toLocaleDateString('id-ID', dateOptions);
 
-        fetch('https://api.aladhan.com/v1/timingsByCity?city=Jakarta&country=Indonesia&method=2')
+        const prayerCity = encodeURIComponent('<%= masjidProfile.prayer_city || "Jakarta" %>');
+        const prayerCountry = encodeURIComponent('<%= masjidProfile.prayer_country || "Indonesia" %>');
+        const calcMethod = '<%= masjidProfile.calculation_method || 20 %>';
+        const subuhOffset = parseInt('<%= masjidProfile.subuh_offset || 0 %>');
+        const dzuhurOffset = parseInt('<%= masjidProfile.dzuhur_offset || 0 %>');
+        const asharOffset = parseInt('<%= masjidProfile.ashar_offset || 0 %>');
+        const maghribOffset = parseInt('<%= masjidProfile.maghrib_offset || 0 %>');
+        const isyaOffset = parseInt('<%= masjidProfile.isya_offset || 0 %>');
+
+        function adjustTime(timeStr, offset) {
+            if (!timeStr || !offset) return timeStr;
+            const [h, m] = timeStr.split(':').map(Number);
+            const d = new Date();
+            d.setHours(h, m + offset, 0);
+            return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+        }
+
+        fetch(`https://api.aladhan.com/v1/timingsByCity?city=${prayerCity}&country=${prayerCountry}&method=${calcMethod}`)
             .then(res => res.json())
             .then(data => {
                 if (data && data.data && data.data.timings) {
                     const t = data.data.timings;
-                    document.getElementById('time-subuh').innerText = t.Fajr;
-                    document.getElementById('time-dzuhur').innerText = t.Dhuhr;
-                    document.getElementById('time-ashar').innerText = t.Asr;
-                    document.getElementById('time-maghrib').innerText = t.Maghrib;
-                    document.getElementById('time-isya').innerText = t.Isha;
+                    const subuh = adjustTime(t.Fajr, subuhOffset);
+                    const dzuhur = adjustTime(t.Dhuhr, dzuhurOffset);
+                    const ashar = adjustTime(t.Asr, asharOffset);
+                    const maghrib = adjustTime(t.Maghrib, maghribOffset);
+                    const isya = adjustTime(t.Isha, isyaOffset);
+
+                    document.getElementById('time-subuh').innerText = subuh;
+                    document.getElementById('time-dzuhur').innerText = dzuhur;
+                    document.getElementById('time-ashar').innerText = ashar;
+                    document.getElementById('time-maghrib').innerText = maghrib;
+                    document.getElementById('time-isya').innerText = isya;
                 }
             }).catch(err => console.log(err));
     });

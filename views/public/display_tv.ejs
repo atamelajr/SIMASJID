@@ -183,17 +183,40 @@
                 document.getElementById('tv-date').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             }, 1000);
 
+            const prayerCity = encodeURIComponent('<%= masjidProfile.prayer_city || "Jakarta" %>');
+            const prayerCountry = encodeURIComponent('<%= masjidProfile.prayer_country || "Indonesia" %>');
+            const calcMethod = '<%= masjidProfile.calculation_method || 20 %>';
+            const subuhOffset = parseInt('<%= masjidProfile.subuh_offset || 0 %>');
+            const dzuhurOffset = parseInt('<%= masjidProfile.dzuhur_offset || 0 %>');
+            const asharOffset = parseInt('<%= masjidProfile.ashar_offset || 0 %>');
+            const maghribOffset = parseInt('<%= masjidProfile.maghrib_offset || 0 %>');
+            const isyaOffset = parseInt('<%= masjidProfile.isya_offset || 0 %>');
+
+            function adjustTime(timeStr, offset) {
+                if (!timeStr || !offset) return timeStr;
+                const [h, m] = timeStr.split(':').map(Number);
+                const d = new Date();
+                d.setHours(h, m + offset, 0);
+                return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+            }
+
             // Fetch Prayer Times
-            fetch('https://api.aladhan.com/v1/timingsByCity?city=Jakarta&country=Indonesia&method=2')
+            fetch(`https://api.aladhan.com/v1/timingsByCity?city=${prayerCity}&country=${prayerCountry}&method=${calcMethod}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data && data.data && data.data.timings) {
                         const t = data.data.timings;
-                        document.getElementById('tv-subuh').innerText = t.Fajr;
-                        document.getElementById('tv-dzuhur').innerText = t.Dhuhr;
-                        document.getElementById('tv-ashar').innerText = t.Asr;
-                        document.getElementById('tv-maghrib').innerText = t.Maghrib;
-                        document.getElementById('tv-isya').innerText = t.Isha;
+                        const subuh = adjustTime(t.Fajr, subuhOffset);
+                        const dzuhur = adjustTime(t.Dhuhr, dzuhurOffset);
+                        const ashar = adjustTime(t.Asr, asharOffset);
+                        const maghrib = adjustTime(t.Maghrib, maghribOffset);
+                        const isya = adjustTime(t.Isha, isyaOffset);
+
+                        document.getElementById('tv-subuh').innerText = subuh;
+                        document.getElementById('tv-dzuhur').innerText = dzuhur;
+                        document.getElementById('tv-ashar').innerText = ashar;
+                        document.getElementById('tv-maghrib').innerText = maghrib;
+                        document.getElementById('tv-isya').innerText = isya;
 
                         const parseMins = str => {
                             const [h, m] = str.split(':').map(Number);
@@ -201,11 +224,11 @@
                         };
 
                         const prayers = [
-                            { id: 'card-subuh', name: 'SUBUH', time: t.Fajr, mins: parseMins(t.Fajr) },
-                            { id: 'card-dzuhur', name: 'DZUHUR', time: t.Dhuhr, mins: parseMins(t.Dhuhr) },
-                            { id: 'card-ashar', name: 'ASHAR', time: t.Asr, mins: parseMins(t.Asr) },
-                            { id: 'card-maghrib', name: 'MAGHRIB', time: t.Maghrib, mins: parseMins(t.Maghrib) },
-                            { id: 'card-isya', name: 'ISYA', time: t.Isha, mins: parseMins(t.Isha) }
+                            { id: 'card-subuh', name: 'SUBUH', time: subuh, mins: parseMins(subuh) },
+                            { id: 'card-dzuhur', name: 'DZUHUR', time: dzuhur, mins: parseMins(dzuhur) },
+                            { id: 'card-ashar', name: 'ASHAR', time: ashar, mins: parseMins(ashar) },
+                            { id: 'card-maghrib', name: 'MAGHRIB', time: maghrib, mins: parseMins(maghrib) },
+                            { id: 'card-isya', name: 'ISYA', time: isya, mins: parseMins(isya) }
                         ];
 
                         const now = new Date();

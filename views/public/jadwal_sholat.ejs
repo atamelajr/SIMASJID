@@ -123,19 +123,42 @@
             document.getElementById('live-date').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         }, 1000);
 
+        const prayerCity = encodeURIComponent('<%= masjidProfile.prayer_city || "Jakarta" %>');
+        const prayerCountry = encodeURIComponent('<%= masjidProfile.prayer_country || "Indonesia" %>');
+        const calcMethod = '<%= masjidProfile.calculation_method || 20 %>';
+        const subuhOffset = parseInt('<%= masjidProfile.subuh_offset || 0 %>');
+        const dzuhurOffset = parseInt('<%= masjidProfile.dzuhur_offset || 0 %>');
+        const asharOffset = parseInt('<%= masjidProfile.ashar_offset || 0 %>');
+        const maghribOffset = parseInt('<%= masjidProfile.maghrib_offset || 0 %>');
+        const isyaOffset = parseInt('<%= masjidProfile.isya_offset || 0 %>');
+
+        function adjustTime(timeStr, offset) {
+            if (!timeStr || !offset) return timeStr;
+            const [h, m] = timeStr.split(':').map(Number);
+            const d = new Date();
+            d.setHours(h, m + offset, 0);
+            return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+        }
+
         // Fetch Aladhan API
-        fetch('https://api.aladhan.com/v1/timingsByCity?city=Jakarta&country=Indonesia&method=2')
+        fetch(`https://api.aladhan.com/v1/timingsByCity?city=${prayerCity}&country=${prayerCountry}&method=${calcMethod}`)
             .then(res => res.json())
             .then(data => {
                 if (data && data.data && data.data.timings) {
                     const t = data.data.timings;
+                    const subuh = adjustTime(t.Fajr, subuhOffset);
+                    const dzuhur = adjustTime(t.Dhuhr, dzuhurOffset);
+                    const ashar = adjustTime(t.Asr, asharOffset);
+                    const maghrib = adjustTime(t.Maghrib, maghribOffset);
+                    const isya = adjustTime(t.Isha, isyaOffset);
+
                     document.getElementById('t-imsak').innerText = t.Imsak;
-                    document.getElementById('t-subuh').innerText = t.Fajr;
+                    document.getElementById('t-subuh').innerText = subuh;
                     document.getElementById('t-syuruq').innerText = t.Sunrise;
-                    document.getElementById('t-dzuhur').innerText = t.Dhuhr;
-                    document.getElementById('t-ashar').innerText = t.Asr;
-                    document.getElementById('t-maghrib').innerText = t.Maghrib;
-                    document.getElementById('t-isya').innerText = t.Isha;
+                    document.getElementById('t-dzuhur').innerText = dzuhur;
+                    document.getElementById('t-ashar').innerText = ashar;
+                    document.getElementById('t-maghrib').innerText = maghrib;
+                    document.getElementById('t-isya').innerText = isya;
 
                     // Next prayer setup
                     const now = new Date();
@@ -146,11 +169,11 @@
                     };
 
                     const prayers = [
-                        { name: 'Subuh', time: t.Fajr, mins: parseMins(t.Fajr) },
-                        { name: 'Dzuhur', time: t.Dhuhr, mins: parseMins(t.Dhuhr) },
-                        { name: 'Ashar', time: t.Asr, mins: parseMins(t.Asr) },
-                        { name: 'Maghrib', time: t.Maghrib, mins: parseMins(t.Maghrib) },
-                        { name: 'Isya', time: t.Isha, mins: parseMins(t.Isha) }
+                        { name: 'Subuh', time: subuh, mins: parseMins(subuh) },
+                        { name: 'Dzuhur', time: dzuhur, mins: parseMins(dzuhur) },
+                        { name: 'Ashar', time: ashar, mins: parseMins(ashar) },
+                        { name: 'Maghrib', time: maghrib, mins: parseMins(maghrib) },
+                        { name: 'Isya', time: isya, mins: parseMins(isya) }
                     ];
 
                     let nextP = prayers.find(p => p.mins > currentMins) || prayers[0];

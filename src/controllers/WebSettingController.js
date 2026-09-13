@@ -23,7 +23,9 @@ class WebSettingController {
             const {
                 name, address, phone, email, vision, mission, history,
                 social_facebook, social_instagram, social_youtube, social_whatsapp,
-                hero_title, hero_subtitle, maps_embed, running_text
+                hero_title, hero_subtitle, maps_embed, running_text,
+                prayer_city, prayer_country, timezone, calculation_method,
+                subuh_offset, dzuhur_offset, ashar_offset, maghrib_offset, isya_offset
             } = req.body;
 
             const existing = await WebSettingModel.getWebProfile();
@@ -44,7 +46,9 @@ class WebSettingController {
                 logo: logoPath,
                 favicon: faviconPath,
                 social_facebook, social_instagram, social_youtube, social_whatsapp,
-                hero_title, hero_subtitle, maps_embed, running_text
+                hero_title, hero_subtitle, maps_embed, running_text,
+                prayer_city, prayer_country, timezone, calculation_method,
+                subuh_offset, dzuhur_offset, ashar_offset, maghrib_offset, isya_offset
             });
 
             res.redirect('/settings/web/general?success=Pengaturan+umum+web+berhasil+disimpan');

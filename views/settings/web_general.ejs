@@ -86,6 +86,67 @@
             <!-- Media Sosial & Visi Misi -->
             <div class="col-lg-6">
                 <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
+                    <h5 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="bi bi-clock-history me-2 text-primary"></i> Pengaturan Wilayah Sholat & Zona Waktu</h5>
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Kota / Kabupaten</label>
+                            <input type="text" name="prayer_city" class="form-control" placeholder="Aceh Tamiang / Jakarta / Medan / Surabaya" value="<%= profile.prayer_city || 'Jakarta' %>" required>
+                            <small class="text-muted">Nama kota/kabupaten untuk pencarian jadwal sholat</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Negara</label>
+                            <input type="text" name="prayer_country" class="form-control" value="<%= profile.prayer_country || 'Indonesia' %>" required>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Zona Waktu (Timezone)</label>
+                            <select name="timezone" class="form-select">
+                                <option value="Asia/Jakarta" <%= (profile.timezone === 'Asia/Jakarta' || !profile.timezone) ? 'selected' : '' %>>WIB - Asia/Jakarta (GMT+7)</option>
+                                <option value="Asia/Makassar" <%= profile.timezone === 'Asia/Makassar' ? 'selected' : '' %>>WITA - Asia/Makassar (GMT+8)</option>
+                                <option value="Asia/Jayapura" <%= profile.timezone === 'Asia/Jayapura' ? 'selected' : '' %>>WIT - Asia/Jayapura (GMT+9)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Metode Perhitungan Sholat</label>
+                            <select name="calculation_method" class="form-select">
+                                <option value="20" <%= (profile.calculation_method == 20 || !profile.calculation_method) ? 'selected' : '' %>>Kemenag Indonesia (SIHAT)</option>
+                                <option value="11" <%= profile.calculation_method == 11 ? 'selected' : '' %>>Majelis Ugama Islam Singapura (MUIS)</option>
+                                <option value="3" <%= profile.calculation_method == 3 ? 'selected' : '' %>>Muslim World League (MWL)</option>
+                                <option value="4" <%= profile.calculation_method == 4 ? 'selected' : '' %>>Umm Al-Qura University, Makkah</option>
+                                <option value="2" <%= profile.calculation_method == 2 ? 'selected' : '' %>>Islamic Society of North America (ISNA)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <label class="form-label fw-semibold text-dark border-top pt-2 mt-2 w-100">Koreksi Penyesuaian Menit Sholat (+/- Menit)</label>
+                    <div class="row g-2 text-center">
+                        <div class="col">
+                            <small class="fw-bold d-block text-muted">SUBUH</small>
+                            <input type="number" name="subuh_offset" class="form-control form-control-sm text-center" value="<%= profile.subuh_offset || 0 %>">
+                        </div>
+                        <div class="col">
+                            <small class="fw-bold d-block text-muted">DZUHUR</small>
+                            <input type="number" name="dzuhur_offset" class="form-control form-control-sm text-center" value="<%= profile.dzuhur_offset || 0 %>">
+                        </div>
+                        <div class="col">
+                            <small class="fw-bold d-block text-muted">ASHAR</small>
+                            <input type="number" name="ashar_offset" class="form-control form-control-sm text-center" value="<%= profile.ashar_offset || 0 %>">
+                        </div>
+                        <div class="col">
+                            <small class="fw-bold d-block text-muted">MAGHRIB</small>
+                            <input type="number" name="maghrib_offset" class="form-control form-control-sm text-center" value="<%= profile.maghrib_offset || 0 %>">
+                        </div>
+                        <div class="col">
+                            <small class="fw-bold d-block text-muted">ISYA</small>
+                            <input type="number" name="isya_offset" class="form-control form-control-sm text-center" value="<%= profile.isya_offset || 0 %>">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
                     <h5 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="bi bi-share me-2 text-primary"></i> Media Sosial & Kontak</h5>
                     
                     <div class="mb-3">
