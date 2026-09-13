@@ -33,10 +33,13 @@ app.use(helmet({
     crossOriginOpenerPolicy: false
 }));
 
+// Static Files (Ditempatkan sebelum Rate Limiter agar gambar, CSS, JS tidak terblokir HTTP 429)
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Global Rate Limiter (ISO/IEC 27001 A.8.20 Anti-DDoS / Traffic Throttling)
 const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 menit
-    max: 300, // maksimal 300 request per IP per 15 menit
+    max: 1000, // maksimal 1000 request per IP per 15 menit
     standardHeaders: true,
     legacyHeaders: false,
     message: 'Terlalu banyak permintaan dari IP ini, silakan coba lagi nanti.'
@@ -46,7 +49,7 @@ app.use(generalLimiter);
 // Rate Limiter khusus Login (ISO/IEC 27001 A.8.5 Anti Brute-Force)
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 menit
-    max: 10, // maksimal 10 percobaan login per IP per 15 menit
+    max: 15, // maksimal 15 percobaan login per IP per 15 menit
     standardHeaders: true,
     legacyHeaders: false,
     message: 'Terlalu banyak percobaan login gagal dari IP ini. Silakan coba lagi setelah 15 menit.'
@@ -82,9 +85,6 @@ app.use(session({
         maxAge: 24 * 60 * 60 * 1000 // Cookie berlaku 24 jam
     }
 }));
-
-// Static Files
-app.use(express.static(path.join(__dirname, 'public')));
 
 // EJS View Engine & Layouts
 app.use(expressLayouts);
