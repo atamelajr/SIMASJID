@@ -7,7 +7,8 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "init-db": "node database/init_db.js",
-    "backup-db": "node database/backup_db.js"
+    "backup-db": "node database/backup_db.js",
+    "create-db-user": "node database/create_db_user.js"
   },
   "keywords": [
     "simasjid",
