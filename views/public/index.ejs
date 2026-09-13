@@ -11,7 +11,7 @@
             <% banners.forEach((b, idx) => { %>
                 <div class="carousel-item <%= idx === 0 ? 'active' : '' %>" style="max-height: 520px;">
                     <div class="position-relative w-100 h-100" style="min-height: 440px;">
-                        <img src="<%= b.image_url %>" class="d-block w-100 h-100 object-fit-cover filter-brightness" alt="<%= b.title %>" style="filter: brightness(0.45); height: 520px; object-fit: cover;">
+                        <img src="<%= b.image_url %>" class="d-block w-100 h-100 object-fit-cover filter-brightness" alt="<%= b.title %>" style="filter: brightness(0.45); height: 520px; object-fit: cover;" onerror="this.src='/images/hero-default.jpg'">
                         <div class="carousel-caption d-flex flex-column justify-content-center h-100 text-start px-md-5" style="top: 0; bottom: 0;">
                             <div class="container">
                                 <div class="col-lg-8">
