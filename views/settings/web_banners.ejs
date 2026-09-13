@@ -1,0 +1,131 @@
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold mb-1"><i class="bi bi-images me-2 text-primary"></i> Kelola Banner / Slide Hero</h4>
+            <p class="text-muted small m-0">Atur gambar banner carousel besar di halaman utama publik.</p>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#modalAddBanner">
+            <i class="bi bi-plus-lg me-1"></i> Tambah Banner Baru
+        </button>
+    </div>
+
+    <% if (typeof successMsg !== 'undefined' && successMsg) { %>
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> <%= successMsg %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <% } %>
+
+    <div class="card border-0 shadow-sm rounded-3 overflow-hidden bg-white">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-muted">
+                        <tr>
+                            <th class="py-3 px-3">GAMBAR BANNER</th>
+                            <th class="py-3">JUDUL & SUBJUDUL</th>
+                            <th class="py-3">TOMBOL LINK</th>
+                            <th class="py-3 text-center">URUTAN</th>
+                            <th class="py-3 text-center">STATUS</th>
+                            <th class="py-3 text-end px-3">AKSI</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (banners && banners.length > 0) { %>
+                            <% banners.forEach(b => { %>
+                                <tr>
+                                    <td class="px-3" style="width: 140px;">
+                                        <img src="<%= b.image_url %>" class="img-fluid rounded border shadow-sm" style="height: 60px; width: 120px; object-fit: cover;" alt="<%= b.title %>">
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-dark"><%= b.title %></div>
+                                        <small class="text-muted"><%= b.subtitle || '-' %></small>
+                                    </td>
+                                    <td>
+                                        <% if (b.button_text) { %>
+                                            <span class="badge bg-light text-dark border"><%= b.button_text %> &rarr; <%= b.button_link %></span>
+                                        <% } else { %>
+                                            <span class="text-muted small">-</span>
+                                        <% } %>
+                                    </td>
+                                    <td class="text-center fw-bold"><%= b.display_order %></td>
+                                    <td class="text-center">
+                                        <% if (b.is_active) { %>
+                                            <span class="badge bg-success-subtle text-success border border-success">Aktif</span>
+                                        <% } else { %>
+                                            <span class="badge bg-secondary-subtle text-secondary border">Non-Aktif</span>
+                                        <% } %>
+                                    </td>
+                                    <td class="text-end px-3">
+                                        <form action="/settings/web/banners/delete/<%= b.id %>" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus banner ini?')">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">Belum ada banner slide hero yang ditambahkan.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah Banner -->
+<div class="modal fade" id="modalAddBanner" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-image me-2"></i> Tambah Banner Slide Hero</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/settings/web/banners/create" method="POST" enctype="multipart/form-data">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Judul Banner Utama</label>
+                        <input type="text" name="title" class="form-control" placeholder="Misal: Selamat Datang di SIMASJID" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Sub-judul / Deskripsi Singkat</label>
+                        <textarea name="subtitle" class="form-control" rows="2" placeholder="Deskripsi di bawah judul..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">File Gambar Banner</label>
+                        <input type="file" name="image" class="form-control" accept="image/*" required>
+                        <small class="text-muted">Rasio lanskap disarankan (1920x800 px atau 1200x500 px)</small>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Teks Tombol (Opsional)</label>
+                            <input type="text" name="button_text" class="form-control" placeholder="Misal: Salurkan Donasi">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Link Tombol (Opsional)</label>
+                            <input type="text" name="button_link" class="form-control" placeholder="/proyek-donasi">
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Urutan Tampil</label>
+                            <input type="number" name="display_order" class="form-control" value="0">
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end mb-2">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="is_active" id="isActiveCheck" checked>
+                                <label class="form-check-input-label fw-semibold" for="isActiveCheck">Status Aktif</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary btn-sm fw-bold px-3">Simpan Banner</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

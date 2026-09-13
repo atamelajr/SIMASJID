@@ -1,0 +1,136 @@
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold mb-1"><i class="bi bi-newspaper me-2 text-primary"></i> Kelola Berita & Artikel</h4>
+            <p class="text-muted small m-0">Tulis dan terbitkan berita, artikel dakwah, & kabar kegiatan masjid.</p>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#modalAddArticle">
+            <i class="bi bi-pencil-square me-1"></i> Tulis Artikel Baru
+        </button>
+    </div>
+
+    <% if (typeof successMsg !== 'undefined' && successMsg) { %>
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> <%= successMsg %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <% } %>
+
+    <div class="card border-0 shadow-sm rounded-3 overflow-hidden bg-white">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-muted">
+                        <tr>
+                            <th class="py-3 px-3">THUMBNAIL</th>
+                            <th class="py-3">JUDUL ARTIKEL</th>
+                            <th class="py-3">KATEGORI</th>
+                            <th class="py-3">PENULIS</th>
+                            <th class="py-3 text-center">DILIHAT</th>
+                            <th class="py-3 text-center">STATUS</th>
+                            <th class="py-3 text-end px-3">AKSI</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (articles && articles.length > 0) { %>
+                            <% articles.forEach(a => { %>
+                                <tr>
+                                    <td class="px-3" style="width: 90px;">
+                                        <img src="<%= a.thumbnail || '/images/hero-default.jpg' %>" class="img-fluid rounded border shadow-sm" style="height: 50px; width: 80px; object-fit: cover;" alt="<%= a.title %>">
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-dark"><%= a.title %></div>
+                                        <small class="text-muted font-monospace">/berita/<%= a.slug %></small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border"><%= a.category %></span>
+                                    </td>
+                                    <td class="small text-secondary"><%= a.author_name %></td>
+                                    <td class="text-center small"><i class="bi bi-eye text-muted me-1"></i> <%= a.views %></td>
+                                    <td class="text-center">
+                                        <% if (a.is_published) { %>
+                                            <span class="badge bg-success-subtle text-success border border-success">Terbit</span>
+                                        <% } else { %>
+                                            <span class="badge bg-secondary-subtle text-secondary border">Draft</span>
+                                        <% } %>
+                                    </td>
+                                    <td class="text-end px-3">
+                                        <a href="/berita/<%= a.slug %>" target="_blank" class="btn btn-outline-info btn-sm me-1" title="Lihat"><i class="bi bi-box-arrow-up-right"></i></a>
+                                        <form action="/settings/web/articles/delete/<%= a.id %>" method="POST" class="d-inline" onsubmit="return confirm('Hapus artikel ini?')">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="7" class="text-center py-5 text-muted">Belum ada berita atau artikel yang ditulis.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah Artikel -->
+<div class="modal fade" id="modalAddArticle" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-journal-plus me-2"></i> Tulis Artikel Baru</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/settings/web/articles/create" method="POST" enctype="multipart/form-data">
+                <div class="modal-body p-4">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Judul Artikel / Berita</label>
+                            <input type="text" name="title" class="form-control" placeholder="Judul berita utama..." required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Kategori</label>
+                            <select name="category" class="form-select">
+                                <option value="Kajian & Dakwah">Kajian & Dakwah</option>
+                                <option value="Berita Kegiatan">Berita Kegiatan</option>
+                                <option value="Pengumuman">Pengumuman DKM</option>
+                                <option value="Sosial & ZIS">Sosial & ZIS</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Gambar Utama (Thumbnail)</label>
+                            <input type="file" name="thumbnail" class="form-control" accept="image/*">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nama Penulis</label>
+                            <input type="text" name="author_name" class="form-control" placeholder="Redaksi DKM">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Ringkasan Singkat (Summary)</label>
+                        <textarea name="summary" class="form-control" rows="2" placeholder="Ringkasan 1-2 kalimat untuk ditampilkan di kartu berita..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Isi Artikel Lengkap</label>
+                        <textarea name="content" class="form-control" rows="8" placeholder="Tuliskan isi artikel lengkap di sini (mendukung HTML)..." required></textarea>
+                    </div>
+
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="is_published" id="publishedCheck" checked>
+                        <label class="form-check-label fw-semibold" for="publishedCheck">Terbitkan Langsung ke Publik</label>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary btn-sm fw-bold px-3">Terbitkan Artikel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

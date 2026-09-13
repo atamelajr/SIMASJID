@@ -1,0 +1,116 @@
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold mb-1"><i class="bi bi-megaphone me-2 text-primary"></i> Kelola Pengumuman Masjid</h4>
+            <p class="text-muted small m-0">Tambah dan kelola pengumuman kegiatan, imbauan, & pesan penting jamaah.</p>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#modalAddAnnouncement">
+            <i class="bi bi-plus-lg me-1"></i> Buat Pengumuman Baru
+        </button>
+    </div>
+
+    <% if (typeof successMsg !== 'undefined' && successMsg) { %>
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> <%= successMsg %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <% } %>
+
+    <div class="card border-0 shadow-sm rounded-3 overflow-hidden bg-white">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-muted">
+                        <tr>
+                            <th class="py-3 px-3">JUDUL PENGUMUMAN</th>
+                            <th class="py-3">TIPE / KATEGORI</th>
+                            <th class="py-3">ISI PENGUMUMAN</th>
+                            <th class="py-3">TANGGAL BUAT</th>
+                            <th class="py-3 text-center">STATUS</th>
+                            <th class="py-3 text-end px-3">AKSI</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (announcements && announcements.length > 0) { %>
+                            <% announcements.forEach(a => { %>
+                                <tr>
+                                    <td class="px-3 fw-bold text-dark"><%= a.title %></td>
+                                    <td>
+                                        <% if (a.type === 'Penting') { %>
+                                            <span class="badge bg-danger-subtle text-danger border border-danger">Penting</span>
+                                        <% } else if (a.type === 'Kegiatan') { %>
+                                            <span class="badge bg-info-subtle text-info border border-info">Kegiatan</span>
+                                        <% } else if (a.type === 'RunningText') { %>
+                                            <span class="badge bg-warning-subtle text-warning border border-warning">Running Text</span>
+                                        <% } else { %>
+                                            <span class="badge bg-light text-dark border">Umum</span>
+                                        <% } %>
+                                    </td>
+                                    <td class="text-secondary small" style="max-width: 300px;"><%= a.content %></td>
+                                    <td class="small text-muted"><%= formatDate(a.created_at) %></td>
+                                    <td class="text-center">
+                                        <% if (a.is_active) { %>
+                                            <span class="badge bg-success-subtle text-success border border-success">Aktif</span>
+                                        <% } else { %>
+                                            <span class="badge bg-secondary-subtle text-secondary border">Non-Aktif</span>
+                                        <% } %>
+                                    </td>
+                                    <td class="text-end px-3">
+                                        <form action="/settings/web/announcements/delete/<%= a.id %>" method="POST" class="d-inline" onsubmit="return confirm('Hapus pengumuman ini?')">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">Belum ada pengumuman yang dibuat.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah Pengumuman -->
+<div class="modal fade" id="modalAddAnnouncement" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-megaphone me-2"></i> Buat Pengumuman Baru</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/settings/web/announcements/create" method="POST">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Judul Pengumuman</label>
+                        <input type="text" name="title" class="form-control" placeholder="Judul pengumuman..." required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Kategori / Tipe</label>
+                        <select name="type" class="form-select">
+                            <option value="Umum">Umum</option>
+                            <option value="Kegiatan">Kegiatan Masjid</option>
+                            <option value="Penting">PENTING / Mendesak</option>
+                            <option value="RunningText">Running Text TV/Web</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Isi Lengkap Pengumuman</label>
+                        <textarea name="content" class="form-control" rows="4" placeholder="Tuliskan isi pesan pengumuman..." required></textarea>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="is_active" id="activeAnnounce" checked>
+                        <label class="form-check-label fw-semibold" for="activeAnnounce">Tampilkan Langsung (Status Aktif)</label>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary btn-sm fw-bold px-3">Terbitkan Pengumuman</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

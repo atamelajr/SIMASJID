@@ -93,6 +93,7 @@ app.set('view engine', 'ejs');
 app.set('layout', 'layout');
 
 // Global View Variables (Currency Formatter, User Session, Dynamic Mosque Profile)
+const WebSettingModel = require('./src/models/WebSettingModel');
 const MasjidModel = require('./src/models/MasjidModel');
 app.use(async (req, res, next) => {
     res.locals.user = req.session.user || null;
@@ -104,7 +105,7 @@ app.use(async (req, res, next) => {
         return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
     };
     try {
-        const profile = await MasjidModel.getProfile();
+        const profile = await WebSettingModel.getWebProfile();
         const dkmMembers = await MasjidModel.getDkmMembers();
         res.locals.masjidProfile = profile || { name: 'SIMASJID', address: '' };
         res.locals.dkmMembers = dkmMembers || [];

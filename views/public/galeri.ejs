@@ -1,0 +1,54 @@
+<div class="bg-dark text-white py-5 mb-5" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+    <div class="container text-center">
+        <h1 class="fw-extrabold display-5 mb-2"><i class="bi bi-camera text-warning me-2"></i> Galeri Dokumentasi Foto</h1>
+        <p class="lead opacity-75 max-w-xl mx-auto">
+            Dokumentasi foto kegiatan ibadah, fasilitas, dan momen kemasyarakatan di <%= masjidProfile.name || 'Masjid' %>.
+        </p>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <div class="row g-4">
+        <% if (galleries && galleries.length > 0) { %>
+            <% galleries.forEach((g, idx) => { %>
+                <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white h-100 group-gallery">
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#modalGalleryZoom<%= idx %>">
+                            <img src="<%= g.image_url %>" class="card-img-top object-fit-cover hover-zoom" style="height: 200px; transition: transform 0.3s ease;" alt="<%= g.title %>">
+                        </a>
+                        <div class="card-body p-3">
+                            <span class="badge bg-light text-dark border small mb-1"><%= g.category %></span>
+                            <h6 class="fw-bold text-dark m-0 text-truncate"><%= g.title %></h6>
+                            <% if (g.description) { %>
+                                <small class="text-muted d-block mt-1 text-truncate"><%= g.description %></small>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Zoom Image -->
+                <div class="modal fade" id="modalGalleryZoom<%= idx %>" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content border-0 bg-transparent text-white">
+                            <div class="modal-header border-0">
+                                <h5 class="modal-title fw-bold text-white"><%= g.title %></h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body text-center p-0">
+                                <img src="<%= g.image_url %>" class="img-fluid rounded-4 shadow" alt="<%= g.title %>">
+                                <% if (g.description) { %>
+                                    <p class="mt-3 text-light"><%= g.description %></p>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        <% } else { %>
+            <div class="col-12 text-center py-5 bg-white rounded-4 shadow-sm text-muted">
+                <i class="bi bi-images display-4 d-block mb-3"></i>
+                <h5>Belum ada dokumentasi foto di galeri.</h5>
+            </div>
+        <% } %>
+    </div>
+</div>

@@ -1,0 +1,128 @@
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold mb-1"><i class="bi bi-globe me-2 text-primary"></i> Pengaturan Umum & Logo Web</h4>
+            <p class="text-muted small m-0">Kelola identitas website, logo, kontak, media sosial, & running text.</p>
+        </div>
+        <a href="/" target="_blank" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-box-arrow-up-right me-1"></i> Lihat Halaman Publik
+        </a>
+    </div>
+
+    <% if (typeof successMsg !== 'undefined' && successMsg) { %>
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> <%= successMsg %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <% } %>
+    <% if (typeof errorMsg !== 'undefined' && errorMsg) { %>
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> <%= errorMsg %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <% } %>
+
+    <form action="/settings/web/general" method="POST" enctype="multipart/form-data">
+        <div class="row g-4">
+            <!-- Identitas & Logo -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
+                    <h5 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="bi bi-building me-2 text-primary"></i> Identitas & Branding</h5>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nama Masjid / Lembaga</label>
+                        <input type="text" name="name" class="form-control" value="<%= profile.name || '' %>" required>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Logo Website</label>
+                            <% if (profile.logo) { %>
+                                <div class="mb-2">
+                                    <img src="<%= profile.logo %>" alt="Logo" height="50" class="img-thumbnail">
+                                </div>
+                            <% } %>
+                            <input type="file" name="logo" class="form-control" accept="image/*">
+                            <small class="text-muted">Format PNG/JPG max 2MB (Background Transparan disarankan)</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Favicon Icon</label>
+                            <% if (profile.favicon) { %>
+                                <div class="mb-2">
+                                    <img src="<%= profile.favicon %>" alt="Favicon" height="32" class="img-thumbnail">
+                                </div>
+                            <% } %>
+                            <input type="file" name="favicon" class="form-control" accept="image/*">
+                            <small class="text-muted">Icon Tab Browser (32x32 px)</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Alamat Lengkap</label>
+                        <textarea name="address" class="form-control" rows="2"><%= profile.address || '' %></textarea>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">No. Telepon / Pengurus</label>
+                            <input type="text" name="phone" class="form-control" value="<%= profile.phone || '' %>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Email Resmi</label>
+                            <input type="email" name="email" class="form-control" value="<%= profile.email || '' %>">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm rounded-3 p-4 bg-white">
+                    <h5 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="bi bi-broadcast me-2 text-primary"></i> Running Text Pengumuman</h5>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Teks Berjalan di Header Publik</label>
+                        <textarea name="running_text" class="form-control" rows="3" placeholder="Tuliskan teks pengumuman yang akan berjalan di bagian atas website..."><%= profile.running_text || '' %></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Media Sosial & Visi Misi -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
+                    <h5 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="bi bi-share me-2 text-primary"></i> Media Sosial & Kontak</h5>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold"><i class="bi bi-whatsapp text-success me-1"></i> WhatsApp Center</label>
+                        <input type="text" name="social_whatsapp" class="form-control" placeholder="628123456789" value="<%= profile.social_whatsapp || '' %>">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold"><i class="bi bi-instagram text-danger me-1"></i> Link Instagram</label>
+                        <input type="url" name="social_instagram" class="form-control" placeholder="https://instagram.com/masjid" value="<%= profile.social_instagram || '' %>">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold"><i class="bi bi-facebook text-primary me-1"></i> Link Facebook</label>
+                        <input type="url" name="social_facebook" class="form-control" placeholder="https://facebook.com/masjid" value="<%= profile.social_facebook || '' %>">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold"><i class="bi bi-youtube text-danger me-1"></i> Link YouTube Channel</label>
+                        <input type="url" name="social_youtube" class="form-control" placeholder="https://youtube.com/@masjid" value="<%= profile.social_youtube || '' %>">
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
+                    <h5 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="bi bi-map me-2 text-primary"></i> Embed Google Maps</h5>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Iframe / Share Link Embed Google Maps</label>
+                        <textarea name="maps_embed" class="form-control font-monospace small" rows="3" placeholder='<iframe src="https://www.google.com/maps/embed?pb=..." ...></iframe>'><%= profile.maps_embed || '' %></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 text-end">
+                <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">
+                    <i class="bi bi-save me-1"></i> Simpan Perubahan Pengaturan
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

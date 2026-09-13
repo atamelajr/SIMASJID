@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= typeof title !== 'undefined' ? title : 'SIMASJID - Portal Informasi Masjid' %></title>
-    <link rel="icon" type="image/png" href="/logo.png">
+    <title><%= typeof title !== 'undefined' ? title : (masjidProfile.name || 'SIMASJID') + ' - Portal Informasi Masjid' %></title>
+    <link rel="icon" type="image/png" href="<%= masjidProfile.favicon || '/logo.png' %>">
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -33,11 +33,28 @@
             min-height: 100vh;
         }
 
+        /* Top Bar Socials & Contact */
+        .top-bar-public {
+            background-color: #0f172a;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            padding: 6px 0;
+        }
+
+        .top-bar-public a {
+            color: #cbd5e1;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .top-bar-public a:hover {
+            color: #38bdf8;
+        }
+
         /* Navbar Styling */
         .navbar-public {
             background: #ffffff;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            padding: 14px 0;
+            padding: 12px 0;
             transition: all 0.3s ease;
         }
 
@@ -51,15 +68,16 @@
         }
 
         .navbar-brand img {
-            height: 42px;
+            height: 44px;
             width: auto;
             border-radius: 8px;
+            object-fit: contain;
         }
 
         .nav-public-link {
             font-weight: 600;
             color: #475569 !important;
-            padding: 8px 16px !important;
+            padding: 8px 14px !important;
             border-radius: 8px;
             transition: all 0.2s ease;
         }
@@ -81,6 +99,15 @@
         .btn-login-dkm:hover {
             background-color: #0f172a;
             transform: translateY(-1px);
+        }
+
+        /* Running Text Bar */
+        .running-text-bar {
+            background-color: #0f766e;
+            color: #ffffff;
+            padding: 6px 0;
+            font-weight: 600;
+            font-size: 0.9rem;
         }
 
         /* Footer */
@@ -117,11 +144,40 @@
 </head>
 <body>
 
+    <!-- Top Bar Kontak & Sosial Media -->
+    <div class="top-bar-public">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <% if (masjidProfile.phone) { %>
+                    <span><i class="bi bi-telephone me-1 text-teal" style="color: #14b8a6;"></i> <%= masjidProfile.phone %></span>
+                <% } %>
+                <% if (masjidProfile.email) { %>
+                    <span class="d-none d-md-inline"><i class="bi bi-envelope me-1 text-teal" style="color: #14b8a6;"></i> <%= masjidProfile.email %></span>
+                <% } %>
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <% if (masjidProfile.social_whatsapp) { %>
+                    <a href="https://wa.me/<%= masjidProfile.social_whatsapp %>" target="_blank" title="WhatsApp Center"><i class="bi bi-whatsapp text-success fs-6"></i></a>
+                <% } %>
+                <% if (masjidProfile.social_instagram) { %>
+                    <a href="<%= masjidProfile.social_instagram %>" target="_blank" title="Instagram"><i class="bi bi-instagram text-danger fs-6"></i></a>
+                <% } %>
+                <% if (masjidProfile.social_facebook) { %>
+                    <a href="<%= masjidProfile.social_facebook %>" target="_blank" title="Facebook"><i class="bi bi-facebook text-primary fs-6"></i></a>
+                <% } %>
+                <% if (masjidProfile.social_youtube) { %>
+                    <a href="<%= masjidProfile.social_youtube %>" target="_blank" title="YouTube"><i class="bi bi-youtube text-danger fs-6"></i></a>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
     <!-- Header Navbar -->
     <nav class="navbar navbar-expand-lg navbar-public sticky-top">
         <div class="container">
             <a class="navbar-brand" href="/">
-                <img src="/logo.png" alt="Logo Masjid" onerror="this.style.display='none'">
+                <img src="<%= masjidProfile.logo || '/logo.png' %>" alt="Logo Masjid" onerror="this.src='/logo.png'">
                 <span><%= masjidProfile.name || 'SIMASJID' %></span>
             </a>
             
@@ -133,27 +189,37 @@
                 <ul class="navbar-nav mx-auto mb-2 mb-lg-0 gap-1">
                     <li class="nav-item">
                         <a class="nav-link nav-public-link <%= typeof currentRoute !== 'undefined' && currentRoute === 'home' ? 'active' : '' %>" href="/">
-                            <i class="bi bi-house-door me-1"></i> Beranda
+                            Beranda
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link nav-public-link <%= typeof currentRoute !== 'undefined' && currentRoute === 'jadwal' ? 'active' : '' %>" href="/jadwal-sholat">
-                            <i class="bi bi-clock-history me-1"></i> Jadwal Sholat
+                            Jadwal Sholat
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link nav-public-link <%= typeof currentRoute !== 'undefined' && currentRoute === 'transparansi' ? 'active' : '' %>" href="/transparansi">
-                            <i class="bi bi-wallet2 me-1"></i> Transparansi Kas
+                            Transparansi Kas
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link nav-public-link <%= typeof currentRoute !== 'undefined' && currentRoute === 'proyek' ? 'active' : '' %>" href="/proyek-donasi">
-                            <i class="bi bi-building me-1"></i> Proyek Donasi
+                            Proyek Donasi
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-public-link <%= typeof currentRoute !== 'undefined' && currentRoute === 'berita' ? 'active' : '' %>" href="/berita">
+                            Berita & Artikel
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-public-link <%= typeof currentRoute !== 'undefined' && currentRoute === 'galeri' ? 'active' : '' %>" href="/galeri">
+                            Galeri Foto
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link nav-public-link text-warning fw-bold" href="/display-tv" target="_blank">
-                            <i class="bi bi-tv me-1"></i> Mode TV Masjid <i class="bi bi-box-arrow-up-right small"></i>
+                            <i class="bi bi-tv me-1"></i> Mode TV
                         </a>
                     </li>
                 </ul>
@@ -173,6 +239,18 @@
         </div>
     </nav>
 
+    <!-- Running Text Pengumuman jika ada -->
+    <% if (masjidProfile.running_text) { %>
+        <div class="running-text-bar">
+            <div class="container d-flex align-items-center">
+                <span class="badge bg-warning text-dark me-2 px-2 py-1 small fw-bold">INFO</span>
+                <marquee behavior="scroll" direction="left" scrollamount="6" class="m-0">
+                    <%= masjidProfile.running_text %>
+                </marquee>
+            </div>
+        </div>
+    <% } %>
+
     <!-- Main Body Content -->
     <main class="flex-grow-1">
         <%- body %>
@@ -184,13 +262,13 @@
             <div class="row g-4">
                 <div class="col-lg-5 col-md-6">
                     <div class="d-flex align-items-center gap-2 mb-3">
-                        <img src="/logo.png" alt="Logo" height="36" onerror="this.style.display='none'">
+                        <img src="<%= masjidProfile.logo || '/logo.png' %>" alt="Logo" height="40" onerror="this.src='/logo.png'">
                         <h5 class="m-0"><%= masjidProfile.name || 'SIMASJID' %></h5>
                     </div>
                     <p class="text-secondary small leading-relaxed">
                         <%= masjidProfile.address || 'Alamat Masjid Belum Diatur.' %>
                     </p>
-                    <div class="d-flex gap-3 text-secondary">
+                    <div class="d-flex gap-3 text-secondary small">
                         <% if (masjidProfile.phone) { %>
                             <span><i class="bi bi-telephone text-emerald me-1"></i> <%= masjidProfile.phone %></span>
                         <% } %>
@@ -201,18 +279,19 @@
                 </div>
                 
                 <div class="col-lg-3 col-md-6">
-                    <h5>Navigasi Cepat</h5>
+                    <h5>Navigasi Publik</h5>
                     <ul class="list-unstyled d-flex flex-column gap-2 small">
                         <li><a href="/"><i class="bi bi-chevron-right me-1 small"></i> Beranda Utama</a></li>
                         <li><a href="/jadwal-sholat"><i class="bi bi-chevron-right me-1 small"></i> Waktu Sholat & Imsakiyah</a></li>
-                        <li><a href="/transparansi"><i class="bi bi-chevron-right me-1 small"></i> Laporan Keuangan Transparan</a></li>
-                        <li><a href="/proyek-donasi"><i class="bi bi-chevron-right me-1 small"></i> Penggalangan Donasi Masjid</a></li>
+                        <li><a href="/transparansi"><i class="bi bi-chevron-right me-1 small"></i> Transparansi Kas Masjid</a></li>
+                        <li><a href="/berita"><i class="bi bi-chevron-right me-1 small"></i> Berita & Artikel Dakwah</a></li>
+                        <li><a href="/galeri"><i class="bi bi-chevron-right me-1 small"></i> Galeri Dokumentasi Foto</a></li>
                     </ul>
                 </div>
 
                 <div class="col-lg-4 col-md-12">
                     <h5>Visi & Misi</h5>
-                    <p class="small text-secondary">
+                    <p class="small text-secondary mb-3">
                         <%= (masjidProfile.vision && masjidProfile.vision.substring(0, 150)) || 'Menjadi pusat peradaban dan pembinaan umat yang mandiri, makmur, dan berakhlak mulia.' %>...
                     </p>
                     <a href="/display-tv" target="_blank" class="btn btn-outline-light btn-sm rounded-pill px-3">
@@ -226,7 +305,7 @@
                     &copy; <%= new Date().getFullYear() %> <strong><%= masjidProfile.name || 'SIMASJID' %></strong>. Hak Cipta Dilindungi.
                 </div>
                 <div class="text-secondary small">
-                    Powered by SIMASJID System
+                    Powered by SIMASJID CMS System
                 </div>
             </div>
         </div>

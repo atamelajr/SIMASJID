@@ -236,6 +236,46 @@
                     </li>
                 <% } %>
 
+                <!-- Modul Pengaturan Web (CMS) Sub-Menu Section -->
+                <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
+                    <% const isWebActive = typeof activeSubmenu !== 'undefined' && ['web-general', 'web-banners', 'web-announcements', 'web-articles', 'web-galleries'].includes(activeSubmenu); %>
+                    <li class="nav-item">
+                        <a href="#webSubmenu" data-bs-toggle="collapse" class="nav-link d-flex align-items-center justify-content-between <%= isWebActive ? '' : 'collapsed' %>" aria-expanded="<%= isWebActive ? 'true' : 'false' %>">
+                            <span><i class="bi bi-globe"></i> Pengaturan Web</span>
+                            <i class="bi bi-chevron-down style-arrow" style="font-size: 0.8rem;"></i>
+                        </a>
+                        <div class="collapse <%= isWebActive ? 'show' : '' %>" id="webSubmenu">
+                            <ul class="nav flex-column sub-menu ps-2">
+                                <li>
+                                    <a href="/settings/web/general" class="nav-link <%= typeof activeSubmenu !== 'undefined' && activeSubmenu === 'web-general' ? 'active' : '' %>">
+                                        <i class="bi bi-sliders"></i> Umum & Logo
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="/settings/web/banners" class="nav-link <%= typeof activeSubmenu !== 'undefined' && activeSubmenu === 'web-banners' ? 'active' : '' %>">
+                                        <i class="bi bi-images"></i> Banner / Slide Hero
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="/settings/web/announcements" class="nav-link <%= typeof activeSubmenu !== 'undefined' && activeSubmenu === 'web-announcements' ? 'active' : '' %>">
+                                        <i class="bi bi-megaphone"></i> Pengumuman
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="/settings/web/articles" class="nav-link <%= typeof activeSubmenu !== 'undefined' && activeSubmenu === 'web-articles' ? 'active' : '' %>">
+                                        <i class="bi bi-newspaper"></i> Berita & Artikel
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="/settings/web/galleries" class="nav-link <%= typeof activeSubmenu !== 'undefined' && activeSubmenu === 'web-galleries' ? 'active' : '' %>">
+                                        <i class="bi bi-camera"></i> Galeri Foto
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                <% } %>
+
                 <% if (user && user.role_name === 'Admin') { %>
                     <li class="nav-item mt-2">
                         <a href="/settings" class="nav-link">
