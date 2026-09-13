@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "init-db": "node database/init_db.js"
+    "init-db": "node database/init_db.js",
+    "backup-db": "node database/backup_db.js"
   },
   "keywords": [
     "simasjid",
@@ -20,6 +21,7 @@
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "csrf-sync": "^4.2.1",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
     "express": "^4.19.2",
@@ -27,6 +29,7 @@
     "express-mysql-session": "^3.0.3",
     "express-rate-limit": "^8.7.0",
     "express-session": "^1.18.0",
+    "express-validator": "^7.3.2",
     "helmet": "^8.3.0",
     "multer": "^1.4.5-lts.1",
     "mysql2": "^3.10.1"

@@ -127,6 +127,20 @@ app.use((req, res) => {
     });
 });
 
+// Centralized 500 Error Handler (ISO 27001 - Prevent Internal Stack Trace Leakage)
+app.use((err, req, res, next) => {
+    console.error('❌ Internal Server Error:', err);
+    if (res.headersSent) {
+        return next(err);
+    }
+    const isProduction = process.env.NODE_ENV === 'production';
+    res.status(500).render('errors/500', {
+        title: '500 Server Error',
+        layout: false,
+        message: isProduction ? 'Terjadi kesalahan pada server. Silakan hubungi pengelola.' : err.message
+    });
+});
+
 app.listen(PORT, () => {
     console.log(`🚀 Aplikasi SIMASJID berjalan di http://localhost:${PORT}`);
 });

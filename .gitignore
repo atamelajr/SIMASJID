@@ -4,3 +4,5 @@ node_modules/
 .DS_Store
 public/uploads/*
 !public/uploads/.gitkeep
+database/backups/*
+!database/backups/.gitkeep

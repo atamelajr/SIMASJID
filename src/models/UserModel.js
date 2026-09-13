@@ -21,6 +21,16 @@ class UserModel {
         return await bcrypt.compare(plainPassword, passwordHash);
     }
 
+    static validatePassword(password) {
+        if (!password || password.length < 8) {
+            return { valid: false, message: 'Kata sandi minimal 8 karakter.' };
+        }
+        if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
+            return { valid: false, message: 'Kata sandi harus mengombinasikan huruf dan angka.' };
+        }
+        return { valid: true };
+    }
+
     static async getAllUsers() {
         const [rows] = await db.query(
             `SELECT u.id, u.username, u.full_name, u.role_id, u.phone, u.is_active, u.created_at, r.name as role_name 
