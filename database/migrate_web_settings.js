@@ -37,7 +37,10 @@ async function migrateWebSettings() {
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS dzuhur_offset INT DEFAULT 0`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS ashar_offset INT DEFAULT 0`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS maghrib_offset INT DEFAULT 0`,
-            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS isya_offset INT DEFAULT 0`
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS isya_offset INT DEFAULT 0`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS friday_khatib VARCHAR(150) DEFAULT 'Ustadz Drs. H. Ahmad Dahlan'`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS friday_imam VARCHAR(150) DEFAULT 'Ust. Muhammad Ridwan, S.Pd.I'`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS friday_muadzin VARCHAR(150) DEFAULT 'Akang Abdullah'`
         ];
 
         for (const query of alterProfileQueries) {
@@ -48,6 +51,19 @@ async function migrateWebSettings() {
             }
         }
         console.log('✅ Kolom masjid_profile berhasil diperbarui!');
+
+        // Tabel friday_officers (Jadwal Petugas Sholat Jumat)
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS friday_officers (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                friday_date DATE NOT NULL,
+                khatib VARCHAR(150) NOT NULL,
+                imam VARCHAR(150) NOT NULL,
+                muadzin VARCHAR(150) NOT NULL,
+                notes VARCHAR(255) NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;
+        `);
 
         // 2. Tabel web_banners
         await connection.query(`

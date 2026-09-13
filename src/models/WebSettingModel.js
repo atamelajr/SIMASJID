@@ -13,7 +13,8 @@ class WebSettingModel {
             logo, favicon, social_facebook, social_instagram, social_youtube,
             social_whatsapp, hero_title, hero_subtitle, maps_embed, running_text,
             prayer_city, prayer_country, timezone, calculation_method,
-            subuh_offset, dzuhur_offset, ashar_offset, maghrib_offset, isya_offset
+            subuh_offset, dzuhur_offset, ashar_offset, maghrib_offset, isya_offset,
+            friday_khatib, friday_imam, friday_muadzin
         } = data;
 
         await db.query(`
@@ -22,14 +23,16 @@ class WebSettingModel {
                 logo=?, favicon=?, social_facebook=?, social_instagram=?, social_youtube=?,
                 social_whatsapp=?, hero_title=?, hero_subtitle=?, maps_embed=?, running_text=?,
                 prayer_city=?, prayer_country=?, timezone=?, calculation_method=?,
-                subuh_offset=?, dzuhur_offset=?, ashar_offset=?, maghrib_offset=?, isya_offset=?
+                subuh_offset=?, dzuhur_offset=?, ashar_offset=?, maghrib_offset=?, isya_offset=?,
+                friday_khatib=?, friday_imam=?, friday_muadzin=?
             WHERE id=1
         `, [
             name, address, phone, email, vision || '', mission || '', history || '',
             logo || null, favicon || null, social_facebook || '', social_instagram || '', social_youtube || '',
             social_whatsapp || '', hero_title || '', hero_subtitle || '', maps_embed || '', running_text || '',
             prayer_city || 'Jakarta', prayer_country || 'Indonesia', timezone || 'Asia/Jakarta', parseInt(calculation_method || 20),
-            parseInt(subuh_offset || 0), parseInt(dzuhur_offset || 0), parseInt(ashar_offset || 0), parseInt(maghrib_offset || 0), parseInt(isya_offset || 0)
+            parseInt(subuh_offset || 0), parseInt(dzuhur_offset || 0), parseInt(ashar_offset || 0), parseInt(maghrib_offset || 0), parseInt(isya_offset || 0),
+            friday_khatib || '', friday_imam || '', friday_muadzin || ''
         ]);
     }
 

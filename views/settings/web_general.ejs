@@ -147,6 +147,25 @@
                 </div>
 
                 <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
+                    <h5 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="bi bi-people me-2 text-primary"></i> Petugas Sholat Jumat Minggu Ini</h5>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Khatib Sholat Jumat</label>
+                        <input type="text" name="friday_khatib" class="form-control" placeholder="Ustadz Drs. H. Ahmad Dahlan" value="<%= profile.friday_khatib || '' %>">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Imam Sholat Jumat</label>
+                        <input type="text" name="friday_imam" class="form-control" placeholder="Ust. Muhammad Ridwan, S.Pd.I" value="<%= profile.friday_imam || '' %>">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Muadzin & Bilal</label>
+                        <input type="text" name="friday_muadzin" class="form-control" placeholder="Akang Abdullah" value="<%= profile.friday_muadzin || '' %>">
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
                     <h5 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="bi bi-share me-2 text-primary"></i> Media Sosial & Kontak</h5>
                     
                     <div class="mb-3">
