@@ -122,10 +122,10 @@ async function migrateWebSettings() {
 
         const [announcementRows] = await connection.query(`SELECT COUNT(*) as count FROM web_announcements`);
         if (announcementRows[0].count === 0) {
-            await connection.query(`
-                INSERT INTO web_announcements (title, content, type) VALUES
-                ('Kajian Rutin Malam Minggu', 'Diundang kepada seluruh jamaah untuk menghadiri Kajian Ba\'da Maghrib bersama Ustadz Drs. H. Ahmad Dahlan.', 'Kegiatan')
-            `);
+            await connection.query(
+                `INSERT INTO web_announcements (title, content, type) VALUES (?, ?, ?)`,
+                ['Kajian Rutin Malam Minggu', "Diundang kepada seluruh jamaah untuk menghadiri Kajian Ba'da Maghrib bersama Ustadz Drs. H. Ahmad Dahlan.", 'Kegiatan']
+            );
         }
 
         await connection.end();
