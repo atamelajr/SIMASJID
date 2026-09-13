@@ -1,10 +1,55 @@
 const db = require('../../config/database');
 
 class WebSettingModel {
+    // Self-healing schema checker (Otomatis menambah kolom baru jika belum ada di database MariaDB)
+    static async ensureSchema() {
+        const alterProfileQueries = [
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS logo VARCHAR(255) NULL`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS favicon VARCHAR(255) NULL`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS social_facebook VARCHAR(255) NULL`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS social_instagram VARCHAR(255) NULL`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS social_youtube VARCHAR(255) NULL`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS social_whatsapp VARCHAR(50) NULL`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS hero_title VARCHAR(255) NULL`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS hero_subtitle TEXT NULL`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS maps_embed TEXT NULL`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS running_text TEXT NULL`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS prayer_city VARCHAR(100) DEFAULT 'Jakarta'`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS prayer_country VARCHAR(100) DEFAULT 'Indonesia'`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS timezone VARCHAR(50) DEFAULT 'Asia/Jakarta'`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS calculation_method INT DEFAULT 20`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS subuh_offset INT DEFAULT 0`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS dzuhur_offset INT DEFAULT 0`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS ashar_offset INT DEFAULT 0`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS maghrib_offset INT DEFAULT 0`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS isya_offset INT DEFAULT 0`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS friday_khatib VARCHAR(150) DEFAULT 'Ustadz Drs. H. Ahmad Dahlan'`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS friday_imam VARCHAR(150) DEFAULT 'Ust. Muhammad Ridwan, S.Pd.I'`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS friday_muadzin VARCHAR(150) DEFAULT 'Akang Abdullah'`
+        ];
+
+        for (const q of alterProfileQueries) {
+            try {
+                await db.query(q);
+            } catch (e) {
+                // Ignore error if column exists
+            }
+        }
+    }
+
     // === 1. PENGATURAN UMUM & LOGO ===
     static async getWebProfile() {
-        const [rows] = await db.query(`SELECT * FROM masjid_profile WHERE id = 1`);
-        return rows[0] || {};
+        try {
+            const [rows] = await db.query(`SELECT * FROM masjid_profile WHERE id = 1`);
+            return rows[0] || {};
+        } catch (err) {
+            if (err.code === 'ER_BAD_FIELD_ERROR' || (err.message && err.message.includes('Unknown column'))) {
+                await this.ensureSchema();
+                const [rows] = await db.query(`SELECT * FROM masjid_profile WHERE id = 1`);
+                return rows[0] || {};
+            }
+            throw err;
+        }
     }
 
     static async updateWebProfile(data) {
@@ -17,23 +62,37 @@ class WebSettingModel {
             friday_khatib, friday_imam, friday_muadzin
         } = data;
 
-        await db.query(`
-            UPDATE masjid_profile SET 
-                name=?, address=?, phone=?, email=?, vision=?, mission=?, history=?,
-                logo=?, favicon=?, social_facebook=?, social_instagram=?, social_youtube=?,
-                social_whatsapp=?, hero_title=?, hero_subtitle=?, maps_embed=?, running_text=?,
-                prayer_city=?, prayer_country=?, timezone=?, calculation_method=?,
-                subuh_offset=?, dzuhur_offset=?, ashar_offset=?, maghrib_offset=?, isya_offset=?,
-                friday_khatib=?, friday_imam=?, friday_muadzin=?
-            WHERE id=1
-        `, [
-            name, address, phone, email, vision || '', mission || '', history || '',
-            logo || null, favicon || null, social_facebook || '', social_instagram || '', social_youtube || '',
-            social_whatsapp || '', hero_title || '', hero_subtitle || '', maps_embed || '', running_text || '',
-            prayer_city || 'Jakarta', prayer_country || 'Indonesia', timezone || 'Asia/Jakarta', parseInt(calculation_method || 20),
-            parseInt(subuh_offset || 0), parseInt(dzuhur_offset || 0), parseInt(ashar_offset || 0), parseInt(maghrib_offset || 0), parseInt(isya_offset || 0),
-            friday_khatib || '', friday_imam || '', friday_muadzin || ''
-        ]);
+        const executeUpdate = async () => {
+            await db.query(`
+                UPDATE masjid_profile SET 
+                    name=?, address=?, phone=?, email=?, vision=?, mission=?, history=?,
+                    logo=?, favicon=?, social_facebook=?, social_instagram=?, social_youtube=?,
+                    social_whatsapp=?, hero_title=?, hero_subtitle=?, maps_embed=?, running_text=?,
+                    prayer_city=?, prayer_country=?, timezone=?, calculation_method=?,
+                    subuh_offset=?, dzuhur_offset=?, ashar_offset=?, maghrib_offset=?, isya_offset=?,
+                    friday_khatib=?, friday_imam=?, friday_muadzin=?
+                WHERE id=1
+            `, [
+                name, address, phone, email, vision || '', mission || '', history || '',
+                logo || null, favicon || null, social_facebook || '', social_instagram || '', social_youtube || '',
+                social_whatsapp || '', hero_title || '', hero_subtitle || '', maps_embed || '', running_text || '',
+                prayer_city || 'Jakarta', prayer_country || 'Indonesia', timezone || 'Asia/Jakarta', parseInt(calculation_method || 20),
+                parseInt(subuh_offset || 0), parseInt(dzuhur_offset || 0), parseInt(ashar_offset || 0), parseInt(maghrib_offset || 0), parseInt(isya_offset || 0),
+                friday_khatib || '', friday_imam || '', friday_muadzin || ''
+            ]);
+        };
+
+        try {
+            await executeUpdate();
+        } catch (err) {
+            if (err.code === 'ER_BAD_FIELD_ERROR' || (err.message && err.message.includes('Unknown column'))) {
+                console.log('🔄 Menjalankan auto-migration penambahan kolom masjid_profile...');
+                await this.ensureSchema();
+                await executeUpdate();
+            } else {
+                throw err;
+            }
+        }
     }
 
     // === 2. KELOLA BANNER / SLIDE HERO ===
@@ -138,7 +197,6 @@ class WebSettingModel {
     }
 
     static async createArticle({ title, slug, category, content, summary, thumbnail, author_name, is_published }) {
-        // Auto generate slug if empty
         const finalSlug = slug && slug.trim() !== '' 
             ? slug.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
             : title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + '-' + Date.now();
