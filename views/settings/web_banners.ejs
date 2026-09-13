@@ -35,7 +35,7 @@
                             <% banners.forEach(b => { %>
                                 <tr>
                                     <td class="px-3" style="width: 140px;">
-                                        <img src="<%= b.image_url %>" class="img-fluid rounded border shadow-sm" style="height: 60px; width: 120px; object-fit: cover;" alt="<%= b.title %>">
+                                        <img src="<%= b.image_url %>" class="img-fluid rounded border shadow-sm" style="height: 60px; width: 120px; object-fit: cover;" alt="<%= b.title %>" onerror="this.src='/images/hero-default.jpg'">
                                     </td>
                                     <td>
                                         <div class="fw-bold text-dark"><%= b.title %></div>
@@ -57,11 +57,69 @@
                                         <% } %>
                                     </td>
                                     <td class="text-end px-3">
+                                        <button type="button" class="btn btn-outline-warning btn-sm me-1" data-bs-toggle="modal" data-bs-target="#modalEditBanner<%= b.id %>" title="Edit Banner"><i class="bi bi-pencil"></i></button>
                                         <form action="/settings/web/banners/delete/<%= b.id %>" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus banner ini?')">
                                             <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus"><i class="bi bi-trash"></i></button>
                                         </form>
                                     </td>
                                 </tr>
+
+                                <!-- Modal Edit Banner -->
+                                <div class="modal fade" id="modalEditBanner<%= b.id %>" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content border-0 shadow">
+                                            <div class="modal-header bg-warning text-dark">
+                                                <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i> Edit Banner Slide Hero</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <form action="/settings/web/banners/update/<%= b.id %>" method="POST" enctype="multipart/form-data">
+                                                <div class="modal-body p-4 text-start">
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Judul Banner Utama</label>
+                                                        <input type="text" name="title" class="form-control" value="<%= b.title %>" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Sub-judul / Deskripsi Singkat</label>
+                                                        <textarea name="subtitle" class="form-control" rows="2"><%= b.subtitle || '' %></textarea>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Ganti Gambar Banner (Biarkan kosong jika tidak diubah)</label>
+                                                        <div class="mb-2">
+                                                            <img src="<%= b.image_url %>" height="60" class="rounded border">
+                                                        </div>
+                                                        <input type="file" name="image" class="form-control" accept="image/*">
+                                                    </div>
+                                                    <div class="row g-2 mb-3">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label fw-semibold">Teks Tombol</label>
+                                                            <input type="text" name="button_text" class="form-control" value="<%= b.button_text || '' %>">
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label fw-semibold">Link Tombol</label>
+                                                            <input type="text" name="button_link" class="form-control" value="<%= b.button_link || '' %>">
+                                                        </div>
+                                                    </div>
+                                                    <div class="row g-2">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label fw-semibold">Urutan Tampil</label>
+                                                            <input type="number" name="display_order" class="form-control" value="<%= b.display_order %>">
+                                                        </div>
+                                                        <div class="col-md-6 d-flex align-items-end mb-2">
+                                                            <div class="form-check form-switch">
+                                                                <input class="form-check-input" type="checkbox" name="is_active" id="isActiveCheck<%= b.id %>" <%= b.is_active ? 'checked' : '' %>>
+                                                                <label class="form-check-label fw-semibold" for="isActiveCheck<%= b.id %>">Status Aktif</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer bg-light">
+                                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                                                    <button type="submit" class="btn btn-warning btn-sm fw-bold px-3">Simpan Perubahan</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
                             <% }); %>
                         <% } else { %>
                             <tr>
@@ -116,7 +174,7 @@
                         <div class="col-md-6 d-flex align-items-end mb-2">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" name="is_active" id="isActiveCheck" checked>
-                                <label class="form-check-input-label fw-semibold" for="isActiveCheck">Status Aktif</label>
+                                <label class="form-check-label fw-semibold" for="isActiveCheck">Status Aktif</label>
                             </div>
                         </div>
                     </div>

@@ -36,7 +36,7 @@
                             <% articles.forEach(a => { %>
                                 <tr>
                                     <td class="px-3" style="width: 90px;">
-                                        <img src="<%= a.thumbnail || '/images/hero-default.jpg' %>" class="img-fluid rounded border shadow-sm" style="height: 50px; width: 80px; object-fit: cover;" alt="<%= a.title %>">
+                                        <img src="<%= a.thumbnail || '/images/hero-default.jpg' %>" class="img-fluid rounded border shadow-sm" style="height: 50px; width: 80px; object-fit: cover;" alt="<%= a.title %>" onerror="this.src='/images/hero-default.jpg'">
                                     </td>
                                     <td>
                                         <div class="fw-bold text-dark"><%= a.title %></div>
@@ -56,11 +56,83 @@
                                     </td>
                                     <td class="text-end px-3">
                                         <a href="/berita/<%= a.slug %>" target="_blank" class="btn btn-outline-info btn-sm me-1" title="Lihat"><i class="bi bi-box-arrow-up-right"></i></a>
+                                        <button type="button" class="btn btn-outline-warning btn-sm me-1" data-bs-toggle="modal" data-bs-target="#modalEditArticle<%= a.id %>" title="Edit Artikel"><i class="bi bi-pencil"></i></button>
                                         <form action="/settings/web/articles/delete/<%= a.id %>" method="POST" class="d-inline" onsubmit="return confirm('Hapus artikel ini?')">
                                             <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus"><i class="bi bi-trash"></i></button>
                                         </form>
                                     </td>
                                 </tr>
+
+                                <!-- Modal Edit Artikel -->
+                                <div class="modal fade" id="modalEditArticle<%= a.id %>" tabindex="-1">
+                                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                                        <div class="modal-content border-0 shadow">
+                                            <div class="modal-header bg-warning text-dark">
+                                                <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i> Edit Artikel / Berita</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <form action="/settings/web/articles/update/<%= a.id %>" method="POST" enctype="multipart/form-data">
+                                                <div class="modal-body p-4 text-start">
+                                                    <div class="row g-3 mb-3">
+                                                        <div class="col-md-8">
+                                                            <label class="form-label fw-semibold">Judul Artikel / Berita</label>
+                                                            <input type="text" name="title" class="form-control" value="<%= a.title %>" required>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <label class="form-label fw-semibold">Kategori</label>
+                                                            <select name="category" class="form-select">
+                                                                <option value="Kajian & Dakwah" <%= a.category === 'Kajian & Dakwah' ? 'selected' : '' %>>Kajian & Dakwah</option>
+                                                                <option value="Berita Kegiatan" <%= a.category === 'Berita Kegiatan' ? 'selected' : '' %>>Berita Kegiatan</option>
+                                                                <option value="Pengumuman" <%= a.category === 'Pengumuman' ? 'selected' : '' %>>Pengumuman DKM</option>
+                                                                <option value="Sosial & ZIS" <%= a.category === 'Sosial & ZIS' ? 'selected' : '' %>>Sosial & ZIS</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row g-3 mb-3">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label fw-semibold">Ganti Gambar (Biarkan kosong jika tidak diubah)</label>
+                                                            <% if (a.thumbnail) { %>
+                                                                <div class="mb-2">
+                                                                    <img src="<%= a.thumbnail %>" height="50" class="rounded border">
+                                                                </div>
+                                                            <% } %>
+                                                            <input type="file" name="thumbnail" class="form-control" accept="image/*">
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label fw-semibold">Nama Penulis</label>
+                                                            <input type="text" name="author_name" class="form-control" value="<%= a.author_name %>">
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">URL Slug (Unik)</label>
+                                                        <input type="text" name="slug" class="form-control font-monospace" value="<%= a.slug %>">
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Ringkasan Singkat (Summary)</label>
+                                                        <textarea name="summary" class="form-control" rows="2"><%= a.summary || '' %></textarea>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Isi Artikel Lengkap</label>
+                                                        <textarea name="content" class="form-control" rows="8" required><%= a.content %></textarea>
+                                                    </div>
+
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" name="is_published" id="publishedCheck<%= a.id %>" <%= a.is_published ? 'checked' : '' %>>
+                                                        <label class="form-check-label fw-semibold" for="publishedCheck<%= a.id %>">Status Terbit</label>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer bg-light">
+                                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                                                    <button type="submit" class="btn btn-warning btn-sm fw-bold px-3">Simpan Perubahan</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
                             <% }); %>
                         <% } else { %>
                             <tr>

@@ -56,11 +56,53 @@
                                         <% } %>
                                     </td>
                                     <td class="text-end px-3">
+                                        <button type="button" class="btn btn-outline-warning btn-sm me-1" data-bs-toggle="modal" data-bs-target="#modalEditAnnouncement<%= a.id %>" title="Edit Pengumuman"><i class="bi bi-pencil"></i></button>
                                         <form action="/settings/web/announcements/delete/<%= a.id %>" method="POST" class="d-inline" onsubmit="return confirm('Hapus pengumuman ini?')">
                                             <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus"><i class="bi bi-trash"></i></button>
                                         </form>
                                     </td>
                                 </tr>
+
+                                <!-- Modal Edit Pengumuman -->
+                                <div class="modal fade" id="modalEditAnnouncement<%= a.id %>" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content border-0 shadow">
+                                            <div class="modal-header bg-warning text-dark">
+                                                <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i> Edit Pengumuman</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <form action="/settings/web/announcements/update/<%= a.id %>" method="POST">
+                                                <div class="modal-body p-4 text-start">
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Judul Pengumuman</label>
+                                                        <input type="text" name="title" class="form-control" value="<%= a.title %>" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Kategori / Tipe</label>
+                                                        <select name="type" class="form-select">
+                                                            <option value="Umum" <%= a.type === 'Umum' ? 'selected' : '' %>>Umum</option>
+                                                            <option value="Kegiatan" <%= a.type === 'Kegiatan' ? 'selected' : '' %>>Kegiatan Masjid</option>
+                                                            <option value="Penting" <%= a.type === 'Penting' ? 'selected' : '' %>>PENTING / Mendesak</option>
+                                                            <option value="RunningText" <%= a.type === 'RunningText' ? 'selected' : '' %>>Running Text TV/Web</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Isi Lengkap Pengumuman</label>
+                                                        <textarea name="content" class="form-control" rows="4" required><%= a.content %></textarea>
+                                                    </div>
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" name="is_active" id="activeAnnounce<%= a.id %>" <%= a.is_active ? 'checked' : '' %>>
+                                                        <label class="form-check-label fw-semibold" for="activeAnnounce<%= a.id %>">Status Aktif</label>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer bg-light">
+                                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                                                    <button type="submit" class="btn btn-warning btn-sm fw-bold px-3">Simpan Perubahan</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
                             <% }); %>
                         <% } else { %>
                             <tr>
