@@ -197,8 +197,8 @@
                                             </button>
                                         <% } %>
                                     <% } %>
-                                    <button type="button" class="btn btn-sm btn-outline-warning me-1" onclick='openEditModal(<%- JSON.stringify(trx) %>)' title="Edit Transaksi">
-                                        <i class="bi bi-pencil"></i> Edit
+                                    <button type="button" class="btn btn-sm btn-outline-warning me-1" onclick='openEditModal(<%- JSON.stringify(trx) %>)' title="Edit Data">
+                                        <i class="bi bi-pencil"></i>
                                     </button>
                                     <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
                                         <form action="/keuangan/delete/<%= trx.id %>" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus transaksi ini? Saldo kas akan otomatis disesuaikan kembali.')">
@@ -359,7 +359,22 @@
                         </div>
                         <div class="col-md-6" id="wrapperDonor">
                             <label class="form-label fw-semibold">Nama Donatur / Penyumbang</label>
-                            <input type="text" name="donor_name" class="form-control" value="Hamba Allah" placeholder="Isi nama donatur / Hamba Allah" required>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <div class="form-check form-check-inline mb-0">
+                                    <input class="form-check-input" type="radio" name="donor_type_option" id="donorOptIncidental" value="incidental" checked onchange="toggleDonorType('incidental')">
+                                    <label class="form-check-label small fw-semibold" for="donorOptIncidental">Insidental (Manual)</label>
+                                </div>
+                                <div class="form-check form-check-inline mb-0">
+                                    <input class="form-check-input" type="radio" name="donor_type_option" id="donorOptRegistered" value="registered" onchange="toggleDonorType('registered')">
+                                    <label class="form-check-label small fw-semibold" for="donorOptRegistered">Terdaftar (Cari)</label>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <input type="text" name="donor_name" id="donor_name_input" class="form-control" value="Hamba Allah" placeholder="Isi nama donatur / Hamba Allah" required>
+                                <button type="button" class="btn btn-outline-primary d-none" id="btnSearchDonor" onclick="openDonorSearchModal('add')" title="Cari Donatur">
+                                    <i class="bi bi-search me-1"></i> Cari
+                                </button>
+                            </div>
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-semibold">Keterangan / Catatan</label>
@@ -390,13 +405,13 @@
                             <h6 class="fw-bold text-primary mb-2"><i class="bi bi-box-fill me-1"></i>Detail Barang Aset Tetap</h6>
                             <div class="row g-2">
                                 <div class="col-md-5">
-                                    <label class="form-label extra-small fw-bold">Pilih Barang Aset (Dari Katalog)</label>
-                                    <select name="asset_name" id="asset_select" class="form-select form-select-sm" onchange="onAssetItemSelect()">
-                                        <option value="">-- Pilih dari Katalog Aset --</option>
-                                        <% masterItems.filter(i => i.type === 'Aset').forEach(i => { %>
-                                            <option value="<%= i.name %>" data-unitid="<%= i.unit_id %>"><%= i.name %> (<%= i.unit_name || '' %>)</option>
-                                        <% }) %>
-                                    </select>
+                                    <label class="form-label extra-small fw-bold">Nama Barang Aset</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" name="asset_name" id="asset_name_input" class="form-control" placeholder="Cari dari katalog aset..." readonly>
+                                        <button type="button" class="btn btn-outline-primary" onclick="openItemSearchModal('Aset', 'add')">
+                                            <i class="bi bi-search me-1"></i> Cari Barang
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label extra-small fw-bold">Jumlah (Qty)</label>
@@ -430,20 +445,20 @@
                             <h6 class="fw-bold text-warning mb-2"><i class="bi bi-boxes me-1"></i>Detail Material / Persediaan (Stok Masuk)</h6>
                             <div class="row g-2">
                                 <div class="col-md-4">
-                                    <label class="form-label extra-small fw-bold">Pilih Material (Dari Katalog)</label>
-                                    <select name="inventory_name" id="inventory_select" class="form-select form-select-sm" onchange="onInventoryItemSelect()">
-                                        <option value="">-- Pilih dari Katalog Material --</option>
-                                        <% masterItems.filter(i => i.type === 'Material').forEach(i => { %>
-                                            <option value="<%= i.name %>" data-unitid="<%= i.unit_id %>" data-unitcode="<%= i.unit_code %>"><%= i.name %></option>
-                                        <% }) %>
-                                    </select>
+                                    <label class="form-label extra-small fw-bold">Nama Material / Barang</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" name="inventory_name" id="inventory_name_input" class="form-control" placeholder="Cari dari katalog material..." readonly>
+                                        <button type="button" class="btn btn-outline-primary" onclick="openItemSearchModal('Material', 'add')">
+                                            <i class="bi bi-search me-1"></i> Cari Material
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label extra-small fw-bold">Jumlah Stok</label>
                                     <input type="number" step="0.1" name="inventory_qty" class="form-control form-control-sm" placeholder="Jumlah" value="1">
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label extra-small fw-bold">Satuan (Dropdown)</label>
+                                    <label class="form-label extra-small fw-bold">Satuan</label>
                                     <select name="inventory_unit" id="inventory_unit_select" class="form-select form-select-sm">
                                         <% units.forEach(u => { %>
                                             <option value="<%= u.code %>" data-unitid="<%= u.id %>"><%= u.name %> (<%= u.code %>)</option>
@@ -452,7 +467,7 @@
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label extra-small fw-bold">Kategori</label>
-                                    <select name="inventory_category" class="form-select form-select-sm">
+                                    <select name="inventory_category" id="inventory_category_select" class="form-select form-select-sm">
                                         <option value="Bahan Bangunan">Bahan Bangunan</option>
                                         <option value="Bahan & Alat Kebersihan">Bahan & Alat Kebersihan</option>
                                         <option value="Alat Tulis Kantor (ATK)">Alat Tulis Kantor (ATK)</option>
@@ -550,7 +565,22 @@
                         </div>
                         <div class="col-md-6" id="edit_wrapperDonor">
                             <label class="form-label fw-semibold">Nama Donatur / Penyumbang</label>
-                            <input type="text" name="donor_name" id="edit_donor_name" class="form-control" placeholder="Nama Donatur">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <div class="form-check form-check-inline mb-0">
+                                    <input class="form-check-input" type="radio" name="edit_donor_type_option" id="editDonorOptIncidental" value="incidental" checked onchange="toggleEditDonorType('incidental')">
+                                    <label class="form-check-label small fw-semibold" for="editDonorOptIncidental">Insidental</label>
+                                </div>
+                                <div class="form-check form-check-inline mb-0">
+                                    <input class="form-check-input" type="radio" name="edit_donor_type_option" id="editDonorOptRegistered" value="registered" onchange="toggleEditDonorType('registered')">
+                                    <label class="form-check-label small fw-semibold" for="editDonorOptRegistered">Terdaftar (Cari)</label>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <input type="text" name="donor_name" id="edit_donor_name" class="form-control" placeholder="Nama Donatur">
+                                <button type="button" class="btn btn-outline-primary d-none" id="edit_btnSearchDonor" onclick="openDonorSearchModal('edit')" title="Cari Donatur">
+                                    <i class="bi bi-search me-1"></i> Cari
+                                </button>
+                            </div>
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-semibold">Keterangan / Catatan</label>
@@ -581,13 +611,13 @@
                             <h6 class="fw-bold text-primary mb-2"><i class="bi bi-box-fill me-1"></i>Detail Barang Aset Tetap</h6>
                             <div class="row g-2">
                                 <div class="col-md-5">
-                                    <label class="form-label extra-small fw-bold">Pilih Barang Aset (Dari Katalog)</label>
-                                    <select name="asset_name" id="edit_asset_select" class="form-select form-select-sm">
-                                        <option value="">-- Pilih dari Katalog Aset --</option>
-                                        <% masterItems.filter(i => i.type === 'Aset').forEach(i => { %>
-                                            <option value="<%= i.name %>"><%= i.name %> (<%= i.unit_name || '' %>)</option>
-                                        <% }) %>
-                                    </select>
+                                    <label class="form-label extra-small fw-bold">Nama Barang Aset</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" name="asset_name" id="edit_asset_name_input" class="form-control" placeholder="Cari dari katalog aset..." readonly>
+                                        <button type="button" class="btn btn-outline-primary" onclick="openItemSearchModal('Aset', 'edit')">
+                                            <i class="bi bi-search me-1"></i> Cari Barang
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label extra-small fw-bold">Jumlah (Qty)</label>
@@ -621,20 +651,20 @@
                             <h6 class="fw-bold text-warning mb-2"><i class="bi bi-boxes me-1"></i>Detail Material / Persediaan (Stok Masuk)</h6>
                             <div class="row g-2">
                                 <div class="col-md-4">
-                                    <label class="form-label extra-small fw-bold">Pilih Material (Dari Katalog)</label>
-                                    <select name="inventory_name" id="edit_inventory_select" class="form-select form-select-sm">
-                                        <option value="">-- Pilih dari Katalog Material --</option>
-                                        <% masterItems.filter(i => i.type === 'Material').forEach(i => { %>
-                                            <option value="<%= i.name %>"><%= i.name %></option>
-                                        <% }) %>
-                                    </select>
+                                    <label class="form-label extra-small fw-bold">Nama Material / Barang</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" name="inventory_name" id="edit_inventory_name_input" class="form-control" placeholder="Cari dari katalog material..." readonly>
+                                        <button type="button" class="btn btn-outline-primary" onclick="openItemSearchModal('Material', 'edit')">
+                                            <i class="bi bi-search me-1"></i> Cari Material
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label extra-small fw-bold">Jumlah Stok</label>
                                     <input type="number" step="0.1" name="inventory_qty" id="edit_inventory_qty" class="form-control form-control-sm" placeholder="Jumlah" value="1">
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label extra-small fw-bold">Satuan (Dropdown)</label>
+                                    <label class="form-label extra-small fw-bold">Satuan</label>
                                     <select name="inventory_unit" id="edit_inventory_unit_select" class="form-select form-select-sm">
                                         <% units.forEach(u => { %>
                                             <option value="<%= u.code %>"><%= u.name %> (<%= u.code %>)</option>
@@ -1060,3 +1090,269 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Pop-Up Lookup Donatur -->
+<div class="modal fade" id="modalSearchDonor" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-search me-2"></i>Pilih Donatur Terdaftar</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group mb-3">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" id="donorSearchInput" class="form-control" placeholder="Cari berdasarkan Nama, Kategori, atau No. HP..." onkeyup="filterDonorTable()">
+                </div>
+                <div class="table-responsive" style="max-height: 350px;">
+                    <table class="table table-hover align-middle mb-0" id="tableDonorList">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>Nama Donatur</th>
+                                <th>Kategori</th>
+                                <th>No. HP / WA</th>
+                                <th>Alamat</th>
+                                <th class="text-end">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (typeof donors !== 'undefined' && donors.length > 0) { %>
+                                <% donors.forEach(d => { %>
+                                    <tr>
+                                        <td class="fw-bold text-dark"><%= d.name %></td>
+                                        <td><span class="badge bg-info-subtle text-info-emphasis border"><%= d.category || 'Perorangan' %></span></td>
+                                        <td class="small text-muted"><%= d.phone || '-' %></td>
+                                        <td class="small text-muted"><%= d.address || '-' %></td>
+                                        <td class="text-end">
+                                            <button type="button" class="btn btn-sm btn-primary fw-semibold" onclick="selectDonor('<%= d.name.replace(/'/g, "\\'") %>')">
+                                                <i class="bi bi-check-lg me-1"></i> Pilih
+                                            </button>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-3">Belum ada data donatur terdaftar. Silakan tambahkan di Master Data Donatur & Mustahik.</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Pop-Up Lookup Barang (Aset & Material) -->
+<div class="modal fade" id="modalSearchItem" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="modalSearchItemTitle"><i class="bi bi-search me-2"></i>Pilih Barang dari Katalog</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-2 mb-3">
+                    <div class="col-md-5">
+                        <label class="form-label extra-small fw-bold mb-1">Filter Kategori Barang</label>
+                        <select id="itemCategoryFilter" class="form-select form-select-sm" onchange="filterItemTable()">
+                            <option value="">-- Semua Kategori --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-7">
+                        <label class="form-label extra-small fw-bold mb-1">Cari Nama / Kode SKU</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                            <input type="text" id="itemSearchInput" class="form-control" placeholder="Ketik nama atau SKU barang..." onkeyup="filterItemTable()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive" style="max-height: 350px;">
+                    <table class="table table-hover align-middle mb-0" id="tableItemList">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>SKU / Kode</th>
+                                <th>Nama Barang</th>
+                                <th>Kategori</th>
+                                <th>Satuan</th>
+                                <th class="text-end">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyItemList">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const allMasterItems = <%- JSON.stringify(masterItems || []) %>;
+    let currentDonorTarget = 'add';
+    let currentItemTarget = { type: 'Aset', mode: 'add' };
+
+    function toggleDonorType(type) {
+        const input = document.getElementById('donor_name_input');
+        const btn = document.getElementById('btnSearchDonor');
+        if (type === 'registered') {
+            input.readOnly = true;
+            input.value = '';
+            input.placeholder = "Klik 'Cari' untuk memilih donatur...";
+            btn.classList.remove('d-none');
+            openDonorSearchModal('add');
+        } else {
+            input.readOnly = false;
+            input.value = "Hamba Allah";
+            input.placeholder = "Isi nama donatur / Hamba Allah";
+            btn.classList.add('d-none');
+        }
+    }
+
+    function toggleEditDonorType(type) {
+        const input = document.getElementById('edit_donor_name');
+        const btn = document.getElementById('edit_btnSearchDonor');
+        if (type === 'registered') {
+            input.readOnly = true;
+            input.placeholder = "Klik 'Cari' untuk memilih donatur...";
+            btn.classList.remove('d-none');
+            openDonorSearchModal('edit');
+        } else {
+            input.readOnly = false;
+            btn.classList.add('d-none');
+        }
+    }
+
+    function openDonorSearchModal(target = 'add') {
+        currentDonorTarget = target;
+        document.getElementById('donorSearchInput').value = '';
+        filterDonorTable();
+        new bootstrap.Modal(document.getElementById('modalSearchDonor')).show();
+    }
+
+    function filterDonorTable() {
+        const q = (document.getElementById('donorSearchInput').value || '').toLowerCase();
+        const rows = document.querySelectorAll('#tableDonorList tbody tr');
+        rows.forEach(r => {
+            const text = r.innerText.toLowerCase();
+            r.style.display = text.includes(q) ? '' : 'none';
+        });
+    }
+
+    function selectDonor(donorName) {
+        if (currentDonorTarget === 'edit') {
+            document.getElementById('edit_donor_name').value = donorName;
+        } else {
+            document.getElementById('donor_name_input').value = donorName;
+        }
+        const modalEl = document.getElementById('modalSearchDonor');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+    }
+
+    function openItemSearchModal(itemType, mode = 'add') {
+        currentItemTarget = { type: itemType, mode: mode };
+        const modalTitle = document.getElementById('modalSearchItemTitle');
+        modalTitle.innerHTML = '<i class="bi bi-search me-2"></i>Pilih ' + (itemType === 'Aset' ? 'Aset Tetap' : 'Material / Persediaan') + ' dari Katalog';
+
+        const catSelect = document.getElementById('itemCategoryFilter');
+        catSelect.innerHTML = '<option value="">-- Semua Kategori --</option>';
+
+        const items = allMasterItems.filter(i => i.type === itemType);
+        const categories = [...new Set(items.map(i => i.category).filter(Boolean))];
+        categories.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            catSelect.appendChild(opt);
+        });
+
+        document.getElementById('itemSearchInput').value = '';
+        renderItemListTable(items);
+        new bootstrap.Modal(document.getElementById('modalSearchItem')).show();
+    }
+
+    function filterItemTable() {
+        const itemType = currentItemTarget.type;
+        const catVal = document.getElementById('itemCategoryFilter').value.toLowerCase();
+        const q = (document.getElementById('itemSearchInput').value || '').toLowerCase();
+
+        const filtered = allMasterItems.filter(i => {
+            if (i.type !== itemType) return false;
+            if (catVal && (i.category || '').toLowerCase() !== catVal) return false;
+            if (q) {
+                const matchName = (i.name || '').toLowerCase().includes(q);
+                const matchSku = (i.sku_code || '').toLowerCase().includes(q);
+                const matchCat = (i.category || '').toLowerCase().includes(q);
+                if (!matchName && !matchSku && !matchCat) return false;
+            }
+            return true;
+        });
+
+        renderItemListTable(filtered);
+    }
+
+    function renderItemListTable(items) {
+        const tbody = document.getElementById('tbodyItemList');
+        tbody.innerHTML = '';
+        if (items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Tidak ada barang yang sesuai filter.</td></tr>';
+            return;
+        }
+
+        items.forEach(itm => {
+            const tr = document.createElement('tr');
+            const safeName = (itm.name || '').replace(/'/g, "\\'");
+            const safeUnit = (itm.unit_code || '').replace(/'/g, "\\'");
+            const safeCat = (itm.category || '').replace(/'/g, "\\'");
+            tr.innerHTML = `
+                <td><code>${itm.sku_code || '-'}</code></td>
+                <td class="fw-bold text-dark">${itm.name}</td>
+                <td><span class="badge bg-secondary-subtle text-secondary-emphasis">${itm.category || '-'}</span></td>
+                <td class="small text-muted">${itm.unit_code || itm.unit_name || '-'}</td>
+                <td class="text-end">
+                    <button type="button" class="btn btn-sm btn-primary fw-semibold" onclick="selectCatalogItem('${safeName}', '${safeUnit}', '${safeCat}')">
+                        <i class="bi bi-check-lg me-1"></i> Pilih
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function selectCatalogItem(name, unitCode, category) {
+        const mode = currentItemTarget.mode;
+        const itemType = currentItemTarget.type;
+
+        if (mode === 'add') {
+            if (itemType === 'Aset') {
+                const input = document.getElementById('asset_name_input');
+                if (input) input.value = name;
+            } else {
+                const input = document.getElementById('inventory_name_input');
+                if (input) input.value = name;
+                const unitSelect = document.getElementById('inventory_unit_select');
+                if (unitSelect && unitCode) unitSelect.value = unitCode;
+                const catSelect = document.getElementById('inventory_category_select');
+                if (catSelect && category) catSelect.value = category;
+            }
+        } else {
+            if (itemType === 'Aset') {
+                const input = document.getElementById('edit_asset_name_input');
+                if (input) input.value = name;
+            } else {
+                const input = document.getElementById('edit_inventory_name_input');
+                if (input) input.value = name;
+                const unitSelect = document.getElementById('edit_inventory_unit_select');
+                if (unitSelect && unitCode) unitSelect.value = unitCode;
+                const catSelect = document.getElementById('edit_inventory_category');
+                if (catSelect && category) catSelect.value = category;
+            }
+        }
+
+        const modalEl = document.getElementById('modalSearchItem');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+    }
+</script>

@@ -23,6 +23,7 @@ class KeuanganController {
             const masterItems = await MasterModel.getAllMasterItems();
             const units = await MasterModel.getAllUnits();
             const locations = await MasterModel.getAllLocations();
+            const donors = await MasterModel.getDonorsMustahik('Donatur');
 
             res.render('keuangan/index', {
                 title: 'Transaksi Keuangan',
@@ -38,6 +39,7 @@ class KeuanganController {
                 masterItems,
                 units,
                 locations,
+                donors,
                 filters,
                 selectedAccount: filters.account_id,
                 selectedType: filters.type

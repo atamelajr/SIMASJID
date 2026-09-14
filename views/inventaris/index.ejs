@@ -139,7 +139,7 @@
                                         <td class="text-end text-nowrap">
                                             <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
                                                 <button type="button" class="btn btn-sm btn-outline-warning me-1" onclick='openEditAssetModal(<%- JSON.stringify(ast) %>)' title="Edit Detail & Spesifikasi Aset">
-                                                    <i class="bi bi-pencil me-1"></i> Edit Detail
+                                                    <i class="bi bi-pencil"></i>
                                                 </button>
                                                 <% if (user.role_name === 'Admin') { %>
                                                     <form action="/inventaris/asset/delete/<%= ast.id %>" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus aset ini?')">

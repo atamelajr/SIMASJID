@@ -33,12 +33,12 @@
                                         <td class="small text-muted"><%= d.phone || '-' %></td>
                                         <td class="text-end">
                                             <button class="btn btn-sm btn-outline-warning me-1" 
-                                                    onclick="editDonorMustahik(<%= JSON.stringify(d) %>)">
-                                                <i class="bi bi-pencil"></i> Edit
+                                                    onclick="editDonorMustahik(<%= JSON.stringify(d) %>)" title="Edit Data">
+                                                <i class="bi bi-pencil"></i>
                                             </button>
                                             <% if (user.role_name === 'Admin') { %>
                                                 <form action="/master/donors-mustahik/delete/<%= d.id %>" method="POST" class="d-inline" onsubmit="return confirm('Hapus donatur ini?')">
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Data"><i class="bi bi-trash"></i></button>
                                                 </form>
                                             <% } %>
                                         </td>
@@ -80,12 +80,12 @@
                                         <td class="small text-muted"><%= m.phone || '-' %></td>
                                         <td class="text-end">
                                             <button class="btn btn-sm btn-outline-warning me-1" 
-                                                    onclick="editDonorMustahik(<%= JSON.stringify(m) %>)">
-                                                <i class="bi bi-pencil"></i> Edit
+                                                    onclick="editDonorMustahik(<%= JSON.stringify(m) %>)" title="Edit Data">
+                                                <i class="bi bi-pencil"></i>
                                             </button>
                                             <% if (user.role_name === 'Admin') { %>
                                                 <form action="/master/donors-mustahik/delete/<%= m.id %>" method="POST" class="d-inline" onsubmit="return confirm('Hapus data mustahik ini?')">
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Data"><i class="bi bi-trash"></i></button>
                                                 </form>
                                             <% } %>
                                         </td>
@@ -116,7 +116,7 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Tipe Data</label>
-                        <select name="type" class="form-select" required>
+                        <select id="add_dm_type" name="type" class="form-select" required onchange="onAddTypeChange()">
                             <option value="Donatur">Donatur (Penyumbang)</option>
                             <option value="Mustahik">Mustahik (Penerima Zakat/Bantuan)</option>
                         </select>
@@ -126,8 +126,8 @@
                         <input type="text" name="name" class="form-control" required placeholder="Contoh: H. Ahmad / PT Amanah">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Kategori / Golongan (Asnaf)</label>
-                        <input type="text" name="category" class="form-control" placeholder="Contoh: Perorangan / Instansi / Fakir / Miskin / Amil" required>
+                        <label class="form-label fw-semibold" id="lbl_add_category">Kategori Donatur</label>
+                        <select id="add_dm_category" name="category" class="form-select" required></select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">No. HP / WA</label>
@@ -159,7 +159,7 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Tipe Data</label>
-                        <select id="edit_dm_type" name="type" class="form-select" required>
+                        <select id="edit_dm_type" name="type" class="form-select" required onchange="onEditTypeChange()">
                             <option value="Donatur">Donatur (Penyumbang)</option>
                             <option value="Mustahik">Mustahik (Penerima Zakat/Bantuan)</option>
                         </select>
@@ -169,8 +169,8 @@
                         <input type="text" id="edit_dm_name" name="name" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Kategori / Golongan (Asnaf)</label>
-                        <input type="text" id="edit_dm_category" name="category" class="form-control" required>
+                        <label class="form-label fw-semibold" id="lbl_edit_category">Kategori Donatur</label>
+                        <select id="edit_dm_category" name="category" class="form-select" required></select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">No. HP / WA</label>
@@ -191,14 +191,65 @@
 </div>
 
 <script>
+const donorCategories = ['Perorangan', 'OPD', 'Instansi Vertikal', 'Badan Usaha', 'LSM', 'Komunitas'];
+const mustahikCategories = ['Fakir', 'Miskin', 'Amil', 'Mualaf', 'Riqab', 'Gharim', 'Fisabilillah', 'Ibnu Sabil'];
+
+function populateCategories(typeVal, selectEl, labelEl, selectedVal) {
+    if (!selectEl) return;
+    selectEl.innerHTML = '';
+    
+    const categories = typeVal === 'Mustahik' ? mustahikCategories : donorCategories;
+    if (labelEl) {
+        labelEl.innerText = typeVal === 'Mustahik' ? 'Golongan Asnaf Mustahik' : 'Kategori Donatur';
+    }
+
+    categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        if (cat === selectedVal) opt.selected = true;
+        selectEl.appendChild(opt);
+    });
+
+    if (selectedVal && !categories.includes(selectedVal)) {
+        const opt = document.createElement('option');
+        opt.value = selectedVal;
+        opt.textContent = selectedVal;
+        opt.selected = true;
+        selectEl.appendChild(opt);
+    }
+}
+
+function onAddTypeChange() {
+    const typeVal = document.getElementById('add_dm_type').value;
+    const catSelect = document.getElementById('add_dm_category');
+    const labelEl = document.getElementById('lbl_add_category');
+    populateCategories(typeVal, catSelect, labelEl);
+}
+
+function onEditTypeChange() {
+    const typeVal = document.getElementById('edit_dm_type').value;
+    const catSelect = document.getElementById('edit_dm_category');
+    const labelEl = document.getElementById('lbl_edit_category');
+    const currentVal = catSelect.value;
+    populateCategories(typeVal, catSelect, labelEl, currentVal);
+}
+
 function editDonorMustahik(dm) {
     document.getElementById('formEditDonorMustahik').action = '/master/donors-mustahik/update/' + dm.id;
     document.getElementById('edit_dm_type').value = dm.type;
     document.getElementById('edit_dm_name').value = dm.name;
-    document.getElementById('edit_dm_category').value = dm.category || '';
     document.getElementById('edit_dm_phone').value = dm.phone || '';
     document.getElementById('edit_dm_address').value = dm.address || '';
     
+    const catSelect = document.getElementById('edit_dm_category');
+    const labelEl = document.getElementById('lbl_edit_category');
+    populateCategories(dm.type, catSelect, labelEl, dm.category || '');
+    
     new bootstrap.Modal(document.getElementById('modalEditDonorMustahik')).show();
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    onAddTypeChange();
+});
 </script>

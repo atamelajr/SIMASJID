@@ -35,10 +35,10 @@
                                 </td>
                                 <td class="small text-muted"><%= cat.description || '-' %></td>
                                 <td class="text-end text-nowrap">
-                                    <button class="btn btn-sm btn-outline-warning me-1" 
-                                            onclick='editItemCategory(<%- JSON.stringify(cat) %>)' title="Edit Kategori">
-                                        <i class="bi bi-pencil"></i> Edit
-                                    </button>
+                                     <button class="btn btn-sm btn-outline-warning me-1" 
+                                            onclick='editItemCategory(<%- JSON.stringify(cat) %>)' title="Edit Data">
+                                         <i class="bi bi-pencil"></i>
+                                     </button>
                                     <% if (user.role_name === 'Admin') { %>
                                         <form action="/master/item-categories/delete/<%= cat.id %>" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus kategori barang ini?')">
                                             <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Kategori"><i class="bi bi-trash"></i></button>

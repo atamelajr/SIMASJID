@@ -26,8 +26,8 @@
                             <td class="fw-semibold"><%= u.name %></td>
                             <td class="text-end">
                                 <button class="btn btn-sm btn-outline-warning me-1" 
-                                        onclick="editUnit(<%= JSON.stringify(u) %>)">
-                                    <i class="bi bi-pencil"></i> Edit
+                                        onclick="editUnit(<%= JSON.stringify(u) %>)" title="Edit Data">
+                                    <i class="bi bi-pencil"></i>
                                 </button>
                                 <% if (user.role_name === 'Admin') { %>
                                     <form action="/master/units/delete/<%= u.id %>" method="POST" class="d-inline" onsubmit="return confirm('Hapus satuan barang ini?')">

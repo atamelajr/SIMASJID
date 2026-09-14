@@ -111,7 +111,7 @@
                                         <td class="text-end text-nowrap">
                                             <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
                                                 <button type="button" class="btn btn-sm btn-outline-warning me-1" onclick='openEditProgressModal(<%- JSON.stringify(log) %>)' title="Edit Log Progres">
-                                                    <i class="bi bi-pencil"></i> Edit
+                                                    <i class="bi bi-pencil"></i>
                                                 </button>
                                                 <% if (user.role_name === 'Admin') { %>
                                                     <form action="/proyek/progress/delete/<%= log.id %>?project_id=<%= activeProject.id %>" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus log progres ini?')">

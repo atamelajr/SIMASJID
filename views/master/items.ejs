@@ -75,10 +75,10 @@
                                 <td><%= itm.category %></td>
                                 <td class="small text-muted"><%= itm.description || '-' %></td>
                                 <td class="text-end">
-                                    <button class="btn btn-sm btn-outline-warning me-1" 
-                                            onclick="editItem(<%= JSON.stringify(itm) %>)">
-                                        <i class="bi bi-pencil"></i> Edit
-                                    </button>
+                                     <button class="btn btn-sm btn-outline-warning me-1" 
+                                            onclick="editItem(<%= JSON.stringify(itm) %>)" title="Edit Data">
+                                        <i class="bi bi-pencil"></i>
+                                     </button>
                                     <% if (user.role_name === 'Admin') { %>
                                         <form action="/master/items/delete/<%= itm.id %>" method="POST" class="d-inline" onsubmit="return confirm('Hapus master barang ini?')">
                                             <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>

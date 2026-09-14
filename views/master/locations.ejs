@@ -29,8 +29,8 @@
                                 <td class="small text-muted"><%= loc.description || '-' %></td>
                                 <td class="text-end">
                                     <button class="btn btn-sm btn-outline-warning me-1" 
-                                            onclick='editLocation(<%- JSON.stringify(loc) %>)' title="Edit Lokasi">
-                                        <i class="bi bi-pencil"></i> Edit
+                                            onclick='editLocation(<%- JSON.stringify(loc) %>)' title="Edit Data">
+                                        <i class="bi bi-pencil"></i>
                                     </button>
                                     <% if (user.role_name === 'Admin') { %>
                                         <form action="/master/locations/delete/<%= loc.id %>" method="POST" class="d-inline" onsubmit="return confirm('Hapus lokasi penempatan ini?')">
