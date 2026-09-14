@@ -31,11 +31,77 @@ class TransactionModel {
         }
         return costs;
     }
+    static async getChartData(period = 'monthly') {
+        let sql = '';
+        if (period === 'daily') {
+            sql = `
+                SELECT 
+                    DATE(transaction_date) as ref_date,
+                    DATE_FORMAT(transaction_date, '%d %b') as label,
+                    SUM(CASE WHEN type = 'Penerimaan' AND is_in_kind = 0 THEN amount ELSE 0 END) as total_penerimaan,
+                    SUM(CASE WHEN type = 'Pengeluaran' AND is_in_kind = 0 THEN amount ELSE 0 END) as total_pengeluaran
+                FROM transactions
+                WHERE transaction_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+                GROUP BY DATE(transaction_date), DATE_FORMAT(transaction_date, '%d %b')
+                ORDER BY ref_date ASC
+            `;
+        } else if (period === 'weekly') {
+            sql = `
+                SELECT 
+                    YEARWEEK(transaction_date, 1) as ref_week,
+                    CONCAT('Mgg ', WEEK(transaction_date, 1), ' (', DATE_FORMAT(MIN(transaction_date), '%d/%m'), ')') as label,
+                    SUM(CASE WHEN type = 'Penerimaan' AND is_in_kind = 0 THEN amount ELSE 0 END) as total_penerimaan,
+                    SUM(CASE WHEN type = 'Pengeluaran' AND is_in_kind = 0 THEN amount ELSE 0 END) as total_pengeluaran
+                FROM transactions
+                WHERE transaction_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 8 WEEK)
+                GROUP BY YEARWEEK(transaction_date, 1)
+                ORDER BY ref_week ASC
+            `;
+        } else if (period === 'yearly') {
+            sql = `
+                SELECT 
+                    YEAR(transaction_date) as ref_year,
+                    CAST(YEAR(transaction_date) AS CHAR) as label,
+                    SUM(CASE WHEN type = 'Penerimaan' AND is_in_kind = 0 THEN amount ELSE 0 END) as total_penerimaan,
+                    SUM(CASE WHEN type = 'Pengeluaran' AND is_in_kind = 0 THEN amount ELSE 0 END) as total_pengeluaran
+                FROM transactions
+                WHERE transaction_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 5 YEAR)
+                GROUP BY YEAR(transaction_date)
+                ORDER BY ref_year ASC
+            `;
+        } else {
+            sql = `
+                SELECT 
+                    DATE_FORMAT(transaction_date, '%Y-%m') as ref_month,
+                    DATE_FORMAT(transaction_date, '%b %Y') as label,
+                    SUM(CASE WHEN type = 'Penerimaan' AND is_in_kind = 0 THEN amount ELSE 0 END) as total_penerimaan,
+                    SUM(CASE WHEN type = 'Pengeluaran' AND is_in_kind = 0 THEN amount ELSE 0 END) as total_pengeluaran
+                FROM transactions
+                WHERE transaction_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 12 MONTH)
+                GROUP BY DATE_FORMAT(transaction_date, '%Y-%m'), DATE_FORMAT(transaction_date, '%b %Y')
+                ORDER BY ref_month ASC
+            `;
+        }
+
+        const [rows] = await db.query(sql);
+
+        const labels = rows.map(r => r.label);
+        const income = rows.map(r => parseFloat(r.total_penerimaan || 0));
+        const expense = rows.map(r => parseFloat(r.total_pengeluaran || 0));
+
+        return { labels, income, expense };
+    }
+
     static async getDashboardSummary() {
         const [cashRows] = await db.query(
             `SELECT SUM(balance) as total_saldo FROM cash_accounts`
         );
         const totalSaldo = cashRows[0].total_saldo || 0;
+
+        // Rincian Akun Kas / Bank
+        const [cashAccounts] = await db.query(
+            `SELECT id, code, name, type, account_number, balance FROM cash_accounts WHERE is_active = 1 ORDER BY id ASC`
+        );
 
         // Pemasukan vs Pengeluaran Bulan Ini berdasarkan Tanggal Transaksi (Tunai/Transfer)
         const [monthlyStats] = await db.query(
@@ -46,6 +112,17 @@ class TransactionModel {
              WHERE MONTH(transaction_date) = MONTH(CURRENT_DATE()) AND YEAR(transaction_date) = YEAR(CURRENT_DATE())`
         );
 
+        // Status Utang Belanja belum lunas
+        const [debtStats] = await db.query(
+            `SELECT COUNT(*) as total_count, SUM(amount) as total_amount 
+             FROM transactions 
+             WHERE payment_mode = 'Hutang' AND debt_status = 'Belum Lunas'`
+        );
+
+        // Summary Aset Tetap & Inventaris
+        const [assetStats] = await db.query(`SELECT COUNT(*) as total_assets, SUM(cost) as total_value FROM fixed_assets`);
+        const [invStats] = await db.query(`SELECT COUNT(*) as total_items, SUM(stock) as total_stock FROM inventory_items`);
+
         // Recent Activity Logs
         const [recentLogs] = await db.query(
             `SELECT a.*, u.full_name as user_name 
@@ -54,11 +131,26 @@ class TransactionModel {
              ORDER BY a.created_at DESC LIMIT 5`
         );
 
+        // Initial Chart Data (bulanan)
+        const initialChartData = await this.getChartData('monthly');
+
         return {
             totalSaldo,
+            cashAccounts,
             totalPenerimaanBulanIni: monthlyStats[0].total_penerimaan || 0,
             totalPengeluaranBulanIni: monthlyStats[0].total_pengeluaran || 0,
-            recentLogs
+            unpaidDebt: {
+                count: debtStats[0]?.total_count || 0,
+                amount: debtStats[0]?.total_amount || 0
+            },
+            assetSummary: {
+                totalAssets: assetStats[0]?.total_assets || 0,
+                totalAssetValue: assetStats[0]?.total_value || 0,
+                totalInventoryItems: invStats[0]?.total_items || 0,
+                totalInventoryStock: invStats[0]?.total_stock || 0
+            },
+            recentLogs,
+            initialChartData
         };
     }
 
