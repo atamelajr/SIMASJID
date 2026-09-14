@@ -100,7 +100,7 @@ class TransactionModel {
 
         // Rincian Akun Kas / Bank
         const [cashAccounts] = await db.query(
-            `SELECT id, code, name, type, account_number, balance FROM cash_accounts WHERE is_active = 1 ORDER BY id ASC`
+            `SELECT id, code, name, bank_name, bank_name as type, account_number, balance FROM cash_accounts WHERE is_active = 1 ORDER BY id ASC`
         );
 
         // Pemasukan vs Pengeluaran Bulan Ini berdasarkan Tanggal Transaksi (Tunai/Transfer)

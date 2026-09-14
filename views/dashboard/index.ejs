@@ -161,7 +161,7 @@
                                         <% if (acc.account_number) { %>
                                             <span class="small text-muted ms-1">(<%= acc.account_number %>)</span>
                                         <% } %>
-                                        <span class="badge bg-light text-secondary border ms-1"><%= acc.type %></span>
+                                        <span class="badge bg-light text-secondary border ms-1"><%= acc.bank_name || acc.type %></span>
                                     </div>
                                     <span class="fw-bold text-primary"><%= formatRupiah(acc.balance) %></span>
                                 </div>
