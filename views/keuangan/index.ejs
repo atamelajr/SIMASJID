@@ -1232,7 +1232,7 @@
         currentDonorTarget = target;
         document.getElementById('donorSearchInput').value = '';
         filterDonorTable();
-        new bootstrap.Modal(document.getElementById('modalSearchDonor')).show();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalSearchDonor')).show();
     }
 
     function filterDonorTable() {
@@ -1274,7 +1274,7 @@
 
         document.getElementById('itemSearchInput').value = '';
         renderItemListTable(items);
-        new bootstrap.Modal(document.getElementById('modalSearchItem')).show();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalSearchItem')).show();
     }
 
     function filterItemTable() {

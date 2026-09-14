@@ -926,7 +926,7 @@
 
         document.getElementById('assetCatalogSearchInput').value = '';
         filterAssetCatalogTable();
-        new bootstrap.Modal(document.getElementById('modalSearchAssetCatalog')).show();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalSearchAssetCatalog')).show();
     }
 
     function filterAssetCatalogTable() {

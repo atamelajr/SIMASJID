@@ -366,5 +366,70 @@
 
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Global Multi-Level Stacked Modals & Escape Key Manager -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // 1. Intercept Escape key in capture phase to close ONLY the top-most modal when stacked
+            window.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' || e.keyCode === 27) {
+                    const openModals = Array.from(document.querySelectorAll('.modal.show'));
+                    if (openModals.length > 1) {
+                        // Sort by computed z-index ascending so the highest z-index modal is at the end
+                        openModals.sort((a, b) => {
+                            const zA = parseInt(window.getComputedStyle(a).zIndex) || 1050;
+                            const zB = parseInt(window.getComputedStyle(b).zIndex) || 1050;
+                            return zA - zB;
+                        });
+
+                        const topModal = openModals[openModals.length - 1];
+
+                        // Prevent the Escape key event from reaching lower modals
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+
+                        // Hide only the topmost modal
+                        const bsModal = bootstrap.Modal.getInstance(topModal) || bootstrap.Modal.getOrCreateInstance(topModal);
+                        if (bsModal) {
+                            bsModal.hide();
+                        }
+                    }
+                }
+            }, true); // True = Capture phase (intercept before lower DOM elements handle Escape)
+
+            // 2. Adjust z-index dynamically for stacked modals and backdrops
+            document.addEventListener('show.bs.modal', function (e) {
+                const openModals = Array.from(document.querySelectorAll('.modal.show'));
+                const baseZIndex = 1055;
+                const newZIndex = baseZIndex + (openModals.length * 20);
+                e.target.style.zIndex = newZIndex;
+
+                setTimeout(function () {
+                    const backdrops = Array.from(document.querySelectorAll('.modal-backdrop'));
+                    if (backdrops.length > 0) {
+                        const topBackdrop = backdrops[backdrops.length - 1];
+                        topBackdrop.style.zIndex = newZIndex - 5;
+                    }
+                }, 10);
+            });
+
+            // 3. Keep body scrollable when closing a child modal while a parent modal is still open
+            document.addEventListener('hidden.bs.modal', function (e) {
+                const remainingModals = document.querySelectorAll('.modal.show');
+                if (remainingModals.length > 0) {
+                    document.body.classList.add('modal-open');
+                }
+            });
+
+            // 4. Automatically focus on non-readonly text input inside lookup modals when shown
+            document.addEventListener('shown.bs.modal', function (e) {
+                const searchInput = e.target.querySelector('input[type="text"]:not([readonly])');
+                if (searchInput) {
+                    searchInput.focus();
+                }
+            });
+        });
+    </script>
 </body>
 </html>
