@@ -452,12 +452,12 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Nama Barang Aset (Dari Katalog)</label>
-                            <select name="name" id="add_asset_name" class="form-select" required onchange="onAddAssetNameChange()">
-                                <option value="">-- Pilih Kategori Terlebih Dahulu --</option>
-                            </select>
-                            <div id="wrapper_custom_add_asset_name" class="mt-2 d-none">
-                                <input type="text" id="custom_add_asset_name" class="form-control" placeholder="Ketik nama barang aset baru...">
+                            <label class="form-label fw-semibold">Nama Barang Aset</label>
+                            <div class="input-group">
+                                <input type="text" name="name" id="add_asset_name_input" class="form-control" placeholder="Cari / pilih nama barang aset..." required>
+                                <button type="button" class="btn btn-outline-primary" onclick="openAssetCatalogModal('add')" title="Cari dari Katalog Aset">
+                                    <i class="bi bi-search me-1"></i> Cari Barang
+                                </button>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -553,12 +553,12 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Nama Barang Aset (Dari Katalog)</label>
-                            <select name="name" id="edit_asset_name" class="form-select" required onchange="onEditAssetNameChange()">
-                                <option value="">-- Pilih Kategori Terlebih Dahulu --</option>
-                            </select>
-                            <div id="wrapper_custom_edit_asset_name" class="mt-2 d-none">
-                                <input type="text" id="custom_edit_asset_name" class="form-control" placeholder="Ketik nama barang aset baru...">
+                            <label class="form-label fw-semibold">Nama Barang Aset</label>
+                            <div class="input-group">
+                                <input type="text" name="name" id="edit_asset_name_input" class="form-control" placeholder="Cari / pilih nama barang aset..." required>
+                                <button type="button" class="btn btn-outline-primary" onclick="openAssetCatalogModal('edit')" title="Cari dari Katalog Aset">
+                                    <i class="bi bi-search me-1"></i> Cari Barang
+                                </button>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -811,7 +811,8 @@
         document.getElementById('formEditAsset').action = '/inventaris/asset/update/' + ast.id;
         
         document.getElementById('edit_asset_category').value = ast.category || 'Peralatan & Mesin';
-        filterEditAssetItemsByCategory(ast.name);
+        const nameInput = document.getElementById('edit_asset_name_input');
+        if (nameInput) nameInput.value = ast.name || '';
 
         document.getElementById('edit_asset_brand').value = ast.brand || '';
         document.getElementById('edit_asset_model_no_plate').value = ast.model_no_plate || '';
@@ -858,4 +859,138 @@
             });
         });
     });
+</script>
+
+<!-- Modal Pop-Up Lookup Katalog Barang Aset -->
+<div class="modal fade" id="modalSearchAssetCatalog" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-search me-2"></i>Pilih Barang Aset dari Katalog Master</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-2 mb-3">
+                    <div class="col-md-5">
+                        <label class="form-label extra-small fw-bold mb-1">Filter Kategori Aset</label>
+                        <select id="assetCatalogCatFilter" class="form-select form-select-sm" onchange="filterAssetCatalogTable()">
+                            <option value="">-- Semua Kategori --</option>
+                            <% if (typeof assetCategories !== 'undefined' && assetCategories.length > 0) { %>
+                                <% assetCategories.forEach(cat => { %>
+                                    <option value="<%= cat.name %>"><%= cat.name %></option>
+                                <% }) %>
+                            <% } %>
+                        </select>
+                    </div>
+                    <div class="col-md-7">
+                        <label class="form-label extra-small fw-bold mb-1">Cari Nama / Kode SKU</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                            <input type="text" id="assetCatalogSearchInput" class="form-control" placeholder="Ketik kata kunci nama barang..." onkeyup="filterAssetCatalogTable()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive" style="max-height: 350px;">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>SKU / Kode</th>
+                                <th>Nama Barang Aset</th>
+                                <th>Kategori</th>
+                                <th>Satuan</th>
+                                <th class="text-end">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyAssetCatalogList">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentAssetCatalogMode = 'add';
+
+    function openAssetCatalogModal(mode = 'add') {
+        currentAssetCatalogMode = mode;
+        const catSelectId = mode === 'edit' ? 'edit_asset_category' : 'add_asset_category';
+        const catSelect = document.getElementById(catSelectId);
+        
+        const modalCatFilter = document.getElementById('assetCatalogCatFilter');
+        if (modalCatFilter && catSelect) {
+            modalCatFilter.value = catSelect.value || '';
+        }
+
+        document.getElementById('assetCatalogSearchInput').value = '';
+        filterAssetCatalogTable();
+        new bootstrap.Modal(document.getElementById('modalSearchAssetCatalog')).show();
+    }
+
+    function filterAssetCatalogTable() {
+        const catVal = (document.getElementById('assetCatalogCatFilter').value || '').toLowerCase();
+        const q = (document.getElementById('assetCatalogSearchInput').value || '').toLowerCase();
+
+        const catalog = typeof rawAssetCatalog !== 'undefined' ? rawAssetCatalog : [];
+        const filtered = catalog.filter(i => {
+            if (catVal && (i.category || '').toLowerCase() !== catVal) return false;
+            if (q) {
+                const matchName = (i.name || '').toLowerCase().includes(q);
+                const matchCode = (i.code || i.sku_code || '').toLowerCase().includes(q);
+                const matchCat = (i.category || '').toLowerCase().includes(q);
+                if (!matchName && !matchCode && !matchCat) return false;
+            }
+            return true;
+        });
+
+        renderAssetCatalogTable(filtered);
+    }
+
+    function renderAssetCatalogTable(items) {
+        const tbody = document.getElementById('tbodyAssetCatalogList');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        if (items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Tidak ada barang aset yang sesuai filter.</td></tr>';
+            return;
+        }
+
+        items.forEach(itm => {
+            const tr = document.createElement('tr');
+            const safeName = (itm.name || '').replace(/'/g, "\\'");
+            const safeCat = (itm.category || '').replace(/'/g, "\\'");
+            tr.innerHTML = `
+                <td><code>${itm.code || itm.sku_code || '-'}</code></td>
+                <td class="fw-bold text-dark">${itm.name}</td>
+                <td><span class="badge bg-info-subtle text-info-emphasis border">${itm.category || '-'}</span></td>
+                <td class="small text-muted">${itm.unit_name || itm.unit_code || '-'}</td>
+                <td class="text-end">
+                    <button type="button" class="btn btn-sm btn-primary fw-semibold" onclick="selectAssetCatalogItem('${safeName}', '${safeCat}')">
+                        <i class="bi bi-check-lg me-1"></i> Pilih
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function selectAssetCatalogItem(name, category) {
+        const mode = currentAssetCatalogMode;
+        const inputId = mode === 'edit' ? 'edit_asset_name_input' : 'add_asset_name_input';
+        const catSelectId = mode === 'edit' ? 'edit_asset_category' : 'add_asset_category';
+
+        const input = document.getElementById(inputId);
+        if (input) input.value = name;
+
+        const catSelect = document.getElementById(catSelectId);
+        if (catSelect && category) {
+            catSelect.value = category;
+        }
+
+        const modalEl = document.getElementById('modalSearchAssetCatalog');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+    }
 </script>

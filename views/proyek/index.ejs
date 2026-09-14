@@ -45,8 +45,8 @@
                             </button>
                             <% if (user.role_name === 'Admin') { %>
                                 <form action="/proyek/delete/<%= activeProject.id %>" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus proyek ini beserta seluruh log progresnya?')">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Proyek">
-                                        <i class="bi bi-trash"></i> Hapus
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Data">
+                                        <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
                             <% } %>
@@ -115,8 +115,8 @@
                                                 </button>
                                                 <% if (user.role_name === 'Admin') { %>
                                                     <form action="/proyek/progress/delete/<%= log.id %>?project_id=<%= activeProject.id %>" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus log progres ini?')">
-                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Log">
-                                                            <i class="bi bi-trash"></i> Hapus
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Data">
+                                                            <i class="bi bi-trash"></i>
                                                         </button>
                                                     </form>
                                                 <% } %>

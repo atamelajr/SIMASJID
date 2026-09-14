@@ -202,8 +202,8 @@
                                     </button>
                                     <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
                                         <form action="/keuangan/delete/<%= trx.id %>" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus transaksi ini? Saldo kas akan otomatis disesuaikan kembali.')">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Transaksi">
-                                                <i class="bi bi-trash"></i> Hapus
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Data">
+                                                <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
                                     <% } %>
@@ -782,16 +782,20 @@
 
         if (trx.inventory_name) {
             if (editKindMaterial) editKindMaterial.checked = true;
-            document.getElementById('edit_inventory_select').value = trx.inventory_name;
-            document.getElementById('edit_inventory_qty').value = trx.inventory_qty || 1;
-            if (trx.inventory_unit) {
-                document.getElementById('edit_inventory_unit_select').value = trx.inventory_unit;
-            }
+            const invInput = document.getElementById('edit_inventory_name_input');
+            if (invInput) invInput.value = trx.inventory_name;
+            const invQty = document.getElementById('edit_inventory_qty');
+            if (invQty) invQty.value = trx.inventory_qty || 1;
+            const invUnit = document.getElementById('edit_inventory_unit_select');
+            if (invUnit && trx.inventory_unit) invUnit.value = trx.inventory_unit;
         } else {
             if (editKindAsset) editKindAsset.checked = true;
-            document.getElementById('edit_asset_select').value = trx.asset_name || '';
-            document.getElementById('edit_asset_condition').value = trx.asset_condition || 'Baik';
-            document.getElementById('edit_asset_location').value = trx.asset_location || '';
+            const astInput = document.getElementById('edit_asset_name_input');
+            if (astInput) astInput.value = trx.asset_name || '';
+            const astCond = document.getElementById('edit_asset_condition');
+            if (astCond) astCond.value = trx.asset_condition || 'Baik';
+            const astLoc = document.getElementById('edit_asset_location');
+            if (astLoc) astLoc.value = trx.asset_location || '';
         }
 
         onEditPaymentModeChange();
