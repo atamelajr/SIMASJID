@@ -46,16 +46,6 @@ const generalLimiter = rateLimit({
 });
 app.use(generalLimiter);
 
-// Rate Limiter khusus Login (ISO/IEC 27001 A.8.5 Anti Brute-Force)
-const loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 menit
-    max: 15, // maksimal 15 percobaan login per IP per 15 menit
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: 'Terlalu banyak percobaan login gagal dari IP ini. Silakan coba lagi setelah 15 menit.'
-});
-app.use('/auth/login', loginLimiter);
-
 // Body Parser Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
