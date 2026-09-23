@@ -8,21 +8,26 @@
 </div>
 
 <div class="container pb-5">
-    <!-- Instruksi Transfer Donasi -->
+    <!-- Instruksi Transfer & QRIS Donasi -->
     <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-5 border-start border-5 border-amber" style="border-color: #f59e0b !important;">
         <div class="row align-items-center g-4">
-            <div class="col-lg-8">
-                <h4 class="fw-bold text-slate-800 mb-2"><i class="bi bi-heart-fill text-danger me-2"></i> Cara Salurkan Donasi & Infaq</h4>
-                <p class="text-muted mb-3">Donasi dapat disalurkan langsung melalui Rekening Resmi DKM <%= masjidProfile.name || 'Masjid' %> di bawah ini:</p>
+            <div class="col-lg-6">
+                <h4 class="fw-bold text-slate-800 mb-2"><i class="bi bi-heart-fill text-danger me-2"></i> Transfer Rekening Resmi DKM</h4>
+                <p class="text-muted mb-3">Donasi & infaq dapat disalurkan langsung melalui Rekening Resmi DKM <%= masjidProfile.name || 'Masjid' %>:</p>
                 <div class="row g-3">
                     <% if (cashAccounts && cashAccounts.length > 0) { %>
                         <% cashAccounts.forEach(acc => { %>
                             <% if (acc.account_number && acc.account_number !== '-') { %>
-                                <div class="col-md-6">
-                                    <div class="p-3 rounded-3 bg-light border">
-                                        <div class="small text-muted fw-bold"><%= acc.bank_name %></div>
-                                        <div class="fs-5 font-monospace fw-extrabold text-teal" style="color: #0f766e;"><%= acc.account_number %></div>
-                                        <div class="small text-secondary">a.n. <%= acc.account_holder %></div>
+                                <div class="col-md-12">
+                                    <div class="p-3 rounded-3 bg-light border d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="small text-muted fw-bold"><%= acc.bank_name %></div>
+                                            <div class="fs-5 font-monospace fw-extrabold text-teal" style="color: #0f766e;"><%= acc.account_number %></div>
+                                            <div class="small text-secondary">a.n. <%= acc.account_holder %></div>
+                                        </div>
+                                        <button class="btn btn-outline-secondary btn-sm" onclick="navigator.clipboard.writeText('<%= acc.account_number %>'); alert('Nomor rekening <%= acc.bank_name %> berhasil disalin!');" title="Salin No. Rekening">
+                                            <i class="bi bi-copy"></i> Salin
+                                        </button>
                                     </div>
                                 </div>
                             <% } %>
@@ -32,11 +37,63 @@
                     <% } %>
                 </div>
             </div>
-            <div class="col-lg-4 text-center border-start ps-lg-4">
-                <div class="p-3 bg-light rounded-3 border d-inline-block">
-                    <i class="bi bi-qr-code-scan display-1 text-dark mb-2 d-block"></i>
-                    <span class="badge bg-amber text-dark fw-bold px-3 py-1" style="background-color: #f59e0b;">QRIS DKM MASJID</span>
-                    <div class="small text-muted mt-1">Scan via BCA, Mandiri, GoPay, OVO, ShopeePay</div>
+            
+            <div class="col-lg-6 border-start ps-lg-4">
+                <h4 class="fw-bold text-slate-800 mb-2"><i class="bi bi-qr-code-scan text-emerald me-2" style="color: #0d9488;"></i> Scan QRIS Pembayaran Digital</h4>
+                <p class="text-muted mb-3">Dapat discan via BSI Mobile, Action Bank Aceh, BCA, Mandiri, GoPay, OVO, Dana, ShopeePay, & e-Wallet lainnya:</p>
+                
+                <div class="row g-3 text-center">
+                    <div class="col-6">
+                        <div class="p-2 bg-light rounded-3 border h-100 shadow-sm">
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#modalQrisAceh">
+                                <img src="/images/qris_bank_aceh.jpeg" class="img-fluid rounded border mb-2 hover-zoom" style="max-height: 180px; object-fit: contain;" alt="QRIS Bank Aceh Syariah">
+                            </a>
+                            <span class="badge bg-emerald text-white fw-bold px-2 py-1 small d-block" style="background-color: #0d9488;">QRIS Bank Aceh</span>
+                            <small class="text-muted extra-small d-block mt-1">Klik untuk perbesar</small>
+                        </div>
+                    </div>
+
+                    <div class="col-6">
+                        <div class="p-2 bg-light rounded-3 border h-100 shadow-sm">
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#modalQrisBsi">
+                                <img src="/images/qris_bsi.jpeg" class="img-fluid rounded border mb-2 hover-zoom" style="max-height: 180px; object-fit: contain;" alt="QRIS BSI">
+                            </a>
+                            <span class="badge bg-amber text-dark fw-bold px-2 py-1 small d-block" style="background-color: #f59e0b;">QRIS Bank BSI</span>
+                            <small class="text-muted extra-small d-block mt-1">Klik untuk perbesar</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Zoom QRIS Bank Aceh -->
+    <div class="modal fade" id="modalQrisAceh" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-emerald text-white" style="background-color: #0d9488;">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-qr-code me-2"></i> QRIS Bank Aceh Syariah</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center p-3 bg-light">
+                    <img src="/images/qris_bank_aceh.jpeg" class="img-fluid rounded shadow mb-2" alt="QRIS Bank Aceh Syariah">
+                    <div class="mt-2 text-muted small">Scan QR Code ini menggunakan aplikasi M-Banking atau e-Wallet pilihan Anda.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Zoom QRIS BSI -->
+    <div class="modal fade" id="modalQrisBsi" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-qr-code me-2"></i> QRIS Bank Syariah Indonesia (BSI)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center p-3 bg-light">
+                    <img src="/images/qris_bsi.jpeg" class="img-fluid rounded shadow mb-2" alt="QRIS BSI">
+                    <div class="mt-2 text-muted small">Scan QR Code ini menggunakan aplikasi M-Banking atau e-Wallet pilihan Anda.</div>
                 </div>
             </div>
         </div>
