@@ -1,6 +1,6 @@
 <!-- Hero Section: Carousel Banners / Dynamic Slide -->
 <% if (banners && banners.length > 0) { %>
-    <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="6000">
+    <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="<%= (masjidProfile.carousel_autoplay == 0) ? 'false' : 'carousel' %>" data-bs-interval="<%= masjidProfile.carousel_duration || 5000 %>">
         <div class="carousel-indicators">
             <% banners.forEach((b, idx) => { %>
                 <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="<%= idx %>" class="<%= idx === 0 ? 'active' : '' %>"></button>
@@ -9,21 +9,29 @@
 
         <div class="carousel-inner">
             <% banners.forEach((b, idx) => { %>
-                <div class="carousel-item <%= idx === 0 ? 'active' : '' %>" style="max-height: 520px;">
-                    <div class="position-relative w-100 h-100" style="min-height: 440px;">
-                        <img src="<%= b.image_url %>" class="d-block w-100 h-100 object-fit-cover filter-brightness" alt="<%= b.title %>" style="filter: brightness(0.45); height: 520px; object-fit: cover;" onerror="this.src='/images/hero-default.jpg'">
-                        <div class="carousel-caption d-flex flex-column justify-content-center h-100 text-start px-md-5" style="top: 0; bottom: 0;">
+                <div class="carousel-item <%= idx === 0 ? 'active' : '' %>" style="max-height: 540px;">
+                    <div class="position-relative w-100 bg-dark" style="min-height: 460px; height: 540px;">
+                        <img src="<%= b.image_url %>" class="d-block w-100 h-100" alt="<%= b.title %>" style="object-fit: <%= b.fit_mode || 'cover' %>; object-position: <%= b.focus_position || 'center' %>;" onerror="this.src='/images/hero-default.jpg'">
+                        
+                        <!-- Dynamic Overlay Gradient -->
+                        <div class="position-absolute top-0 bottom-0 start-0 end-0 p-4 p-md-5 d-flex flex-column justify-content-center text-start" style="
+                            background: linear-gradient(<%= b.overlay_direction === 'right' ? 'to left' : (b.overlay_direction === 'top' ? 'to bottom' : (b.overlay_direction === 'bottom' ? 'to top' : 'to right')) %>, rgba(0,0,0, <%= b.overlay_darkness === 'dark' ? '0.85' : (b.overlay_darkness === 'light' ? '0.35' : (b.overlay_darkness === 'none' ? '0.0' : '0.65')) %>), rgba(0,0,0,0.15));
+                        ">
                             <div class="container">
                                 <div class="col-lg-8">
-                                    <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold mb-3">
-                                        <i class="bi bi-star-fill me-1"></i> <%= b.badge_text || masjidProfile.name || 'SIMASJID' %>
-                                    </span>
-                                    <h1 class="display-4 fw-extrabold text-white mb-3 leading-tight"><%= b.title %></h1>
-                                    <% if (b.subtitle) { %>
-                                        <p class="lead text-white-50 mb-4 opacity-90 d-none d-sm-block"><%= b.subtitle %></p>
+                                    <% if (b.show_badge !== 0 && (b.badge_text || masjidProfile.name)) { %>
+                                        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold mb-3 shadow-sm">
+                                            <i class="bi bi-star-fill me-1"></i> <%= b.badge_text || masjidProfile.name || 'SIMASJID' %>
+                                        </span>
                                     <% } %>
-                                    <% if (b.button_text && b.button_link) { %>
-                                        <a href="<%= b.button_link %>" class="btn btn-emerald btn-lg px-4 fw-bold rounded-pill text-white shadow" style="background-color: #0d9488;">
+                                    <% if (b.show_title !== 0) { %>
+                                        <h1 class="display-4 fw-extrabold text-white mb-3 leading-tight drop-shadow"><%= b.title %></h1>
+                                    <% } %>
+                                    <% if (b.show_subtitle !== 0 && b.subtitle) { %>
+                                        <p class="lead text-white-50 mb-4 opacity-90 d-none d-sm-block drop-shadow"><%= b.subtitle %></p>
+                                    <% } %>
+                                    <% if (b.show_button !== 0 && b.button_text && b.button_link) { %>
+                                        <a href="<%= b.button_link %>" class="btn btn-emerald btn-lg px-4 fw-bold rounded-pill text-white shadow-lg" style="background-color: #0d9488;">
                                             <%= b.button_text %> <i class="bi bi-arrow-right me-1"></i>
                                         </a>
                                     <% } %>
@@ -35,7 +43,7 @@
             <% }); %>
         </div>
 
-        <% if (banners.length > 1) { %>
+        <% if (banners.length > 1 && masjidProfile.carousel_nav_arrows !== 'hide') { %>
             <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
                 <span class="carousel-control-prev-icon"></span>
             </button>

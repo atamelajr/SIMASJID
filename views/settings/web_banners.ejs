@@ -1,12 +1,20 @@
 <div class="container-fluid px-0">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <!-- Header Page -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
         <div>
-            <h4 class="fw-bold mb-1"><i class="bi bi-images me-2 text-primary"></i> Kelola Banner / Slide Hero</h4>
-            <p class="text-muted small m-0">Atur gambar banner carousel besar, tag badge, & tombol aksi di halaman utama publik.</p>
+            <h4 class="fw-bold mb-1 text-dark"><i class="bi bi-images me-2 text-primary"></i> Manajer Banner & Carousel Hero - CMS SIMASJID</h4>
+            <p class="text-muted small m-0">Atur gambar slide hero banner, durasi autoplay, penyesuaian overlay gelap, & tombol aksi publik.</p>
         </div>
-        <button type="button" class="btn btn-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#modalAddBanner">
-            <i class="bi bi-plus-lg me-1"></i> Tambah Banner Baru
-        </button>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-success-subtle text-success border border-success px-2 py-1 small d-none d-md-inline-block"><i class="bi bi-shield-check me-1"></i> ISO 27001 Secure</span>
+            <span class="badge bg-info-subtle text-info border border-info px-2 py-1 small d-none d-md-inline-block"><i class="bi bi-database me-1"></i> MariaDB SQL Sync</span>
+            <a href="/" target="_blank" class="btn btn-outline-secondary btn-sm fw-semibold">
+                <i class="bi bi-box-arrow-up-right me-1"></i> Lihat Front-End
+            </a>
+            <button type="button" class="btn btn-primary btn-sm fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddBanner">
+                <i class="bi bi-plus-lg me-1"></i> Tambah Banner Baru
+            </button>
+        </div>
     </div>
 
     <% if (typeof successMsg !== 'undefined' && successMsg) { %>
@@ -15,184 +23,421 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     <% } %>
+    <% if (typeof errorMsg !== 'undefined' && errorMsg) { %>
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> <%= errorMsg %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <% } %>
 
-    <div class="card border-0 shadow-sm rounded-3 overflow-hidden bg-white">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light text-muted">
-                        <tr>
-                            <th class="py-3 px-3">GAMBAR BANNER</th>
-                            <th class="py-3">JUDUL, BADGE & SUBJUDUL</th>
-                            <th class="py-3">TOMBOL LINK</th>
-                            <th class="py-3 text-center">URUTAN</th>
-                            <th class="py-3 text-center">STATUS</th>
-                            <th class="py-3 text-end px-3">AKSI</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% if (banners && banners.length > 0) { %>
-                            <% banners.forEach(b => { %>
-                                <tr>
-                                    <td class="px-3" style="width: 140px;">
-                                        <img src="<%= b.image_url %>" class="img-fluid rounded border shadow-sm" style="height: 65px; width: 120px; object-fit: cover;" alt="<%= b.title %>" onerror="this.src='/images/hero-default.jpg'">
-                                    </td>
-                                    <td>
-                                        <% if (b.badge_text) { %>
-                                            <span class="badge bg-warning text-dark me-1 small"><%= b.badge_text %></span>
-                                        <% } %>
-                                        <span class="fw-bold text-dark"><%= b.title %></span>
-                                        <small class="text-muted d-block mt-1"><%= b.subtitle || '-' %></small>
-                                    </td>
-                                    <td>
-                                        <% if (b.button_text) { %>
-                                            <span class="badge bg-light text-dark border"><%= b.button_text %> &rarr; <%= b.button_link %></span>
-                                        <% } else { %>
-                                            <span class="text-muted small">-</span>
-                                        <% } %>
-                                    </td>
-                                    <td class="text-center fw-bold"><%= b.display_order %></td>
-                                    <td class="text-center">
-                                        <% if (b.is_active) { %>
-                                            <span class="badge bg-success-subtle text-success border border-success">Aktif</span>
-                                        <% } else { %>
-                                            <span class="badge bg-secondary-subtle text-secondary border">Non-Aktif</span>
-                                        <% } %>
-                                    </td>
-                                    <td class="text-end px-3">
-                                        <button type="button" class="btn btn-outline-warning btn-sm me-1" data-bs-toggle="modal" data-bs-target="#modalEditBanner<%= b.id %>" title="Edit Banner"><i class="bi bi-pencil"></i></button>
-                                        <form action="/settings/web/banners/delete/<%= b.id %>" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus banner ini?')">
-                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus"><i class="bi bi-trash"></i></button>
-                                        </form>
-                                    </td>
-                                </tr>
-
-                                <!-- Modal Edit Banner -->
-                                <div class="modal fade" id="modalEditBanner<%= b.id %>" tabindex="-1">
-                                    <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content border-0 shadow">
-                                            <div class="modal-header bg-warning text-dark">
-                                                <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i> Edit Banner Slide Hero</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <form action="/settings/web/banners/update/<%= b.id %>" method="POST" enctype="multipart/form-data">
-                                                <div class="modal-body p-4 text-start">
-                                                    <div class="mb-3">
-                                                        <label class="form-label fw-semibold">Label Tag / Badge (Opsional)</label>
-                                                        <input type="text" name="badge_text" class="form-control" value="<%= b.badge_text || '' %>" placeholder="Misal: PROGRAM UTAMA / INFO JADWAL">
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label class="form-label fw-semibold">Judul Banner Utama</label>
-                                                        <input type="text" name="title" class="form-control" value="<%= b.title %>" required>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label class="form-label fw-semibold">Sub-judul / Deskripsi Singkat</label>
-                                                        <textarea name="subtitle" class="form-control" rows="2"><%= b.subtitle || '' %></textarea>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label class="form-label fw-semibold">Ganti Gambar Banner (Kosongkan jika tidak diubah)</label>
-                                                        <div class="mb-2">
-                                                            <img src="<%= b.image_url %>" height="60" class="rounded border">
-                                                        </div>
-                                                        <input type="file" name="image" class="form-control" accept="image/*">
-                                                    </div>
-                                                    <div class="row g-2 mb-3">
-                                                        <div class="col-md-6">
-                                                            <label class="form-label fw-semibold">Teks Tombol</label>
-                                                            <input type="text" name="button_text" class="form-control" value="<%= b.button_text || '' %>">
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <label class="form-label fw-semibold">Link Tombol</label>
-                                                            <input type="text" name="button_link" class="form-control" value="<%= b.button_link || '' %>">
-                                                        </div>
-                                                    </div>
-                                                    <div class="row g-2">
-                                                        <div class="col-md-6">
-                                                            <label class="form-label fw-semibold">Urutan Tampil</label>
-                                                            <input type="number" name="display_order" class="form-control" value="<%= b.display_order %>">
-                                                        </div>
-                                                        <div class="col-md-6 d-flex align-items-end mb-2">
-                                                            <div class="form-check form-switch">
-                                                                <input class="form-check-input" type="checkbox" name="is_active" id="isActiveCheck<%= b.id %>" <%= b.is_active ? 'checked' : '' %>>
-                                                                <label class="form-check-label fw-semibold" for="isActiveCheck<%= b.id %>">Status Aktif</label>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer bg-light">
-                                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
-                                                    <button type="submit" class="btn btn-warning btn-sm fw-bold px-3">Simpan Perubahan</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            <% }); %>
-                        <% } else { %>
-                            <tr>
-                                <td colspan="6" class="text-center py-5 text-muted">Belum ada banner slide hero yang ditambahkan.</td>
-                            </tr>
-                        <% } %>
-                    </tbody>
-                </table>
+    <!-- Alert Rekomendasi Dimensi Hero Banner (Matching Image 3) -->
+    <div class="card border-0 bg-primary-subtle text-primary border-start border-4 border-primary shadow-sm rounded-3 p-3 mb-4">
+        <div class="d-flex align-items-start gap-3">
+            <div class="fs-3"><i class="bi bi-info-circle-fill"></i></div>
+            <div>
+                <h6 class="fw-bold mb-1 text-primary">Rekomendasi Dimensi & Fitur Penyesuaian Gambar Hero Banner</h6>
+                <p class="mb-0 small text-secondary">
+                    Ukuran ideal gambar hero banner: <strong>1920 &times; 800 px</strong> (rasio Widescreen ~21:9) atau <strong>1920 &times; 1080 px</strong> (16:9). Disarankan format WebP / JPG berukuran &lt; 500 KB agar pemuatan halaman sangat cepat. Jika rasio gambar tidak pas, gunakan pengaturan <strong>Mode Tampilan (Fit)</strong>, <strong>Posisi Fokus</strong>, <strong>Tingkat Kegelapan</strong>, <strong>Arah Overlay Gelap</strong>, serta centang elemen yang ingin Tampil/Sembunyi.
+                </p>
             </div>
         </div>
     </div>
+
+    <!-- Pengaturan Putar Otomatis (Autoplay Carousel Card) (Matching Image 3) -->
+    <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
+        <div class="d-flex align-items-center gap-2 border-bottom pb-2 mb-3">
+            <i class="bi bi-play-circle-fill text-primary fs-5"></i>
+            <div>
+                <h6 class="fw-bold text-dark m-0">Pengaturan Putar Otomatis (Autoplay Carousel)</h6>
+                <small class="text-muted">Atur apakah gambar slide di halaman depan berganti otomatis dan tentukan durasi jeda per slide.</small>
+            </div>
+        </div>
+
+        <form action="/settings/web/banners/carousel-settings" method="POST">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Status Slide Otomatis</label>
+                    <select name="carousel_autoplay" class="form-select border-primary-subtle fw-semibold">
+                        <option value="1" <%= profile.carousel_autoplay == 1 ? 'selected' : '' %>>🟢 AKTIF (Slide Otomatis)</option>
+                        <option value="0" <%= profile.carousel_autoplay == 0 ? 'selected' : '' %>>🔴 NON-AKTIF (Statis)</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Durasi Tampil Per Slide</label>
+                    <select name="carousel_duration" class="form-select border-primary-subtle fw-semibold">
+                        <option value="3000" <%= profile.carousel_duration == 3000 ? 'selected' : '' %>>⏱️ 3 Detik (Cepat)</option>
+                        <option value="5000" <%= (profile.carousel_duration == 5000 || !profile.carousel_duration) ? 'selected' : '' %>>⏱️ 5 Detik (Sedang / Standard)</option>
+                        <option value="7000" <%= profile.carousel_duration == 7000 ? 'selected' : '' %>>⏱️ 7 Detik (Lama)</option>
+                        <option value="10000" <%= profile.carousel_duration == 10000 ? 'selected' : '' %>>⏱️ 10 Detik (Sangat Lama)</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Tombol Panah Navigasi</label>
+                    <div class="d-flex gap-2">
+                        <select name="carousel_nav_arrows" class="form-select border-primary-subtle fw-semibold flex-grow-1">
+                            <option value="always" <%= profile.carousel_nav_arrows === 'always' ? 'selected' : '' %>>➡️ Selalu Tampil (Always)</option>
+                            <option value="hover" <%= (profile.carousel_nav_arrows === 'hover' || !profile.carousel_nav_arrows) ? 'selected' : '' %>>👁️ Auto Show/Hide (Mouse Over)</option>
+                            <option value="hide" <%= profile.carousel_nav_arrows === 'hide' ? 'selected' : '' %>>🚫 Sembunyikan</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary fw-bold text-nowrap px-3 shadow-sm">
+                            <i class="bi bi-save me-1"></i> Simpan Pengaturan
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Grid Banner Cards Layout (Matching Image 3) -->
+    <div class="row g-4">
+        <% if (banners && banners.length > 0) { %>
+            <% banners.forEach((b, idx) => { %>
+                <div class="col-lg-6 col-md-12">
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white h-100 position-relative border border-2">
+                        <!-- Banner Preview Card Header -->
+                        <div class="position-relative w-100 bg-dark" style="height: 220px;">
+                            <img src="<%= b.image_url %>" class="w-100 h-100" style="object-fit: <%= b.fit_mode || 'cover' %>; object-position: <%= b.focus_position || 'center' %>;" alt="<%= b.title %>" onerror="this.src='/images/hero-default.jpg'">
+                            
+                            <!-- Overlay Preview Gradient -->
+                            <div class="position-absolute top-0 bottom-0 start-0 end-0 p-4 d-flex flex-column justify-content-between" style="
+                                background: linear-gradient(<%= b.overlay_direction === 'right' ? 'to left' : (b.overlay_direction === 'top' ? 'to bottom' : (b.overlay_direction === 'bottom' ? 'to top' : 'to right')) %>, rgba(0,0,0, <%= b.overlay_darkness === 'dark' ? '0.85' : (b.overlay_darkness === 'light' ? '0.3' : (b.overlay_darkness === 'none' ? '0.0' : '0.65')) %>), rgba(0,0,0,0.15));
+                            ">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-dark bg-opacity-75 text-warning border border-warning extra-small">
+                                        SLIDE #<%= idx + 1 %> &bull; <%= b.fit_mode || 'cover' %> &bull; <%= b.focus_position || 'center' %> &bull; Overlay: <%= b.overlay_direction || 'kiri' %>
+                                    </span>
+                                    <% if (b.is_active) { %>
+                                        <span class="badge bg-success px-3 py-1 rounded-pill">Aktif</span>
+                                    <% } else { %>
+                                        <span class="badge bg-secondary px-3 py-1 rounded-pill">Non-Aktif</span>
+                                    <% } %>
+                                </div>
+
+                                <div class="text-white">
+                                    <% if (b.show_badge !== 0 && b.badge_text) { %>
+                                        <span class="badge bg-warning text-dark px-2 py-1 rounded-pill extra-small mb-1 fw-bold"><%= b.badge_text %></span>
+                                    <% } %>
+                                    <% if (b.show_title !== 0) { %>
+                                        <h5 class="fw-extrabold text-white mb-1 text-truncate" title="<%= b.title %>"><%= b.title %></h5>
+                                    <% } %>
+                                    <% if (b.show_subtitle !== 0 && b.subtitle) { %>
+                                        <p class="small text-white-50 mb-0 text-truncate opacity-90"><%= b.subtitle %></p>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card Footer Details & Actions -->
+                        <div class="card-body p-3 bg-white d-flex justify-content-between align-items-center border-top">
+                            <div class="text-truncate me-2" style="max-width: 60%;">
+                                <% if (b.show_button !== 0 && b.button_text) { %>
+                                    <small class="text-muted d-block text-truncate">Tombol: <strong><%= b.button_text %></strong> &rarr; <code class="small"><%= b.button_link %></code></small>
+                                <% } else { %>
+                                    <small class="text-muted">- Tanpa Tombol Action -</small>
+                                <% } %>
+                                <small class="text-muted d-block">Urutan Index: <strong>#<%= b.display_order %></strong></small>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-primary btn-sm px-3 fw-bold rounded-pill" data-bs-toggle="modal" data-bs-target="#modalEditBanner<%= b.id %>">
+                                    <i class="bi bi-pencil-square me-1"></i> Sunting
+                                </button>
+                                <form action="/settings/web/banners/delete/<%= b.id %>" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus banner slide ini?')">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm px-3 fw-bold rounded-pill">
+                                        <i class="bi bi-trash me-1"></i> Hapus
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Sunting Banner #X (Matching Image 4) -->
+                <div class="modal fade" id="modalEditBanner<%= b.id %>" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                            <div class="modal-header bg-warning text-dark py-3">
+                                <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i> Sunting Banner #<%= idx + 1 %></h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <form action="/settings/web/banners/update/<%= b.id %>" method="POST" enctype="multipart/form-data">
+                                <div class="modal-body p-4 text-start">
+                                    
+                                    <!-- 1. Teks Lencana (Badge Atas) -->
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <label class="form-label fw-bold mb-0">TEKS LENCANA (BADGE ATAS)</label>
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input" type="checkbox" name="show_badge" value="1" id="showBadge<%= b.id %>" <%= b.show_badge !== 0 ? 'checked' : '' %>>
+                                                <label class="form-check-label small fw-semibold" for="showBadge<%= b.id %>">Tampilkan</label>
+                                            </div>
+                                        </div>
+                                        <input type="text" name="badge_text" class="form-control" value="<%= b.badge_text || '' %>" placeholder="Misal: Transparansi & Akuntabel / PROGRAM UTAMA">
+                                    </div>
+
+                                    <!-- 2. Judul Promosi / Banner -->
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <label class="form-label fw-bold mb-0">JUDUL PROMOSI / BANNER *</label>
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input" type="checkbox" name="show_title" value="1" id="showTitle<%= b.id %>" <%= b.show_title !== 0 ? 'checked' : '' %>>
+                                                <label class="form-check-label small fw-semibold" for="showTitle<%= b.id %>">Tampilkan</label>
+                                            </div>
+                                        </div>
+                                        <input type="text" name="title" class="form-control" value="<%= b.title %>" required placeholder="Judul banner utama">
+                                    </div>
+
+                                    <!-- 3. Sub-Judul / Teks Ucapan -->
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <label class="form-label fw-bold mb-0">SUB JUDUL / TEKS UCAPAN</label>
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input" type="checkbox" name="show_subtitle" value="1" id="showSub<%= b.id %>" <%= b.show_subtitle !== 0 ? 'checked' : '' %>>
+                                                <label class="form-check-label small fw-semibold" for="showSub<%= b.id %>">Tampilkan</label>
+                                            </div>
+                                        </div>
+                                        <textarea name="subtitle" class="form-control" rows="2" placeholder="Deskripsi di bawah judul..."><%= b.subtitle || '' %></textarea>
+                                    </div>
+
+                                    <!-- 4. Gambar Slide -->
+                                    <div class="mb-4">
+                                        <label class="form-label fw-bold">GAMBAR SLIDE *</label>
+                                        <div class="input-group mb-2">
+                                            <input type="text" class="form-control font-monospace small bg-light" value="<%= b.image_url %>" readonly>
+                                        </div>
+                                        <div class="mb-2 p-2 bg-light rounded text-center border">
+                                            <img src="<%= b.image_url %>" height="100" class="img-fluid rounded border shadow-sm" onerror="this.src='/images/hero-default.jpg'">
+                                        </div>
+                                        <label class="form-label small text-muted">Upload Gambar Baru (Biarkan kosong jika tidak diubah):</label>
+                                        <input type="file" name="image" class="form-control" accept="image/*">
+                                    </div>
+
+                                    <!-- 5. Section Penyesuaian Tampilan & Overlay Gambar (Matching Image 4) -->
+                                    <div class="p-3 bg-light rounded-3 border mb-4">
+                                        <h6 class="fw-bold text-primary mb-3"><i class="bi bi-sliders me-2"></i> PENYESUAIAN TAMPILAN & OVERLAY GAMBAR</h6>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-semibold small">MODE TAMPILAN (FIT)</label>
+                                                <select name="fit_mode" class="form-select">
+                                                    <option value="cover" <%= (b.fit_mode === 'cover' || !b.fit_mode) ? 'selected' : '' %>>Cover (Isi Penuh Crop)</option>
+                                                    <option value="contain" <%= b.fit_mode === 'contain' ? 'selected' : '' %>>Contain (Utuh Sesuai Asli)</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-semibold small">POSISI FOKUS</label>
+                                                <select name="focus_position" class="form-select">
+                                                    <option value="center" <%= (b.focus_position === 'center' || !b.focus_position) ? 'selected' : '' %>>Tengah (Center)</option>
+                                                    <option value="top" <%= b.focus_position === 'top' ? 'selected' : '' %>>Atas (Top)</option>
+                                                    <option value="bottom" <%= b.focus_position === 'bottom' ? 'selected' : '' %>>Bawah (Bottom)</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-semibold small">KEGELAPAN OVERLAY</label>
+                                                <select name="overlay_darkness" class="form-select">
+                                                    <option value="standard" <%= (b.overlay_darkness === 'standard' || !b.overlay_darkness) ? 'selected' : '' %>>Gelap (Standard)</option>
+                                                    <option value="dark" <%= b.overlay_darkness === 'dark' ? 'selected' : '' %>>Sangat Gelap</option>
+                                                    <option value="light" <%= b.overlay_darkness === 'light' ? 'selected' : '' %>>Terang (Tipis)</option>
+                                                    <option value="none" <%= b.overlay_darkness === 'none' ? 'selected' : '' %>>Tanpa Overlay</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-semibold small">ARAH OVERLAY</label>
+                                                <select name="overlay_direction" class="form-select">
+                                                    <option value="left" <%= (b.overlay_direction === 'left' || !b.overlay_direction) ? 'selected' : '' %>>Kiri ke Kanan</option>
+                                                    <option value="right" <%= b.overlay_direction === 'right' ? 'selected' : '' %>>Kanan ke Kiri</option>
+                                                    <option value="top" <%= b.overlay_direction === 'top' ? 'selected' : '' %>>Atas ke Bawah</option>
+                                                    <option value="bottom" <%= b.overlay_direction === 'bottom' ? 'selected' : '' %>>Bawah ke Atas</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 6. Section Tombol CTA (Call-To-Action) (Matching Image 4) -->
+                                    <div class="p-3 bg-light rounded-3 border mb-4">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h6 class="fw-bold text-primary mb-0"><i class="bi bi-cursor-fill me-2"></i> TOMBOL CTA (CALL-TO-ACTION)</h6>
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input" type="checkbox" name="show_button" value="1" id="showBtn<%= b.id %>" <%= b.show_button !== 0 ? 'checked' : '' %>>
+                                                <label class="form-check-label small fw-semibold" for="showBtn<%= b.id %>">Tampilkan Tombol</label>
+                                            </div>
+                                        </div>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-semibold small">Teks Tombol Action</label>
+                                                <input type="text" name="button_text" class="form-control" value="<%= b.button_text || '' %>" placeholder="Misal: Jelajahi Layanan / Salurkan Donasi">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-semibold small">Link Target Tombol</label>
+                                                <input type="text" name="button_link" class="form-control" value="<%= b.button_link || '' %>" placeholder="Misal: /jadwal-sholat atau /proyek-donasi">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 7. Urutan & Status Switch -->
+                                    <div class="row g-3 align-items-center">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold">URUTAN SLIDE (INDEX)</label>
+                                            <input type="number" name="display_order" class="form-control fw-bold" value="<%= b.display_order %>">
+                                        </div>
+                                        <div class="col-md-6 d-flex align-items-end mb-1">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" name="is_active" id="isActiveCheckModal<%= b.id %>" <%= b.is_active ? 'checked' : '' %>>
+                                                <label class="form-check-label fw-bold" for="isActiveCheckModal<%= b.id %>">Tampilkan Slide Ini (Aktif)</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer bg-light">
+                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                                    <button type="submit" class="btn btn-primary btn-sm fw-bold px-4">Perbarui Banner</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        <% } else { %>
+            <div class="col-12 text-center py-5 bg-white rounded shadow-sm text-muted">
+                <i class="bi bi-images display-4 d-block mb-3"></i>
+                <h5>Belum ada banner slide hero yang ditambahkan.</h5>
+                <p>Klik tombol "+ Tambah Banner Baru" di atas untuk menambahkan slide hero pertama.</p>
+            </div>
+        <% } %>
+    </div>
 </div>
 
-<!-- Modal Tambah Banner -->
+<!-- Modal Tambah Banner (Matching Image 4) -->
 <div class="modal fade" id="modalAddBanner" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fw-bold"><i class="bi bi-image me-2"></i> Tambah Banner Slide Hero</h5>
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-primary text-white py-3">
+                <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2"></i> Tambah Banner Slide Hero Baru</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form action="/settings/web/banners/create" method="POST" enctype="multipart/form-data">
-                <div class="modal-body p-4">
+                <div class="modal-body p-4 text-start">
+                    
+                    <!-- 1. Teks Lencana (Badge Atas) -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Label Tag / Badge (Opsional)</label>
-                        <input type="text" name="badge_text" class="form-control" placeholder="Misal: PROGRAM UTAMA / EVENT SPESIAL">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label fw-bold mb-0">TEKS LENCANA (BADGE ATAS)</label>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" name="show_badge" value="1" id="showBadgeAdd" checked>
+                                <label class="form-check-label small fw-semibold" for="showBadgeAdd">Tampilkan</label>
+                            </div>
+                        </div>
+                        <input type="text" name="badge_text" class="form-control" placeholder="Misal: INFORMASI UTAMA / PHBI">
                     </div>
+
+                    <!-- 2. Judul Promosi / Banner -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Judul Banner Utama</label>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label fw-bold mb-0">JUDUL PROMOSI / BANNER *</label>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" name="show_title" value="1" id="showTitleAdd" checked>
+                                <label class="form-check-label small fw-semibold" for="showTitleAdd">Tampilkan</label>
+                            </div>
+                        </div>
                         <input type="text" name="title" class="form-control" placeholder="Misal: Selamat Datang di SIMASJID" required>
                     </div>
+
+                    <!-- 3. Sub-Judul / Teks Ucapan -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Sub-judul / Deskripsi Singkat</label>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label fw-bold mb-0">SUB JUDUL / TEKS UCAPAN</label>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" name="show_subtitle" value="1" id="showSubAdd" checked>
+                                <label class="form-check-label small fw-semibold" for="showSubAdd">Tampilkan</label>
+                            </div>
+                        </div>
                         <textarea name="subtitle" class="form-control" rows="2" placeholder="Deskripsi di bawah judul..."></textarea>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">File Gambar Banner</label>
+
+                    <!-- 4. Gambar Slide -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">GAMBAR SLIDE *</label>
                         <input type="file" name="image" class="form-control" accept="image/*" required>
-                        <small class="text-muted">Rasio lanskap disarankan (1920x800 px atau 1200x500 px)</small>
+                        <small class="text-muted">Rasio lanskap disarankan (1920 &times; 800 px atau 1920 &times; 1080 px)</small>
                     </div>
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Teks Tombol (Opsional)</label>
-                            <input type="text" name="button_text" class="form-control" placeholder="Misal: Salurkan Donasi">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Link Tombol (Opsional)</label>
-                            <input type="text" name="button_link" class="form-control" placeholder="/proyek-donasi">
+
+                    <!-- 5. Section Penyesuaian Tampilan & Overlay Gambar -->
+                    <div class="p-3 bg-light rounded-3 border mb-4">
+                        <h6 class="fw-bold text-primary mb-3"><i class="bi bi-sliders me-2"></i> PENYESUAIAN TAMPILAN & OVERLAY GAMBAR</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">MODE TAMPILAN (FIT)</label>
+                                <select name="fit_mode" class="form-select">
+                                    <option value="cover" selected>Cover (Isi Penuh Crop)</option>
+                                    <option value="contain">Contain (Utuh Sesuai Asli)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">POSISI FOKUS</label>
+                                <select name="focus_position" class="form-select">
+                                    <option value="center" selected>Tengah (Center)</option>
+                                    <option value="top">Atas (Top)</option>
+                                    <option value="bottom">Bawah (Bottom)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">KEGELAPAN OVERLAY</label>
+                                <select name="overlay_darkness" class="form-select">
+                                    <option value="standard" selected>Gelap (Standard)</option>
+                                    <option value="dark">Sangat Gelap</option>
+                                    <option value="light">Terang (Tipis)</option>
+                                    <option value="none">Tanpa Overlay</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">ARAH OVERLAY</label>
+                                <select name="overlay_direction" class="form-select">
+                                    <option value="left" selected>Kiri ke Kanan</option>
+                                    <option value="right">Kanan ke Kiri</option>
+                                    <option value="top">Atas ke Bawah</option>
+                                    <option value="bottom">Bawah ke Atas</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
-                    <div class="row g-2">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Urutan Tampil</label>
-                            <input type="number" name="display_order" class="form-control" value="0">
+
+                    <!-- 6. Section Tombol CTA (Call-To-Action) -->
+                    <div class="p-3 bg-light rounded-3 border mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold text-primary mb-0"><i class="bi bi-cursor-fill me-2"></i> TOMBOL CTA (CALL-TO-ACTION)</h6>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" name="show_button" value="1" id="showBtnAdd" checked>
+                                <label class="form-check-label small fw-semibold" for="showBtnAdd">Tampilkan Tombol</label>
+                            </div>
                         </div>
-                        <div class="col-md-6 d-flex align-items-end mb-2">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Teks Tombol Action</label>
+                                <input type="text" name="button_text" class="form-control" placeholder="Misal: Jadwal Sholat / Salurkan Donasi">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Link Target Tombol</label>
+                                <input type="text" name="button_link" class="form-control" placeholder="Misal: /jadwal-sholat atau /proyek-donasi">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 7. Urutan & Status Switch -->
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">URUTAN SLIDE (INDEX)</label>
+                            <input type="number" name="display_order" class="form-control fw-bold" value="<%= (banners ? banners.length + 1 : 1) %>">
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end mb-1">
                             <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" name="is_active" id="isActiveCheck" checked>
-                                <label class="form-check-label fw-semibold" for="isActiveCheck">Status Aktif</label>
+                                <input class="form-check-input" type="checkbox" name="is_active" id="isActiveCheckModalAdd" checked>
+                                <label class="form-check-label fw-bold" for="isActiveCheckModalAdd">Tampilkan Slide Ini (Aktif)</label>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary btn-sm fw-bold px-3">Simpan Banner</button>
+                    <button type="submit" class="btn btn-primary btn-sm fw-bold px-4">Simpan Banner</button>
                 </div>
             </form>
         </div>

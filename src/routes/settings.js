@@ -28,6 +28,7 @@ router.post('/web/menus/delete/:id', checkAuth, checkRole('Admin', 'Operator'), 
 
 // 3. Banner / Slide Hero
 router.get('/web/banners', checkAuth, checkRole('Admin', 'Operator'), WebSettingController.getBanners);
+router.post('/web/banners/carousel-settings', checkAuth, checkRole('Admin', 'Operator'), WebSettingController.updateCarouselSettings);
 router.post('/web/banners/create', checkAuth, checkRole('Admin', 'Operator'), upload.single('image'), WebSettingController.createBanner);
 router.post('/web/banners/update/:id', checkAuth, checkRole('Admin', 'Operator'), upload.single('image'), WebSettingController.updateBanner);
 router.post('/web/banners/delete/:id', checkAuth, checkRole('Admin', 'Operator'), WebSettingController.deleteBanner);

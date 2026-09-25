@@ -43,6 +43,7 @@ class WebSettingController {
             }
 
             await WebSettingModel.updateWebProfile({
+                ...existing,
                 name, tagline, address, phone, email, vision, mission, history,
                 logo: logoPath,
                 favicon: faviconPath,
@@ -130,10 +131,12 @@ class WebSettingController {
     static async getBanners(req, res) {
         try {
             const banners = await WebSettingModel.getAllBanners();
+            const profile = await WebSettingModel.getWebProfile();
             res.render('settings/web_banners', {
-                title: 'Kelola Banner & Slide Hero',
+                title: 'Manajer Banner & Carousel Hero - CMS SIMASJID',
                 activeSubmenu: 'web-banners',
                 banners,
+                profile,
                 successMsg: req.query.success || null,
                 errorMsg: req.query.error || null
             });
@@ -143,21 +146,54 @@ class WebSettingController {
         }
     }
 
+    static async updateCarouselSettings(req, res) {
+        try {
+            const { carousel_autoplay, carousel_duration, carousel_nav_arrows } = req.body;
+            await WebSettingModel.updateCarouselSettings({
+                carousel_autoplay: carousel_autoplay ? 1 : 0,
+                carousel_duration: parseInt(carousel_duration || 5000),
+                carousel_nav_arrows
+            });
+            res.redirect('/settings/web/banners?success=Pengaturan+autoplay+carousel+berhasil+disimpan');
+        } catch (error) {
+            console.error('Error WebSettingController updateCarouselSettings:', error);
+            res.redirect('/settings/web/banners?error=Gagal+menyimpan+pengaturan+carousel');
+        }
+    }
+
     static async createBanner(req, res) {
         try {
-            const { title, subtitle, button_text, button_link, badge_text, display_order, is_active } = req.body;
+            const {
+                title, show_title, subtitle, show_subtitle, button_text, button_link, show_button,
+                badge_text, show_badge, fit_mode, focus_position, overlay_darkness, overlay_direction,
+                display_order, is_active
+            } = req.body;
+
             let image_url = '/images/hero-default.jpg';
             if (req.file) {
                 image_url = '/uploads/' + req.file.filename;
             }
 
             await WebSettingModel.createBanner({
-                title, subtitle, image_url, button_text, button_link, badge_text,
+                title,
+                show_title: show_title ? 1 : 0,
+                subtitle,
+                show_subtitle: show_subtitle ? 1 : 0,
+                image_url,
+                button_text,
+                button_link,
+                show_button: show_button ? 1 : 0,
+                badge_text,
+                show_badge: show_badge ? 1 : 0,
+                fit_mode,
+                focus_position,
+                overlay_darkness,
+                overlay_direction,
                 display_order: parseInt(display_order || 0),
                 is_active: is_active ? 1 : 0
             });
 
-            res.redirect('/settings/web/banners?success=Banner+berhasil+ditambahkan');
+            res.redirect('/settings/web/banners?success=Banner+hero+berhasil+ditambahkan');
         } catch (error) {
             console.error('Error WebSettingController createBanner:', error);
             res.redirect('/settings/web/banners?error=Gagal+menambahkan+banner');
@@ -167,19 +203,37 @@ class WebSettingController {
     static async updateBanner(req, res) {
         try {
             const { id } = req.params;
-            const { title, subtitle, button_text, button_link, badge_text, display_order, is_active } = req.body;
+            const {
+                title, show_title, subtitle, show_subtitle, button_text, button_link, show_button,
+                badge_text, show_badge, fit_mode, focus_position, overlay_darkness, overlay_direction,
+                display_order, is_active
+            } = req.body;
+
             let image_url = null;
             if (req.file) {
                 image_url = '/uploads/' + req.file.filename;
             }
 
             await WebSettingModel.updateBanner(id, {
-                title, subtitle, image_url, button_text, button_link, badge_text,
+                title,
+                show_title: show_title ? 1 : 0,
+                subtitle,
+                show_subtitle: show_subtitle ? 1 : 0,
+                image_url,
+                button_text,
+                button_link,
+                show_button: show_button ? 1 : 0,
+                badge_text,
+                show_badge: show_badge ? 1 : 0,
+                fit_mode,
+                focus_position,
+                overlay_darkness,
+                overlay_direction,
                 display_order: parseInt(display_order || 0),
                 is_active: is_active ? 1 : 0
             });
 
-            res.redirect('/settings/web/banners?success=Banner+berhasil+diperbarui');
+            res.redirect('/settings/web/banners?success=Banner+hero+berhasil+diperbarui');
         } catch (error) {
             console.error('Error WebSettingController updateBanner:', error);
             res.redirect('/settings/web/banners?error=Gagal+memperbarui+banner');
@@ -374,15 +428,8 @@ class WebSettingController {
         }
     }
 
-    static async deleteGallery(req, res) {
-        try {
-            const { id } = req.params;
-            await WebSettingModel.deleteGallery(id);
-            res.redirect('/settings/web/galleries?success=Foto+berhasil+dihapus');
-        } catch (error) {
-            console.error('Error WebSettingController deleteGallery:', error);
-            res.redirect('/settings/web/galleries?error=Gagal+menghapus+foto');
-        }
+    static async deleteGallery(id) {
+        await WebSettingModel.deleteGallery(id);
     }
 
     // 7. Pengaturan Jadwal Sholat & Petugas Jumat (/settings/web/prayer)

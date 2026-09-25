@@ -2,7 +2,7 @@ const mysql = require('mysql2/promise');
 require('dotenv').config();
 
 async function migrateWebSettings() {
-    console.log('🔄 Memulai migrasi database Pengaturan Web (CMS SIMASJID)...');
+    console.log('🔄 Memulai migrasi database Pengaturan Web & Banner (CMS SIMASJID)...');
 
     const config = {
         host: process.env.DB_HOST || 'localhost',
@@ -17,7 +17,7 @@ async function migrateWebSettings() {
         const connection = await mysql.createConnection(config);
         console.log('✅ Terhubung ke database!');
 
-        // 1. Alter tabel masjid_profile untuk menambahkan kolom web & sosmed & SEO
+        // 1. Alter tabel masjid_profile untuk menambahkan kolom web, sosmed, SEO & Carousel Autoplay
         const alterProfileQueries = [
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS logo VARCHAR(255) NULL`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS favicon VARCHAR(255) NULL`,
@@ -45,7 +45,10 @@ async function migrateWebSettings() {
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS isya_offset INT DEFAULT 0`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS friday_khatib VARCHAR(150) DEFAULT 'Ustadz Drs. H. Ahmad Dahlan'`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS friday_imam VARCHAR(150) DEFAULT 'Ust. Muhammad Ridwan, S.Pd.I'`,
-            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS friday_muadzin VARCHAR(150) DEFAULT 'Akang Abdullah'`
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS friday_muadzin VARCHAR(150) DEFAULT 'Akang Abdullah'`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS carousel_autoplay TINYINT(1) DEFAULT 1`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS carousel_duration INT DEFAULT 5000`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS carousel_nav_arrows VARCHAR(30) DEFAULT 'hover'`
         ];
 
         for (const query of alterProfileQueries) {
@@ -102,7 +105,7 @@ async function migrateWebSettings() {
             ) ENGINE=InnoDB;
         `);
 
-        // 4. Tabel web_banners & alter badge_text
+        // 4. Tabel web_banners & alter fitur advance overlay & toggle
         await connection.query(`
             CREATE TABLE IF NOT EXISTS web_banners (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -112,14 +115,35 @@ async function migrateWebSettings() {
                 button_text VARCHAR(50) NULL,
                 button_link VARCHAR(255) NULL,
                 badge_text VARCHAR(50) NULL,
+                show_badge TINYINT(1) DEFAULT 1,
+                show_title TINYINT(1) DEFAULT 1,
+                show_subtitle TINYINT(1) DEFAULT 1,
+                fit_mode VARCHAR(30) DEFAULT 'cover',
+                focus_position VARCHAR(30) DEFAULT 'center',
+                overlay_darkness VARCHAR(30) DEFAULT 'standard',
+                overlay_direction VARCHAR(30) DEFAULT 'left',
+                show_button TINYINT(1) DEFAULT 1,
                 display_order INT DEFAULT 0,
                 is_active TINYINT(1) DEFAULT 1,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             ) ENGINE=InnoDB;
         `);
-        try {
-            await connection.query(`ALTER TABLE web_banners ADD COLUMN IF NOT EXISTS badge_text VARCHAR(50) NULL`);
-        } catch (err) {}
+        const alterBannerQueries = [
+            `ALTER TABLE web_banners ADD COLUMN IF NOT EXISTS badge_text VARCHAR(50) NULL`,
+            `ALTER TABLE web_banners ADD COLUMN IF NOT EXISTS show_badge TINYINT(1) DEFAULT 1`,
+            `ALTER TABLE web_banners ADD COLUMN IF NOT EXISTS show_title TINYINT(1) DEFAULT 1`,
+            `ALTER TABLE web_banners ADD COLUMN IF NOT EXISTS show_subtitle TINYINT(1) DEFAULT 1`,
+            `ALTER TABLE web_banners ADD COLUMN IF NOT EXISTS fit_mode VARCHAR(30) DEFAULT 'cover'`,
+            `ALTER TABLE web_banners ADD COLUMN IF NOT EXISTS focus_position VARCHAR(30) DEFAULT 'center'`,
+            `ALTER TABLE web_banners ADD COLUMN IF NOT EXISTS overlay_darkness VARCHAR(30) DEFAULT 'standard'`,
+            `ALTER TABLE web_banners ADD COLUMN IF NOT EXISTS overlay_direction VARCHAR(30) DEFAULT 'left'`,
+            `ALTER TABLE web_banners ADD COLUMN IF NOT EXISTS show_button TINYINT(1) DEFAULT 1`
+        ];
+        for (const q of alterBannerQueries) {
+            try {
+                await connection.query(q);
+            } catch (err) {}
+        }
         console.log('✅ Tabel web_banners berhasil dibuat & diperbarui!');
 
         // 5. Tabel web_announcements
@@ -199,7 +223,7 @@ async function migrateWebSettings() {
         }
 
         await connection.end();
-        console.log('🎉 Migrasi Pengaturan Web Selesai!');
+        console.log('🎉 Migrasi Pengaturan Web & Banner Selesai!');
     } catch (err) {
         console.error('❌ Gagal Migrasi:', err);
     }

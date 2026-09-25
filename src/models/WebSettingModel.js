@@ -30,7 +30,10 @@ class WebSettingModel {
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS isya_offset INT DEFAULT 0`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS friday_khatib VARCHAR(150) DEFAULT 'Ustadz Drs. H. Ahmad Dahlan'`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS friday_imam VARCHAR(150) DEFAULT 'Ust. Muhammad Ridwan, S.Pd.I'`,
-            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS friday_muadzin VARCHAR(150) DEFAULT 'Akang Abdullah'`
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS friday_muadzin VARCHAR(150) DEFAULT 'Akang Abdullah'`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS carousel_autoplay TINYINT(1) DEFAULT 1`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS carousel_duration INT DEFAULT 5000`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS carousel_nav_arrows VARCHAR(30) DEFAULT 'hover'`
         ];
 
         for (const q of alterProfileQueries) {
@@ -41,10 +44,22 @@ class WebSettingModel {
             }
         }
 
-        try {
-            await db.query(`ALTER TABLE web_banners ADD COLUMN IF NOT EXISTS badge_text VARCHAR(50) NULL`);
-            await db.query(`ALTER TABLE web_galleries ADD COLUMN IF NOT EXISTS event_date DATE NULL`);
-        } catch (e) {}
+        const alterBannerQueries = [
+            `ALTER TABLE web_banners ADD COLUMN IF NOT EXISTS badge_text VARCHAR(50) NULL`,
+            `ALTER TABLE web_banners ADD COLUMN IF NOT EXISTS show_badge TINYINT(1) DEFAULT 1`,
+            `ALTER TABLE web_banners ADD COLUMN IF NOT EXISTS show_title TINYINT(1) DEFAULT 1`,
+            `ALTER TABLE web_banners ADD COLUMN IF NOT EXISTS show_subtitle TINYINT(1) DEFAULT 1`,
+            `ALTER TABLE web_banners ADD COLUMN IF NOT EXISTS fit_mode VARCHAR(30) DEFAULT 'cover'`,
+            `ALTER TABLE web_banners ADD COLUMN IF NOT EXISTS focus_position VARCHAR(30) DEFAULT 'center'`,
+            `ALTER TABLE web_banners ADD COLUMN IF NOT EXISTS overlay_darkness VARCHAR(30) DEFAULT 'standard'`,
+            `ALTER TABLE web_banners ADD COLUMN IF NOT EXISTS overlay_direction VARCHAR(30) DEFAULT 'left'`,
+            `ALTER TABLE web_banners ADD COLUMN IF NOT EXISTS show_button TINYINT(1) DEFAULT 1`
+        ];
+        for (const q of alterBannerQueries) {
+            try {
+                await db.query(q);
+            } catch (e) {}
+        }
     }
 
     // === 1. PENGATURAN UMUM & LOGO ===
@@ -69,7 +84,8 @@ class WebSettingModel {
             social_whatsapp, social_tiktok, hero_title, hero_subtitle, maps_embed, running_text,
             prayer_city, prayer_country, timezone, calculation_method,
             subuh_offset, dzuhur_offset, ashar_offset, maghrib_offset, isya_offset,
-            friday_khatib, friday_imam, friday_muadzin, footer_copyright, meta_keywords, meta_description
+            friday_khatib, friday_imam, friday_muadzin, footer_copyright, meta_keywords, meta_description,
+            carousel_autoplay, carousel_duration, carousel_nav_arrows
         } = data;
 
         const executeUpdate = async () => {
@@ -80,7 +96,8 @@ class WebSettingModel {
                     social_whatsapp=?, social_tiktok=?, hero_title=?, hero_subtitle=?, maps_embed=?, running_text=?,
                     prayer_city=?, prayer_country=?, timezone=?, calculation_method=?,
                     subuh_offset=?, dzuhur_offset=?, ashar_offset=?, maghrib_offset=?, isya_offset=?,
-                    friday_khatib=?, friday_imam=?, friday_muadzin=?, footer_copyright=?, meta_keywords=?, meta_description=?
+                    friday_khatib=?, friday_imam=?, friday_muadzin=?, footer_copyright=?, meta_keywords=?, meta_description=?,
+                    carousel_autoplay=?, carousel_duration=?, carousel_nav_arrows=?
                 WHERE id=1
             `, [
                 name, tagline || '', address, phone, email, vision || '', mission || '', history || '',
@@ -88,7 +105,8 @@ class WebSettingModel {
                 social_whatsapp || '', social_tiktok || '', hero_title || '', hero_subtitle || '', maps_embed || '', running_text || '',
                 prayer_city || 'Jakarta', prayer_country || 'Indonesia', timezone || 'Asia/Jakarta', parseInt(calculation_method || 20),
                 parseInt(subuh_offset || 0), parseInt(dzuhur_offset || 0), parseInt(ashar_offset || 0), parseInt(maghrib_offset || 0), parseInt(isya_offset || 0),
-                friday_khatib || '', friday_imam || '', friday_muadzin || '', footer_copyright || '', meta_keywords || '', meta_description || ''
+                friday_khatib || '', friday_imam || '', friday_muadzin || '', footer_copyright || '', meta_keywords || '', meta_description || '',
+                carousel_autoplay ?? 1, parseInt(carousel_duration || 5000), carousel_nav_arrows || 'hover'
             ]);
         };
 
@@ -103,6 +121,17 @@ class WebSettingModel {
                 throw err;
             }
         }
+    }
+
+    static async updateCarouselSettings({ carousel_autoplay, carousel_duration, carousel_nav_arrows }) {
+        await this.ensureSchema();
+        await db.query(`
+            UPDATE masjid_profile SET
+                carousel_autoplay = ?,
+                carousel_duration = ?,
+                carousel_nav_arrows = ?
+            WHERE id = 1
+        `, [carousel_autoplay ? 1 : 0, parseInt(carousel_duration || 5000), carousel_nav_arrows || 'hover']);
     }
 
     // === 2. PENGATURAN MENU WEBSITE (NAVBAR FRONTEND) ===
@@ -167,33 +196,62 @@ class WebSettingModel {
 
     // === 3. KELOLA BANNER / SLIDE HERO ===
     static async getAllBanners() {
+        await this.ensureSchema();
         const [rows] = await db.query(`SELECT * FROM web_banners ORDER BY display_order ASC, id DESC`);
         return rows;
     }
 
     static async getActiveBanners() {
+        await this.ensureSchema();
         const [rows] = await db.query(`SELECT * FROM web_banners WHERE is_active = 1 ORDER BY display_order ASC, id DESC`);
         return rows;
     }
 
-    static async createBanner({ title, subtitle, image_url, button_text, button_link, badge_text, display_order, is_active }) {
+    static async createBanner({
+        title, show_title, subtitle, show_subtitle, image_url, button_text, button_link, show_button,
+        badge_text, show_badge, fit_mode, focus_position, overlay_darkness, overlay_direction,
+        display_order, is_active
+    }) {
+        await this.ensureSchema();
         const [result] = await db.query(`
-            INSERT INTO web_banners (title, subtitle, image_url, button_text, button_link, badge_text, display_order, is_active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `, [title, subtitle || '', image_url, button_text || '', button_link || '', badge_text || '', display_order || 0, is_active ?? 1]);
+            INSERT INTO web_banners (
+                title, show_title, subtitle, show_subtitle, image_url, button_text, button_link, show_button,
+                badge_text, show_badge, fit_mode, focus_position, overlay_darkness, overlay_direction,
+                display_order, is_active
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+            title, show_title ?? 1, subtitle || '', show_subtitle ?? 1, image_url,
+            button_text || '', button_link || '', show_button ?? 1,
+            badge_text || '', show_badge ?? 1, fit_mode || 'cover', focus_position || 'center',
+            overlay_darkness || 'standard', overlay_direction || 'left',
+            display_order || 0, is_active ?? 1
+        ]);
         return result.insertId;
     }
 
-    static async updateBanner(id, { title, subtitle, image_url, button_text, button_link, badge_text, display_order, is_active }) {
+    static async updateBanner(id, {
+        title, show_title, subtitle, show_subtitle, image_url, button_text, button_link, show_button,
+        badge_text, show_badge, fit_mode, focus_position, overlay_darkness, overlay_direction,
+        display_order, is_active
+    }) {
+        await this.ensureSchema();
         const [rows] = await db.query(`SELECT image_url FROM web_banners WHERE id = ?`, [id]);
         const oldImage = rows[0]?.image_url;
         const newImage = image_url || oldImage;
 
         await db.query(`
             UPDATE web_banners SET 
-                title=?, subtitle=?, image_url=?, button_text=?, button_link=?, badge_text=?, display_order=?, is_active=?
+                title=?, show_title=?, subtitle=?, show_subtitle=?, image_url=?, button_text=?, button_link=?, show_button=?,
+                badge_text=?, show_badge=?, fit_mode=?, focus_position=?, overlay_darkness=?, overlay_direction=?,
+                display_order=?, is_active=?
             WHERE id=?
-        `, [title, subtitle || '', newImage, button_text || '', button_link || '', badge_text || '', display_order || 0, is_active ?? 1, id]);
+        `, [
+            title, show_title ?? 1, subtitle || '', show_subtitle ?? 1, newImage,
+            button_text || '', button_link || '', show_button ?? 1,
+            badge_text || '', show_badge ?? 1, fit_mode || 'cover', focus_position || 'center',
+            overlay_darkness || 'standard', overlay_direction || 'left',
+            display_order || 0, is_active ?? 1, id
+        ]);
     }
 
     static async deleteBanner(id) {
