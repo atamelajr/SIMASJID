@@ -1,12 +1,14 @@
 <div class="container-fluid px-0">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h4 class="fw-bold mb-1"><i class="bi bi-globe me-2 text-primary"></i> Pengaturan Umum & Logo Web</h4>
-            <p class="text-muted small m-0">Kelola identitas website, logo, kontak, media sosial, & running text.</p>
+            <h4 class="fw-bold mb-1"><i class="bi bi-sliders me-2 text-primary"></i> Pengaturan Umum & Logo Web</h4>
+            <p class="text-muted small m-0">Kelola identitas utama masjid, logo, slogan, kontak, media sosial, & SEO meta tag.</p>
         </div>
-        <a href="/" target="_blank" class="btn btn-outline-primary btn-sm">
-            <i class="bi bi-box-arrow-up-right me-1"></i> Lihat Halaman Publik
-        </a>
+        <div>
+            <a href="/" target="_blank" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-box-arrow-up-right me-1"></i> Lihat Tampilan Publik
+            </a>
+        </div>
     </div>
 
     <% if (typeof successMsg !== 'undefined' && successMsg) { %>
@@ -24,183 +26,158 @@
 
     <form action="/settings/web/general" method="POST" enctype="multipart/form-data">
         <div class="row g-4">
-            <!-- Identitas & Logo -->
+            <!-- Kolom Kiri: Identitas, Branding, Kontak, Medsos -->
             <div class="col-lg-6">
+                <!-- 1. Identitas & Branding -->
                 <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
-                    <h5 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="bi bi-building me-2 text-primary"></i> Identitas & Branding</h5>
+                    <h5 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="bi bi-building me-2 text-primary"></i> Identitas & Branding Masjid</h5>
                     
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Nama Masjid / Lembaga</label>
-                        <input type="text" name="name" class="form-control" value="<%= profile.name || '' %>" required>
+                        <input type="text" name="name" class="form-control" value="<%= profile.name || '' %>" required placeholder="Misal: Masjid Agung Al-Barokah">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tagline / Slogan Utama</label>
+                        <input type="text" name="tagline" class="form-control" value="<%= profile.tagline || '' %>" placeholder="Misal: Pusat Kegiatan Ibadah, Dakwah, & Pembinaan Umat">
                     </div>
 
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Logo Website</label>
                             <% if (profile.logo) { %>
-                                <div class="mb-2">
-                                    <img src="<%= profile.logo %>" alt="Logo" height="50" class="img-thumbnail">
+                                <div class="mb-2 p-2 bg-light rounded text-center border">
+                                    <img src="<%= profile.logo %>" alt="Logo" height="50" class="img-fluid object-fit-contain">
                                 </div>
                             <% } %>
                             <input type="file" name="logo" class="form-control" accept="image/*">
-                            <small class="text-muted">Format PNG/JPG max 2MB (Background Transparan disarankan)</small>
+                            <small class="text-muted">Disarankan PNG transparan (Max 2MB)</small>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Favicon Icon</label>
+                            <label class="form-label fw-semibold">Favicon Icon (Tab Browser)</label>
                             <% if (profile.favicon) { %>
-                                <div class="mb-2">
-                                    <img src="<%= profile.favicon %>" alt="Favicon" height="32" class="img-thumbnail">
+                                <div class="mb-2 p-2 bg-light rounded text-center border">
+                                    <img src="<%= profile.favicon %>" alt="Favicon" height="32" class="img-fluid object-fit-contain">
                                 </div>
                             <% } %>
                             <input type="file" name="favicon" class="form-control" accept="image/*">
-                            <small class="text-muted">Icon Tab Browser (32x32 px)</small>
+                            <small class="text-muted">Ukuran 32x32 px (PNG / ICO)</small>
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Alamat Lengkap</label>
-                        <textarea name="address" class="form-control" rows="2"><%= profile.address || '' %></textarea>
+                        <label class="form-label fw-semibold">Sejarah / Profil Singkat</label>
+                        <textarea name="history" class="form-control" rows="3" placeholder="Sejarah singkat berdirinya masjid atau deskripsi umum..."><%= profile.history || '' %></textarea>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Visi Masjid</label>
+                            <textarea name="vision" class="form-control" rows="2" placeholder="Visi masjid..."><%= profile.vision || '' %></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Misi Masjid</label>
+                            <textarea name="mission" class="form-control" rows="2" placeholder="Misi masjid..."><%= profile.mission || '' %></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Informasi Kontak & Alamat -->
+                <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
+                    <h5 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="bi bi-geo-alt me-2 text-primary"></i> Kontak & Alamat Sekretariat</h5>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Alamat Lengkap Masjid</label>
+                        <textarea name="address" class="form-control" rows="2" placeholder="Jl. Raya No. ..., Kec. ..., Kota ..."><%= profile.address || '' %></textarea>
                     </div>
 
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">No. Telepon / Pengurus</label>
-                            <input type="text" name="phone" class="form-control" value="<%= profile.phone || '' %>">
+                            <input type="text" name="phone" class="form-control" value="<%= profile.phone || '' %>" placeholder="0812-3456-7890">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Email Resmi</label>
-                            <input type="email" name="email" class="form-control" value="<%= profile.email || '' %>">
+                            <input type="email" name="email" class="form-control" value="<%= profile.email || '' %>" placeholder="dkm@masjid.id">
                         </div>
-                    </div>
-                </div>
-
-                <div class="card border-0 shadow-sm rounded-3 p-4 bg-white">
-                    <h5 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="bi bi-broadcast me-2 text-primary"></i> Running Text Pengumuman</h5>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Teks Berjalan di Header Publik</label>
-                        <textarea name="running_text" class="form-control" rows="3" placeholder="Tuliskan teks pengumuman yang akan berjalan di bagian atas website..."><%= profile.running_text || '' %></textarea>
                     </div>
                 </div>
             </div>
 
-            <!-- Media Sosial & Visi Misi -->
+            <!-- Kolom Kanan: Sosmed, Running Text, SEO Meta, Maps -->
             <div class="col-lg-6">
+                <!-- 3. Media Sosial & WhatsApp Center -->
                 <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
-                    <h5 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="bi bi-clock-history me-2 text-primary"></i> Pengaturan Wilayah Sholat & Zona Waktu</h5>
-                    
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Kota / Kabupaten</label>
-                            <input type="text" name="prayer_city" class="form-control" placeholder="Aceh Tamiang / Jakarta / Medan / Surabaya" value="<%= profile.prayer_city || 'Jakarta' %>" required>
-                            <small class="text-muted">Nama kota/kabupaten untuk pencarian jadwal sholat</small>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Negara</label>
-                            <input type="text" name="prayer_country" class="form-control" value="<%= profile.prayer_country || 'Indonesia' %>" required>
-                        </div>
-                    </div>
-
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Zona Waktu (Timezone)</label>
-                            <select name="timezone" class="form-select">
-                                <option value="Asia/Jakarta" <%= (profile.timezone === 'Asia/Jakarta' || !profile.timezone) ? 'selected' : '' %>>WIB - Asia/Jakarta (GMT+7)</option>
-                                <option value="Asia/Makassar" <%= profile.timezone === 'Asia/Makassar' ? 'selected' : '' %>>WITA - Asia/Makassar (GMT+8)</option>
-                                <option value="Asia/Jayapura" <%= profile.timezone === 'Asia/Jayapura' ? 'selected' : '' %>>WIT - Asia/Jayapura (GMT+9)</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Metode Perhitungan Sholat</label>
-                            <select name="calculation_method" class="form-select">
-                                <option value="20" <%= (profile.calculation_method == 20 || !profile.calculation_method) ? 'selected' : '' %>>Kemenag Indonesia (SIHAT)</option>
-                                <option value="11" <%= profile.calculation_method == 11 ? 'selected' : '' %>>Majelis Ugama Islam Singapura (MUIS)</option>
-                                <option value="3" <%= profile.calculation_method == 3 ? 'selected' : '' %>>Muslim World League (MWL)</option>
-                                <option value="4" <%= profile.calculation_method == 4 ? 'selected' : '' %>>Umm Al-Qura University, Makkah</option>
-                                <option value="2" <%= profile.calculation_method == 2 ? 'selected' : '' %>>Islamic Society of North America (ISNA)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <label class="form-label fw-semibold text-dark border-top pt-2 mt-2 w-100">Koreksi Penyesuaian Menit Sholat (+/- Menit)</label>
-                    <div class="row g-2 text-center">
-                        <div class="col">
-                            <small class="fw-bold d-block text-muted">SUBUH</small>
-                            <input type="number" name="subuh_offset" class="form-control form-control-sm text-center" value="<%= profile.subuh_offset || 0 %>">
-                        </div>
-                        <div class="col">
-                            <small class="fw-bold d-block text-muted">DZUHUR</small>
-                            <input type="number" name="dzuhur_offset" class="form-control form-control-sm text-center" value="<%= profile.dzuhur_offset || 0 %>">
-                        </div>
-                        <div class="col">
-                            <small class="fw-bold d-block text-muted">ASHAR</small>
-                            <input type="number" name="ashar_offset" class="form-control form-control-sm text-center" value="<%= profile.ashar_offset || 0 %>">
-                        </div>
-                        <div class="col">
-                            <small class="fw-bold d-block text-muted">MAGHRIB</small>
-                            <input type="number" name="maghrib_offset" class="form-control form-control-sm text-center" value="<%= profile.maghrib_offset || 0 %>">
-                        </div>
-                        <div class="col">
-                            <small class="fw-bold d-block text-muted">ISYA</small>
-                            <input type="number" name="isya_offset" class="form-control form-control-sm text-center" value="<%= profile.isya_offset || 0 %>">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
-                    <h5 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="bi bi-people me-2 text-primary"></i> Petugas Sholat Jumat Minggu Ini</h5>
+                    <h5 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="bi bi-share me-2 text-primary"></i> Media Sosial & WhatsApp Center</h5>
                     
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Khatib Sholat Jumat</label>
-                        <input type="text" name="friday_khatib" class="form-control" placeholder="Ustadz Drs. H. Ahmad Dahlan" value="<%= profile.friday_khatib || '' %>">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Imam Sholat Jumat</label>
-                        <input type="text" name="friday_imam" class="form-control" placeholder="Ust. Muhammad Ridwan, S.Pd.I" value="<%= profile.friday_imam || '' %>">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Muadzin & Bilal</label>
-                        <input type="text" name="friday_muadzin" class="form-control" placeholder="Akang Abdullah" value="<%= profile.friday_muadzin || '' %>">
-                    </div>
-                </div>
-
-                <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
-                    <h5 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="bi bi-share me-2 text-primary"></i> Media Sosial & Kontak</h5>
-                    
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold"><i class="bi bi-whatsapp text-success me-1"></i> WhatsApp Center</label>
+                        <label class="form-label fw-semibold"><i class="bi bi-whatsapp text-success me-1"></i> WhatsApp Center (Nomor WA tanpa +)</label>
                         <input type="text" name="social_whatsapp" class="form-control" placeholder="628123456789" value="<%= profile.social_whatsapp || '' %>">
+                        <small class="text-muted">Format: <code>6281234567890</code></small>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold"><i class="bi bi-instagram text-danger me-1"></i> Link Instagram</label>
-                        <input type="url" name="social_instagram" class="form-control" placeholder="https://instagram.com/masjid" value="<%= profile.social_instagram || '' %>">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold"><i class="bi bi-instagram text-danger me-1"></i> Instagram</label>
+                            <input type="url" name="social_instagram" class="form-control" placeholder="https://instagram.com/masjid" value="<%= profile.social_instagram || '' %>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold"><i class="bi bi-facebook text-primary me-1"></i> Facebook</label>
+                            <input type="url" name="social_facebook" class="form-control" placeholder="https://facebook.com/masjid" value="<%= profile.social_facebook || '' %>">
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold"><i class="bi bi-facebook text-primary me-1"></i> Link Facebook</label>
-                        <input type="url" name="social_facebook" class="form-control" placeholder="https://facebook.com/masjid" value="<%= profile.social_facebook || '' %>">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold"><i class="bi bi-youtube text-danger me-1"></i> Link YouTube Channel</label>
-                        <input type="url" name="social_youtube" class="form-control" placeholder="https://youtube.com/@masjid" value="<%= profile.social_youtube || '' %>">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold"><i class="bi bi-youtube text-danger me-1"></i> Channel YouTube</label>
+                            <input type="url" name="social_youtube" class="form-control" placeholder="https://youtube.com/@masjid" value="<%= profile.social_youtube || '' %>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold"><i class="bi bi-tiktok text-dark me-1"></i> Akun TikTok</label>
+                            <input type="url" name="social_tiktok" class="form-control" placeholder="https://tiktok.com/@masjid" value="<%= profile.social_tiktok || '' %>">
+                        </div>
                     </div>
                 </div>
 
+                <!-- 4. Running Text Pengumuman & SEO Meta Tag -->
                 <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
-                    <h5 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="bi bi-map me-2 text-primary"></i> Embed Google Maps</h5>
+                    <h5 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="bi bi-broadcast me-2 text-primary"></i> Running Text & Metadata SEO</h5>
+                    
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Iframe / Share Link Embed Google Maps</label>
-                        <textarea name="maps_embed" class="form-control font-monospace small" rows="3" placeholder='<iframe src="https://www.google.com/maps/embed?pb=..." ...></iframe>'><%= profile.maps_embed || '' %></textarea>
+                        <label class="form-label fw-semibold">Running Text Pengumuman Header</label>
+                        <textarea name="running_text" class="form-control" rows="2" placeholder="Pengumuman penting berjalan di bagian paling atas website..."><%= profile.running_text || '' %></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">SEO Meta Description</label>
+                        <textarea name="meta_description" class="form-control" rows="2" placeholder="Deskripsi singkat website untuk tampil di pencarian Google..."><%= profile.meta_description || '' %></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">SEO Meta Keywords</label>
+                        <input type="text" name="meta_keywords" class="form-control" placeholder="masjid, simasjid, dkm, donasi, jadwal sholat" value="<%= profile.meta_keywords || '' %>">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Teks Hak Cipta Footer (Copyright)</label>
+                        <input type="text" name="footer_copyright" class="form-control" placeholder="Hak Cipta Dilindungi DKM SIMASJID" value="<%= profile.footer_copyright || '' %>">
+                    </div>
+                </div>
+
+                <!-- 5. Google Maps Embed -->
+                <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
+                    <h5 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="bi bi-map me-2 text-primary"></i> Peta Google Maps Embed</h5>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Kode Embed Iframe Google Maps</label>
+                        <textarea name="maps_embed" class="form-control font-monospace small" rows="3" placeholder='<iframe src="https://www.google.com/maps/embed?pb=..." width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy"></iframe>'><%= profile.maps_embed || '' %></textarea>
+                        <small class="text-muted">Salin kode dari Google Maps &rarr; Bagikan &rarr; Sematkan peta (Embed a map).</small>
                     </div>
                 </div>
             </div>
 
-            <div class="col-12 text-end">
-                <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">
-                    <i class="bi bi-save me-1"></i> Simpan Perubahan Pengaturan
+            <div class="col-12 text-end mb-4">
+                <button type="submit" class="btn btn-primary px-5 py-2 fw-bold shadow-sm rounded-pill">
+                    <i class="bi bi-save me-2"></i> Simpan Semua Pengaturan Web
                 </button>
             </div>
         </div>

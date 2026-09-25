@@ -2,7 +2,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h4 class="fw-bold mb-1"><i class="bi bi-images me-2 text-primary"></i> Kelola Banner / Slide Hero</h4>
-            <p class="text-muted small m-0">Atur gambar banner carousel besar di halaman utama publik.</p>
+            <p class="text-muted small m-0">Atur gambar banner carousel besar, tag badge, & tombol aksi di halaman utama publik.</p>
         </div>
         <button type="button" class="btn btn-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#modalAddBanner">
             <i class="bi bi-plus-lg me-1"></i> Tambah Banner Baru
@@ -23,7 +23,7 @@
                     <thead class="bg-light text-muted">
                         <tr>
                             <th class="py-3 px-3">GAMBAR BANNER</th>
-                            <th class="py-3">JUDUL & SUBJUDUL</th>
+                            <th class="py-3">JUDUL, BADGE & SUBJUDUL</th>
                             <th class="py-3">TOMBOL LINK</th>
                             <th class="py-3 text-center">URUTAN</th>
                             <th class="py-3 text-center">STATUS</th>
@@ -35,11 +35,14 @@
                             <% banners.forEach(b => { %>
                                 <tr>
                                     <td class="px-3" style="width: 140px;">
-                                        <img src="<%= b.image_url %>" class="img-fluid rounded border shadow-sm" style="height: 60px; width: 120px; object-fit: cover;" alt="<%= b.title %>" onerror="this.src='/images/hero-default.jpg'">
+                                        <img src="<%= b.image_url %>" class="img-fluid rounded border shadow-sm" style="height: 65px; width: 120px; object-fit: cover;" alt="<%= b.title %>" onerror="this.src='/images/hero-default.jpg'">
                                     </td>
                                     <td>
-                                        <div class="fw-bold text-dark"><%= b.title %></div>
-                                        <small class="text-muted"><%= b.subtitle || '-' %></small>
+                                        <% if (b.badge_text) { %>
+                                            <span class="badge bg-warning text-dark me-1 small"><%= b.badge_text %></span>
+                                        <% } %>
+                                        <span class="fw-bold text-dark"><%= b.title %></span>
+                                        <small class="text-muted d-block mt-1"><%= b.subtitle || '-' %></small>
                                     </td>
                                     <td>
                                         <% if (b.button_text) { %>
@@ -75,6 +78,10 @@
                                             <form action="/settings/web/banners/update/<%= b.id %>" method="POST" enctype="multipart/form-data">
                                                 <div class="modal-body p-4 text-start">
                                                     <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Label Tag / Badge (Opsional)</label>
+                                                        <input type="text" name="badge_text" class="form-control" value="<%= b.badge_text || '' %>" placeholder="Misal: PROGRAM UTAMA / INFO JADWAL">
+                                                    </div>
+                                                    <div class="mb-3">
                                                         <label class="form-label fw-semibold">Judul Banner Utama</label>
                                                         <input type="text" name="title" class="form-control" value="<%= b.title %>" required>
                                                     </div>
@@ -83,7 +90,7 @@
                                                         <textarea name="subtitle" class="form-control" rows="2"><%= b.subtitle || '' %></textarea>
                                                     </div>
                                                     <div class="mb-3">
-                                                        <label class="form-label fw-semibold">Ganti Gambar Banner (Biarkan kosong jika tidak diubah)</label>
+                                                        <label class="form-label fw-semibold">Ganti Gambar Banner (Kosongkan jika tidak diubah)</label>
                                                         <div class="mb-2">
                                                             <img src="<%= b.image_url %>" height="60" class="rounded border">
                                                         </div>
@@ -143,6 +150,10 @@
             </div>
             <form action="/settings/web/banners/create" method="POST" enctype="multipart/form-data">
                 <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Label Tag / Badge (Opsional)</label>
+                        <input type="text" name="badge_text" class="form-control" placeholder="Misal: PROGRAM UTAMA / EVENT SPESIAL">
+                    </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Judul Banner Utama</label>
                         <input type="text" name="title" class="form-control" placeholder="Misal: Selamat Datang di SIMASJID" required>

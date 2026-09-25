@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= typeof title !== 'undefined' ? title : (masjidProfile.name || 'SIMASJID') + ' - Portal Informasi Masjid' %></title>
+    <title><%= typeof title !== 'undefined' ? title : (masjidProfile.name || 'SIMASJID') + (masjidProfile.tagline ? ' - ' + masjidProfile.tagline : ' - Portal Informasi Masjid') %></title>
+    <% if (masjidProfile.meta_description) { %>
+        <meta name="description" content="<%= masjidProfile.meta_description %>">
+    <% } %>
+    <% if (masjidProfile.meta_keywords) { %>
+        <meta name="keywords" content="<%= masjidProfile.meta_keywords %>">
+    <% } %>
     <link rel="icon" type="image/png" href="<%= masjidProfile.favicon || '/logo.png' %>">
     
     <!-- Google Fonts -->
@@ -169,16 +175,24 @@
                 <% if (masjidProfile.social_youtube) { %>
                     <a href="<%= masjidProfile.social_youtube %>" target="_blank" title="YouTube"><i class="bi bi-youtube text-danger fs-6"></i></a>
                 <% } %>
+                <% if (masjidProfile.social_tiktok) { %>
+                    <a href="<%= masjidProfile.social_tiktok %>" target="_blank" title="TikTok"><i class="bi bi-tiktok text-light fs-6"></i></a>
+                <% } %>
             </div>
         </div>
     </div>
 
-    <!-- Header Navbar -->
+    <!-- Header Navbar Navigasi Dinamis -->
     <nav class="navbar navbar-expand-lg navbar-public sticky-top">
         <div class="container">
             <a class="navbar-brand" href="/">
                 <img src="<%= masjidProfile.logo || '/logo.png' %>" alt="Logo Masjid" onerror="this.src='/logo.png'">
-                <span><%= masjidProfile.name || 'SIMASJID' %></span>
+                <div>
+                    <span><%= masjidProfile.name || 'SIMASJID' %></span>
+                    <% if (masjidProfile.tagline) { %>
+                        <small class="d-block text-muted fw-normal" style="font-size: 0.72rem; margin-top: -3px;"><%= masjidProfile.tagline %></small>
+                    <% } %>
+                </div>
             </a>
             
             <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarPublicContent">
@@ -187,41 +201,22 @@
 
             <div class="collapse navbar-collapse" id="navbarPublicContent">
                 <ul class="navbar-nav mx-auto mb-2 mb-lg-0 gap-1">
-                    <li class="nav-item">
-                        <a class="nav-link nav-public-link <%= typeof currentRoute !== 'undefined' && currentRoute === 'home' ? 'active' : '' %>" href="/">
-                            Beranda
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link nav-public-link <%= typeof currentRoute !== 'undefined' && currentRoute === 'jadwal' ? 'active' : '' %>" href="/jadwal-sholat">
-                            Jadwal Sholat
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link nav-public-link <%= typeof currentRoute !== 'undefined' && currentRoute === 'transparansi' ? 'active' : '' %>" href="/transparansi">
-                            Transparansi Kas
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link nav-public-link <%= typeof currentRoute !== 'undefined' && currentRoute === 'proyek' ? 'active' : '' %>" href="/proyek-donasi">
-                            Proyek Donasi
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link nav-public-link <%= typeof currentRoute !== 'undefined' && currentRoute === 'berita' ? 'active' : '' %>" href="/berita">
-                            Berita & Artikel
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link nav-public-link <%= typeof currentRoute !== 'undefined' && currentRoute === 'galeri' ? 'active' : '' %>" href="/galeri">
-                            Galeri Foto
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link nav-public-link text-warning fw-bold" href="/display-tv" target="_blank">
-                            <i class="bi bi-tv me-1"></i> Mode TV
-                        </a>
-                    </li>
+                    <% if (typeof webMenus !== 'undefined' && webMenus && webMenus.length > 0) { %>
+                        <% webMenus.forEach(m => { %>
+                            <li class="nav-item">
+                                <a class="nav-link nav-public-link <%= (typeof currentRoute !== 'undefined' && currentRoute === m.url) ? 'active' : '' %>" href="<%= m.url %>" target="<%= m.target || '_self' %>">
+                                    <%= m.title %>
+                                </a>
+                            </li>
+                        <% }); %>
+                    <% } else { %>
+                        <li class="nav-item"><a class="nav-link nav-public-link active" href="/">Beranda</a></li>
+                        <li class="nav-item"><a class="nav-link nav-public-link" href="/jadwal-sholat">Jadwal Sholat</a></li>
+                        <li class="nav-item"><a class="nav-link nav-public-link" href="/transparansi">Transparansi Kas</a></li>
+                        <li class="nav-item"><a class="nav-link nav-public-link" href="/proyek-donasi">Proyek Donasi</a></li>
+                        <li class="nav-item"><a class="nav-link nav-public-link" href="/berita">Berita & Artikel</a></li>
+                        <li class="nav-item"><a class="nav-link nav-public-link" href="/galeri">Galeri Foto</a></li>
+                    <% } %>
                 </ul>
 
                 <div class="d-flex align-items-center gap-2">
@@ -302,7 +297,7 @@
 
             <div class="footer-bottom d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
                 <div>
-                    &copy; <%= new Date().getFullYear() %> <strong><%= masjidProfile.name || 'SIMASJID' %></strong>. Hak Cipta Dilindungi.
+                    &copy; <%= new Date().getFullYear() %> <strong><%= masjidProfile.name || 'SIMASJID' %></strong>. <%= masjidProfile.footer_copyright || 'Hak Cipta Dilindungi.' %>
                 </div>
                 <div class="text-secondary small">
                     Powered by SIMASJID CMS System

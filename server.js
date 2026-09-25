@@ -97,11 +97,30 @@ app.use(async (req, res, next) => {
     try {
         const profile = await WebSettingModel.getWebProfile();
         const dkmMembers = await MasjidModel.getDkmMembers();
+        const activeMenus = await WebSettingModel.getActiveMenus();
         res.locals.masjidProfile = profile || { name: 'SIMASJID', address: '' };
         res.locals.dkmMembers = dkmMembers || [];
+        res.locals.webMenus = (activeMenus && activeMenus.length > 0) ? activeMenus : [
+            { title: 'Beranda', url: '/', target: '_self' },
+            { title: 'Jadwal Sholat', url: '/jadwal-sholat', target: '_self' },
+            { title: 'Transparansi Kas', url: '/transparansi', target: '_self' },
+            { title: 'Proyek Donasi', url: '/proyek-donasi', target: '_self' },
+            { title: 'Berita & Artikel', url: '/berita', target: '_self' },
+            { title: 'Galeri Foto', url: '/galeri', target: '_self' },
+            { title: 'Mode TV', url: '/display-tv', target: '_blank' }
+        ];
     } catch (err) {
         res.locals.masjidProfile = { name: 'SIMASJID', address: '' };
         res.locals.dkmMembers = [];
+        res.locals.webMenus = [
+            { title: 'Beranda', url: '/', target: '_self' },
+            { title: 'Jadwal Sholat', url: '/jadwal-sholat', target: '_self' },
+            { title: 'Transparansi Kas', url: '/transparansi', target: '_self' },
+            { title: 'Proyek Donasi', url: '/proyek-donasi', target: '_self' },
+            { title: 'Berita & Artikel', url: '/berita', target: '_self' },
+            { title: 'Galeri Foto', url: '/galeri', target: '_self' },
+            { title: 'Mode TV', url: '/display-tv', target: '_blank' }
+        ];
     }
     next();
 });

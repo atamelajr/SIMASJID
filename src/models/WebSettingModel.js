@@ -6,10 +6,15 @@ class WebSettingModel {
         const alterProfileQueries = [
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS logo VARCHAR(255) NULL`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS favicon VARCHAR(255) NULL`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS tagline VARCHAR(255) NULL`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS footer_copyright VARCHAR(255) NULL`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS meta_keywords TEXT NULL`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS meta_description TEXT NULL`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS social_facebook VARCHAR(255) NULL`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS social_instagram VARCHAR(255) NULL`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS social_youtube VARCHAR(255) NULL`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS social_whatsapp VARCHAR(50) NULL`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS social_tiktok VARCHAR(255) NULL`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS hero_title VARCHAR(255) NULL`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS hero_subtitle TEXT NULL`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS maps_embed TEXT NULL`,
@@ -35,6 +40,11 @@ class WebSettingModel {
                 // Ignore error if column exists
             }
         }
+
+        try {
+            await db.query(`ALTER TABLE web_banners ADD COLUMN IF NOT EXISTS badge_text VARCHAR(50) NULL`);
+            await db.query(`ALTER TABLE web_galleries ADD COLUMN IF NOT EXISTS event_date DATE NULL`);
+        } catch (e) {}
     }
 
     // === 1. PENGATURAN UMUM & LOGO ===
@@ -54,31 +64,31 @@ class WebSettingModel {
 
     static async updateWebProfile(data) {
         const {
-            name, address, phone, email, vision, mission, history,
+            name, tagline, address, phone, email, vision, mission, history,
             logo, favicon, social_facebook, social_instagram, social_youtube,
-            social_whatsapp, hero_title, hero_subtitle, maps_embed, running_text,
+            social_whatsapp, social_tiktok, hero_title, hero_subtitle, maps_embed, running_text,
             prayer_city, prayer_country, timezone, calculation_method,
             subuh_offset, dzuhur_offset, ashar_offset, maghrib_offset, isya_offset,
-            friday_khatib, friday_imam, friday_muadzin
+            friday_khatib, friday_imam, friday_muadzin, footer_copyright, meta_keywords, meta_description
         } = data;
 
         const executeUpdate = async () => {
             await db.query(`
                 UPDATE masjid_profile SET 
-                    name=?, address=?, phone=?, email=?, vision=?, mission=?, history=?,
+                    name=?, tagline=?, address=?, phone=?, email=?, vision=?, mission=?, history=?,
                     logo=?, favicon=?, social_facebook=?, social_instagram=?, social_youtube=?,
-                    social_whatsapp=?, hero_title=?, hero_subtitle=?, maps_embed=?, running_text=?,
+                    social_whatsapp=?, social_tiktok=?, hero_title=?, hero_subtitle=?, maps_embed=?, running_text=?,
                     prayer_city=?, prayer_country=?, timezone=?, calculation_method=?,
                     subuh_offset=?, dzuhur_offset=?, ashar_offset=?, maghrib_offset=?, isya_offset=?,
-                    friday_khatib=?, friday_imam=?, friday_muadzin=?
+                    friday_khatib=?, friday_imam=?, friday_muadzin=?, footer_copyright=?, meta_keywords=?, meta_description=?
                 WHERE id=1
             `, [
-                name, address, phone, email, vision || '', mission || '', history || '',
+                name, tagline || '', address, phone, email, vision || '', mission || '', history || '',
                 logo || null, favicon || null, social_facebook || '', social_instagram || '', social_youtube || '',
-                social_whatsapp || '', hero_title || '', hero_subtitle || '', maps_embed || '', running_text || '',
+                social_whatsapp || '', social_tiktok || '', hero_title || '', hero_subtitle || '', maps_embed || '', running_text || '',
                 prayer_city || 'Jakarta', prayer_country || 'Indonesia', timezone || 'Asia/Jakarta', parseInt(calculation_method || 20),
                 parseInt(subuh_offset || 0), parseInt(dzuhur_offset || 0), parseInt(ashar_offset || 0), parseInt(maghrib_offset || 0), parseInt(isya_offset || 0),
-                friday_khatib || '', friday_imam || '', friday_muadzin || ''
+                friday_khatib || '', friday_imam || '', friday_muadzin || '', footer_copyright || '', meta_keywords || '', meta_description || ''
             ]);
         };
 
@@ -95,7 +105,67 @@ class WebSettingModel {
         }
     }
 
-    // === 2. KELOLA BANNER / SLIDE HERO ===
+    // === 2. PENGATURAN MENU WEBSITE (NAVBAR FRONTEND) ===
+    static async getAllMenus() {
+        try {
+            const [rows] = await db.query(`SELECT * FROM web_menus ORDER BY display_order ASC, id ASC`);
+            return rows;
+        } catch (err) {
+            return [];
+        }
+    }
+
+    static async getActiveMenus() {
+        try {
+            const [rows] = await db.query(`SELECT * FROM web_menus WHERE is_active = 1 ORDER BY display_order ASC, id ASC`);
+            return rows;
+        } catch (err) {
+            return [];
+        }
+    }
+
+    static async createMenu({ title, url, target, parent_id, display_order, is_active, is_external }) {
+        const [result] = await db.query(`
+            INSERT INTO web_menus (title, url, target, parent_id, display_order, is_active, is_external)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `, [
+            title,
+            url,
+            target || '_self',
+            parent_id ? parseInt(parent_id) : null,
+            parseInt(display_order || 0),
+            is_active ?? 1,
+            is_external ? 1 : 0
+        ]);
+        return result.insertId;
+    }
+
+    static async updateMenu(id, { title, url, target, parent_id, display_order, is_active, is_external }) {
+        await db.query(`
+            UPDATE web_menus SET 
+                title=?, url=?, target=?, parent_id=?, display_order=?, is_active=?, is_external=?
+            WHERE id=?
+        `, [
+            title,
+            url,
+            target || '_self',
+            parent_id ? parseInt(parent_id) : null,
+            parseInt(display_order || 0),
+            is_active ?? 1,
+            is_external ? 1 : 0,
+            id
+        ]);
+    }
+
+    static async toggleMenuStatus(id) {
+        await db.query(`UPDATE web_menus SET is_active = IF(is_active=1, 0, 1) WHERE id = ?`, [id]);
+    }
+
+    static async deleteMenu(id) {
+        await db.query(`DELETE FROM web_menus WHERE id = ?`, [id]);
+    }
+
+    // === 3. KELOLA BANNER / SLIDE HERO ===
     static async getAllBanners() {
         const [rows] = await db.query(`SELECT * FROM web_banners ORDER BY display_order ASC, id DESC`);
         return rows;
@@ -106,31 +176,31 @@ class WebSettingModel {
         return rows;
     }
 
-    static async createBanner({ title, subtitle, image_url, button_text, button_link, display_order, is_active }) {
+    static async createBanner({ title, subtitle, image_url, button_text, button_link, badge_text, display_order, is_active }) {
         const [result] = await db.query(`
-            INSERT INTO web_banners (title, subtitle, image_url, button_text, button_link, display_order, is_active)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        `, [title, subtitle || '', image_url, button_text || '', button_link || '', display_order || 0, is_active ?? 1]);
+            INSERT INTO web_banners (title, subtitle, image_url, button_text, button_link, badge_text, display_order, is_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `, [title, subtitle || '', image_url, button_text || '', button_link || '', badge_text || '', display_order || 0, is_active ?? 1]);
         return result.insertId;
     }
 
-    static async updateBanner(id, { title, subtitle, image_url, button_text, button_link, display_order, is_active }) {
+    static async updateBanner(id, { title, subtitle, image_url, button_text, button_link, badge_text, display_order, is_active }) {
         const [rows] = await db.query(`SELECT image_url FROM web_banners WHERE id = ?`, [id]);
         const oldImage = rows[0]?.image_url;
         const newImage = image_url || oldImage;
 
         await db.query(`
             UPDATE web_banners SET 
-                title=?, subtitle=?, image_url=?, button_text=?, button_link=?, display_order=?, is_active=?
+                title=?, subtitle=?, image_url=?, button_text=?, button_link=?, badge_text=?, display_order=?, is_active=?
             WHERE id=?
-        `, [title, subtitle || '', newImage, button_text || '', button_link || '', display_order || 0, is_active ?? 1, id]);
+        `, [title, subtitle || '', newImage, button_text || '', button_link || '', badge_text || '', display_order || 0, is_active ?? 1, id]);
     }
 
     static async deleteBanner(id) {
         await db.query(`DELETE FROM web_banners WHERE id = ?`, [id]);
     }
 
-    // === 3. KELOLA PENGUMUMAN ===
+    // === 4. KELOLA PENGUMUMAN ===
     static async getAllAnnouncements() {
         const [rows] = await db.query(`SELECT * FROM web_announcements ORDER BY created_at DESC`);
         return rows;
@@ -160,7 +230,7 @@ class WebSettingModel {
         await db.query(`DELETE FROM web_announcements WHERE id = ?`, [id]);
     }
 
-    // === 4. KELOLA BERITA / ARTIKEL ===
+    // === 5. KELOLA BERITA / ARTIKEL ===
     static async getAllArticles({ category, search, limit = 20, offset = 0 } = {}) {
         let sql = `SELECT * FROM web_articles WHERE 1=1`;
         const params = [];
@@ -231,12 +301,12 @@ class WebSettingModel {
         await db.query(`UPDATE web_articles SET views = views + 1 WHERE id = ?`, [id]);
     }
 
-    // === 5. KELOLA GALERI FOTO ===
-    static async getAllGalleries({ category, limit = 30 } = {}) {
+    // === 6. KELOLA GALERI FOTO ===
+    static async getAllGalleries({ category, limit = 50 } = {}) {
         let sql = `SELECT * FROM web_galleries WHERE 1=1`;
         const params = [];
 
-        if (category) {
+        if (category && category !== 'Semua') {
             sql += ` AND category = ?`;
             params.push(category);
         }
@@ -248,11 +318,23 @@ class WebSettingModel {
         return rows;
     }
 
-    static async createGallery({ title, category, image_url, description }) {
+    static async createGallery({ title, category, image_url, description, event_date }) {
         await db.query(`
-            INSERT INTO web_galleries (title, category, image_url, description)
-            VALUES (?, ?, ?, ?)
-        `, [title, category || 'Kegiatan', image_url, description || '']);
+            INSERT INTO web_galleries (title, category, image_url, description, event_date)
+            VALUES (?, ?, ?, ?, ?)
+        `, [title, category || 'Kegiatan', image_url, description || '', event_date || null]);
+    }
+
+    static async updateGallery(id, { title, category, image_url, description, event_date }) {
+        const [rows] = await db.query(`SELECT image_url FROM web_galleries WHERE id = ?`, [id]);
+        const oldImage = rows[0]?.image_url;
+        const newImage = image_url || oldImage;
+
+        await db.query(`
+            UPDATE web_galleries SET
+                title=?, category=?, image_url=?, description=?, event_date=?
+            WHERE id=?
+        `, [title, category || 'Kegiatan', newImage, description || '', event_date || null, id]);
     }
 
     static async deleteGallery(id) {

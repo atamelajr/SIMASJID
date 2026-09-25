@@ -17,14 +17,19 @@ async function migrateWebSettings() {
         const connection = await mysql.createConnection(config);
         console.log('✅ Terhubung ke database!');
 
-        // 1. Alter tabel masjid_profile untuk menambahkan kolom web & sosmed
+        // 1. Alter tabel masjid_profile untuk menambahkan kolom web & sosmed & SEO
         const alterProfileQueries = [
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS logo VARCHAR(255) NULL`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS favicon VARCHAR(255) NULL`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS tagline VARCHAR(255) NULL`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS footer_copyright VARCHAR(255) NULL`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS meta_keywords TEXT NULL`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS meta_description TEXT NULL`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS social_facebook VARCHAR(255) NULL`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS social_instagram VARCHAR(255) NULL`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS social_youtube VARCHAR(255) NULL`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS social_whatsapp VARCHAR(50) NULL`,
+            `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS social_tiktok VARCHAR(255) NULL`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS hero_title VARCHAR(255) NULL`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS hero_subtitle TEXT NULL`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS maps_embed TEXT NULL`,
@@ -52,7 +57,39 @@ async function migrateWebSettings() {
         }
         console.log('✅ Kolom masjid_profile berhasil diperbarui!');
 
-        // Tabel friday_officers (Jadwal Petugas Sholat Jumat)
+        // 2. Tabel web_menus (Pengaturan Menu Navigasi FrontEnd)
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS web_menus (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                title VARCHAR(100) NOT NULL,
+                url VARCHAR(255) NOT NULL,
+                target VARCHAR(20) DEFAULT '_self',
+                parent_id INT NULL,
+                display_order INT DEFAULT 0,
+                is_active TINYINT(1) DEFAULT 1,
+                is_external TINYINT(1) DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;
+        `);
+        console.log('✅ Tabel web_menus berhasil dibuat!');
+
+        // Seed default menus jika kosong
+        const [menuRows] = await connection.query(`SELECT COUNT(*) as count FROM web_menus`);
+        if (menuRows[0].count === 0) {
+            await connection.query(`
+                INSERT INTO web_menus (title, url, target, display_order, is_active) VALUES
+                ('Beranda', '/', '_self', 1, 1),
+                ('Jadwal Sholat', '/jadwal-sholat', '_self', 2, 1),
+                ('Transparansi Kas', '/transparansi', '_self', 3, 1),
+                ('Proyek Donasi', '/proyek-donasi', '_self', 4, 1),
+                ('Berita & Artikel', '/berita', '_self', 5, 1),
+                ('Galeri Foto', '/galeri', '_self', 6, 1),
+                ('Mode TV', '/display-tv', '_blank', 7, 1)
+            `);
+            console.log('✅ Default web_menus berhasil diseed!');
+        }
+
+        // 3. Tabel friday_officers (Jadwal Petugas Sholat Jumat)
         await connection.query(`
             CREATE TABLE IF NOT EXISTS friday_officers (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -65,7 +102,7 @@ async function migrateWebSettings() {
             ) ENGINE=InnoDB;
         `);
 
-        // 2. Tabel web_banners
+        // 4. Tabel web_banners & alter badge_text
         await connection.query(`
             CREATE TABLE IF NOT EXISTS web_banners (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -74,14 +111,18 @@ async function migrateWebSettings() {
                 image_url VARCHAR(255) NOT NULL,
                 button_text VARCHAR(50) NULL,
                 button_link VARCHAR(255) NULL,
+                badge_text VARCHAR(50) NULL,
                 display_order INT DEFAULT 0,
                 is_active TINYINT(1) DEFAULT 1,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             ) ENGINE=InnoDB;
         `);
-        console.log('✅ Tabel web_banners berhasil dibuat!');
+        try {
+            await connection.query(`ALTER TABLE web_banners ADD COLUMN IF NOT EXISTS badge_text VARCHAR(50) NULL`);
+        } catch (err) {}
+        console.log('✅ Tabel web_banners berhasil dibuat & diperbarui!');
 
-        // 3. Tabel web_announcements
+        // 5. Tabel web_announcements
         await connection.query(`
             CREATE TABLE IF NOT EXISTS web_announcements (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -96,7 +137,7 @@ async function migrateWebSettings() {
         `);
         console.log('✅ Tabel web_announcements berhasil dibuat!');
 
-        // 4. Tabel web_articles
+        // 6. Tabel web_articles
         await connection.query(`
             CREATE TABLE IF NOT EXISTS web_articles (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -115,7 +156,7 @@ async function migrateWebSettings() {
         `);
         console.log('✅ Tabel web_articles berhasil dibuat!');
 
-        // 5. Tabel web_galleries
+        // 7. Tabel web_galleries & alter event_date
         await connection.query(`
             CREATE TABLE IF NOT EXISTS web_galleries (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -123,17 +164,21 @@ async function migrateWebSettings() {
                 category VARCHAR(50) DEFAULT 'Kegiatan',
                 image_url VARCHAR(255) NOT NULL,
                 description TEXT NULL,
+                event_date DATE NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             ) ENGINE=InnoDB;
         `);
-        console.log('✅ Tabel web_galleries berhasil dibuat!');
+        try {
+            await connection.query(`ALTER TABLE web_galleries ADD COLUMN IF NOT EXISTS event_date DATE NULL`);
+        } catch (err) {}
+        console.log('✅ Tabel web_galleries berhasil dibuat & diperbarui!');
 
         // Seed data sampel jika kosong
         const [bannerRows] = await connection.query(`SELECT COUNT(*) as count FROM web_banners`);
         if (bannerRows[0].count === 0) {
             await connection.query(`
-                INSERT INTO web_banners (title, subtitle, image_url, button_text, button_link, display_order) VALUES
-                ('Selamat Datang di SIMASJID', 'Pusat Kegiatan Ibadah, Dakwah, & Pembinaan Umat yang Mandiri', '/images/hero-default.jpg', 'Jadwal Sholat', '/jadwal-sholat', 1)
+                INSERT INTO web_banners (title, subtitle, image_url, button_text, button_link, badge_text, display_order) VALUES
+                ('Selamat Datang di SIMASJID', 'Pusat Kegiatan Ibadah, Dakwah, & Pembinaan Umat yang Mandiri', '/images/hero-default.jpg', 'Jadwal Sholat', '/jadwal-sholat', 'INFORMASI UTAMA', 1)
             `);
         }
 

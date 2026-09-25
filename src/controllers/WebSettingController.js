@@ -21,12 +21,12 @@ class WebSettingController {
     static async updateGeneral(req, res) {
         try {
             const {
-                name, address, phone, email, vision, mission, history,
-                social_facebook, social_instagram, social_youtube, social_whatsapp,
+                name, tagline, address, phone, email, vision, mission, history,
+                social_facebook, social_instagram, social_youtube, social_whatsapp, social_tiktok,
                 hero_title, hero_subtitle, maps_embed, running_text,
                 prayer_city, prayer_country, timezone, calculation_method,
                 subuh_offset, dzuhur_offset, ashar_offset, maghrib_offset, isya_offset,
-                friday_khatib, friday_imam, friday_muadzin
+                friday_khatib, friday_imam, friday_muadzin, footer_copyright, meta_keywords, meta_description
             } = req.body;
 
             const existing = await WebSettingModel.getWebProfile();
@@ -43,14 +43,14 @@ class WebSettingController {
             }
 
             await WebSettingModel.updateWebProfile({
-                name, address, phone, email, vision, mission, history,
+                name, tagline, address, phone, email, vision, mission, history,
                 logo: logoPath,
                 favicon: faviconPath,
-                social_facebook, social_instagram, social_youtube, social_whatsapp,
+                social_facebook, social_instagram, social_youtube, social_whatsapp, social_tiktok,
                 hero_title, hero_subtitle, maps_embed, running_text,
                 prayer_city, prayer_country, timezone, calculation_method,
                 subuh_offset, dzuhur_offset, ashar_offset, maghrib_offset, isya_offset,
-                friday_khatib, friday_imam, friday_muadzin
+                friday_khatib, friday_imam, friday_muadzin, footer_copyright, meta_keywords, meta_description
             });
 
             res.redirect('/settings/web/general?success=Pengaturan+umum+web+berhasil+disimpan');
@@ -60,7 +60,73 @@ class WebSettingController {
         }
     }
 
-    // 2. Banner / Slide Hero (/settings/web/banners)
+    // 2. Pengaturan Menu Website (/settings/web/menus)
+    static async getMenus(req, res) {
+        try {
+            const menus = await WebSettingModel.getAllMenus();
+            res.render('settings/web_menus', {
+                title: 'Pengaturan Menu Navigasi Web',
+                activeSubmenu: 'web-menus',
+                menus,
+                successMsg: req.query.success || null,
+                errorMsg: req.query.error || null
+            });
+        } catch (error) {
+            console.error('Error WebSettingController getMenus:', error);
+            res.status(500).render('errors/500', { title: '500 Server Error', layout: false });
+        }
+    }
+
+    static async createMenu(req, res) {
+        try {
+            const { title, url, target, parent_id, display_order, is_active, is_external } = req.body;
+            await WebSettingModel.createMenu({
+                title, url, target, parent_id, display_order, is_active: is_active ? 1 : 0, is_external: is_external ? 1 : 0
+            });
+            res.redirect('/settings/web/menus?success=Menu+baru+berhasil+ditambahkan');
+        } catch (error) {
+            console.error('Error WebSettingController createMenu:', error);
+            res.redirect('/settings/web/menus?error=Gagal+menambahkan+menu');
+        }
+    }
+
+    static async updateMenu(req, res) {
+        try {
+            const { id } = req.params;
+            const { title, url, target, parent_id, display_order, is_active, is_external } = req.body;
+            await WebSettingModel.updateMenu(id, {
+                title, url, target, parent_id, display_order, is_active: is_active ? 1 : 0, is_external: is_external ? 1 : 0
+            });
+            res.redirect('/settings/web/menus?success=Menu+berhasil+diperbarui');
+        } catch (error) {
+            console.error('Error WebSettingController updateMenu:', error);
+            res.redirect('/settings/web/menus?error=Gagal+memperbarui+menu');
+        }
+    }
+
+    static async toggleMenuStatus(req, res) {
+        try {
+            const { id } = req.params;
+            await WebSettingModel.toggleMenuStatus(id);
+            res.redirect('/settings/web/menus?success=Status+menu+berhasil+diubah');
+        } catch (error) {
+            console.error('Error WebSettingController toggleMenuStatus:', error);
+            res.redirect('/settings/web/menus?error=Gagal+mengubah+status+menu');
+        }
+    }
+
+    static async deleteMenu(req, res) {
+        try {
+            const { id } = req.params;
+            await WebSettingModel.deleteMenu(id);
+            res.redirect('/settings/web/menus?success=Menu+berhasil+dihapus');
+        } catch (error) {
+            console.error('Error WebSettingController deleteMenu:', error);
+            res.redirect('/settings/web/menus?error=Gagal+menghapus+menu');
+        }
+    }
+
+    // 3. Banner / Slide Hero (/settings/web/banners)
     static async getBanners(req, res) {
         try {
             const banners = await WebSettingModel.getAllBanners();
@@ -79,14 +145,14 @@ class WebSettingController {
 
     static async createBanner(req, res) {
         try {
-            const { title, subtitle, button_text, button_link, display_order, is_active } = req.body;
+            const { title, subtitle, button_text, button_link, badge_text, display_order, is_active } = req.body;
             let image_url = '/images/hero-default.jpg';
             if (req.file) {
                 image_url = '/uploads/' + req.file.filename;
             }
 
             await WebSettingModel.createBanner({
-                title, subtitle, image_url, button_text, button_link,
+                title, subtitle, image_url, button_text, button_link, badge_text,
                 display_order: parseInt(display_order || 0),
                 is_active: is_active ? 1 : 0
             });
@@ -101,14 +167,14 @@ class WebSettingController {
     static async updateBanner(req, res) {
         try {
             const { id } = req.params;
-            const { title, subtitle, button_text, button_link, display_order, is_active } = req.body;
+            const { title, subtitle, button_text, button_link, badge_text, display_order, is_active } = req.body;
             let image_url = null;
             if (req.file) {
                 image_url = '/uploads/' + req.file.filename;
             }
 
             await WebSettingModel.updateBanner(id, {
-                title, subtitle, image_url, button_text, button_link,
+                title, subtitle, image_url, button_text, button_link, badge_text,
                 display_order: parseInt(display_order || 0),
                 is_active: is_active ? 1 : 0
             });
@@ -131,7 +197,7 @@ class WebSettingController {
         }
     }
 
-    // 3. Pengumuman (/settings/web/announcements)
+    // 4. Pengumuman (/settings/web/announcements)
     static async getAnnouncements(req, res) {
         try {
             const announcements = await WebSettingModel.getAllAnnouncements();
@@ -186,7 +252,7 @@ class WebSettingController {
         }
     }
 
-    // 4. Berita & Artikel (/settings/web/articles)
+    // 5. Berita & Artikel (/settings/web/articles)
     static async getArticles(req, res) {
         try {
             const articles = await WebSettingModel.getAllArticles();
@@ -256,14 +322,16 @@ class WebSettingController {
         }
     }
 
-    // 5. Galeri Foto (/settings/web/galleries)
+    // 6. Galeri Foto (/settings/web/galleries)
     static async getGalleries(req, res) {
         try {
-            const galleries = await WebSettingModel.getAllGalleries();
+            const selectedCategory = req.query.category || 'Semua';
+            const galleries = await WebSettingModel.getAllGalleries({ category: selectedCategory });
             res.render('settings/web_galleries', {
                 title: 'Kelola Galeri Foto',
                 activeSubmenu: 'web-galleries',
                 galleries,
+                selectedCategory,
                 successMsg: req.query.success || null,
                 errorMsg: req.query.error || null
             });
@@ -275,17 +343,34 @@ class WebSettingController {
 
     static async createGallery(req, res) {
         try {
-            const { title, category, description } = req.body;
+            const { title, category, description, event_date } = req.body;
             if (!req.file) {
                 return res.redirect('/settings/web/galleries?error=Pilih+file+foto+terlebih+dahulu');
             }
             const image_url = '/uploads/' + req.file.filename;
 
-            await WebSettingModel.createGallery({ title, category, image_url, description });
+            await WebSettingModel.createGallery({ title, category, image_url, description, event_date });
             res.redirect('/settings/web/galleries?success=Foto+berhasil+diunggah+ke+galeri');
         } catch (error) {
             console.error('Error WebSettingController createGallery:', error);
             res.redirect('/settings/web/galleries?error=Gagal+mengunggah+foto');
+        }
+    }
+
+    static async updateGallery(req, res) {
+        try {
+            const { id } = req.params;
+            const { title, category, description, event_date } = req.body;
+            let image_url = null;
+            if (req.file) {
+                image_url = '/uploads/' + req.file.filename;
+            }
+
+            await WebSettingModel.updateGallery(id, { title, category, image_url, description, event_date });
+            res.redirect('/settings/web/galleries?success=Foto+galeri+berhasil+diperbarui');
+        } catch (error) {
+            console.error('Error WebSettingController updateGallery:', error);
+            res.redirect('/settings/web/galleries?error=Gagal+memperbarui+foto');
         }
     }
 
@@ -297,6 +382,46 @@ class WebSettingController {
         } catch (error) {
             console.error('Error WebSettingController deleteGallery:', error);
             res.redirect('/settings/web/galleries?error=Gagal+menghapus+foto');
+        }
+    }
+
+    // 7. Pengaturan Jadwal Sholat & Petugas Jumat (/settings/web/prayer)
+    static async getPrayer(req, res) {
+        try {
+            const profile = await WebSettingModel.getWebProfile();
+            res.render('settings/web_prayer', {
+                title: 'Pengaturan Jadwal Sholat & Petugas',
+                activeSubmenu: 'web-prayer',
+                profile,
+                successMsg: req.query.success || null,
+                errorMsg: req.query.error || null
+            });
+        } catch (error) {
+            console.error('Error WebSettingController getPrayer:', error);
+            res.status(500).render('errors/500', { title: '500 Server Error', layout: false });
+        }
+    }
+
+    static async updatePrayer(req, res) {
+        try {
+            const {
+                prayer_city, prayer_country, timezone, calculation_method,
+                subuh_offset, dzuhur_offset, ashar_offset, maghrib_offset, isya_offset,
+                friday_khatib, friday_imam, friday_muadzin
+            } = req.body;
+
+            const existing = await WebSettingModel.getWebProfile();
+            await WebSettingModel.updateWebProfile({
+                ...existing,
+                prayer_city, prayer_country, timezone, calculation_method,
+                subuh_offset, dzuhur_offset, ashar_offset, maghrib_offset, isya_offset,
+                friday_khatib, friday_imam, friday_muadzin
+            });
+
+            res.redirect('/settings/web/prayer?success=Pengaturan+jadwal+sholat+berhasil+disimpan');
+        } catch (error) {
+            console.error('Error WebSettingController updatePrayer:', error);
+            res.redirect('/settings/web/prayer?error=Gagal+menyimpan+pengaturan+sholat');
         }
     }
 }

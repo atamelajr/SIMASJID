@@ -1,0 +1,123 @@
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold mb-1"><i class="bi bi-clock-history me-2 text-primary"></i> Pengaturan Jadwal Sholat & Petugas Jumat</h4>
+            <p class="text-muted small m-0">Atur integrasi API jadwal sholat, koreksi menit, zona waktu, & petugas Sholat Jumat.</p>
+        </div>
+        <a href="/jadwal-sholat" target="_blank" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-clock me-1"></i> Buka Halaman Jadwal Sholat
+        </a>
+    </div>
+
+    <% if (typeof successMsg !== 'undefined' && successMsg) { %>
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> <%= successMsg %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <% } %>
+    <% if (typeof errorMsg !== 'undefined' && errorMsg) { %>
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> <%= errorMsg %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <% } %>
+
+    <form action="/settings/web/prayer" method="POST">
+        <div class="row g-4">
+            <!-- 1. Lokasi & Metode Perhitungan -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
+                    <h5 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="bi bi-geo me-2 text-primary"></i> Lokasi & Zona Waktu Integration</h5>
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Kota / Kabupaten</label>
+                            <input type="text" name="prayer_city" class="form-control" placeholder="Jakarta / Surabaya / Medan / Banda Aceh" value="<%= profile.prayer_city || 'Jakarta' %>" required>
+                            <small class="text-muted">Parameter pencarian kota API Aladhan</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Negara</label>
+                            <input type="text" name="prayer_country" class="form-control" value="<%= profile.prayer_country || 'Indonesia' %>" required>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Zona Waktu (Timezone)</label>
+                            <select name="timezone" class="form-select">
+                                <option value="Asia/Jakarta" <%= (profile.timezone === 'Asia/Jakarta' || !profile.timezone) ? 'selected' : '' %>>WIB - Asia/Jakarta (GMT+7)</option>
+                                <option value="Asia/Makassar" <%= profile.timezone === 'Asia/Makassar' ? 'selected' : '' %>>WITA - Asia/Makassar (GMT+8)</option>
+                                <option value="Asia/Jayapura" <%= profile.timezone === 'Asia/Jayapura' ? 'selected' : '' %>>WIT - Asia/Jayapura (GMT+9)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Metode Perhitungan Sholat</label>
+                            <select name="calculation_method" class="form-select">
+                                <option value="20" <%= (profile.calculation_method == 20 || !profile.calculation_method) ? 'selected' : '' %>>Kemenag Indonesia (SIHAT / Standard)</option>
+                                <option value="11" <%= profile.calculation_method == 11 ? 'selected' : '' %>>Majelis Ugama Islam Singapura (MUIS)</option>
+                                <option value="3" <%= profile.calculation_method == 3 ? 'selected' : '' %>>Muslim World League (MWL)</option>
+                                <option value="4" <%= profile.calculation_method == 4 ? 'selected' : '' %>>Umm Al-Qura University, Makkah</option>
+                                <option value="2" <%= profile.calculation_method == 2 ? 'selected' : '' %>>ISNA (North America)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <label class="form-label fw-semibold text-dark border-top pt-3 mt-2 w-100"><i class="bi bi-sliders me-1 text-primary"></i> Koreksi Penyesuaian Menit Sholat (+ / - Menit)</label>
+                    <p class="text-muted small mb-2">Gunakan angka positif (+) untuk menambah menit atau minus (-) untuk mengurangi menit sesuai jadwal lokal Kemenag / MUI daerah.</p>
+                    
+                    <div class="row g-2 text-center">
+                        <div class="col">
+                            <small class="fw-bold d-block text-muted">SUBUH</small>
+                            <input type="number" name="subuh_offset" class="form-control text-center fw-bold" value="<%= profile.subuh_offset || 0 %>">
+                        </div>
+                        <div class="col">
+                            <small class="fw-bold d-block text-muted">DZUHUR</small>
+                            <input type="number" name="dzuhur_offset" class="form-control text-center fw-bold" value="<%= profile.dzuhur_offset || 0 %>">
+                        </div>
+                        <div class="col">
+                            <small class="fw-bold d-block text-muted">ASHAR</small>
+                            <input type="number" name="ashar_offset" class="form-control text-center fw-bold" value="<%= profile.ashar_offset || 0 %>">
+                        </div>
+                        <div class="col">
+                            <small class="fw-bold d-block text-muted">MAGHRIB</small>
+                            <input type="number" name="maghrib_offset" class="form-control text-center fw-bold" value="<%= profile.maghrib_offset || 0 %>">
+                        </div>
+                        <div class="col">
+                            <small class="fw-bold d-block text-muted">ISYA</small>
+                            <input type="number" name="isya_offset" class="form-control text-center fw-bold" value="<%= profile.isya_offset || 0 %>">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Petugas Sholat Jumat Munggu Ini -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
+                    <h5 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="bi bi-people me-2 text-primary"></i> Petugas Sholat Jumat Minggu Ini</h5>
+                    <p class="text-muted small mb-3">Petugas Sholat Jumat ini akan otomatis ditampilkan pada Running Text, Banner Info, dan Mode Display TV Digital Masjid.</p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold"><i class="bi bi-mic-fill me-1 text-success"></i> Khatib Sholat Jumat</label>
+                        <input type="text" name="friday_khatib" class="form-control" placeholder="Ustadz Drs. H. Ahmad Dahlan" value="<%= profile.friday_khatib || '' %>">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold"><i class="bi bi-person-fill me-1 text-primary"></i> Imam Sholat Jumat</label>
+                        <input type="text" name="friday_imam" class="form-control" placeholder="Ust. Muhammad Ridwan, S.Pd.I" value="<%= profile.friday_imam || '' %>">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold"><i class="bi bi-megaphone-fill me-1 text-warning"></i> Muadzin & Bilal</label>
+                        <input type="text" name="friday_muadzin" class="form-control" placeholder="Akang Abdullah" value="<%= profile.friday_muadzin || '' %>">
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 text-end mb-4">
+                <button type="submit" class="btn btn-primary px-5 py-2 fw-bold shadow-sm rounded-pill">
+                    <i class="bi bi-save me-2"></i> Simpan Pengaturan Sholat
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

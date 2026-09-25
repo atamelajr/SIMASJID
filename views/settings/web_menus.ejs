@@ -1,0 +1,269 @@
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold mb-1"><i class="bi bi-menu-button-wide me-2 text-primary"></i> Pengaturan Menu Website</h4>
+            <p class="text-muted small m-0">Atur struktur menu navigasi header pada tampilan publik website SIMASJID.</p>
+        </div>
+        <div>
+            <button type="button" class="btn btn-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#modalAddMenu">
+                <i class="bi bi-plus-lg me-1"></i> Tambah Menu Baru
+            </button>
+            <a href="/" target="_blank" class="btn btn-outline-secondary btn-sm ms-2">
+                <i class="bi bi-box-arrow-up-right me-1"></i> Pratinjau Website
+            </a>
+        </div>
+    </div>
+
+    <% if (typeof successMsg !== 'undefined' && successMsg) { %>
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> <%= successMsg %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <% } %>
+    <% if (typeof errorMsg !== 'undefined' && errorMsg) { %>
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> <%= errorMsg %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <% } %>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-3 overflow-hidden bg-white">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold text-dark m-0"><i class="bi bi-list-stars me-2 text-primary"></i> Daftar Menu Navigasi Header</h6>
+                    <span class="badge bg-light text-dark border">Total: <%= menus ? menus.length : 0 %> Menu</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light text-muted">
+                                <tr>
+                                    <th class="py-3 px-3 text-center" style="width: 70px;">URUTAN</th>
+                                    <th class="py-3">NAMA MENU</th>
+                                    <th class="py-3">URL / LINK TARGET</th>
+                                    <th class="py-3 text-center">TARGET TAB</th>
+                                    <th class="py-3 text-center">STATUS</th>
+                                    <th class="py-3 text-end px-3">AKSI</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (menus && menus.length > 0) { %>
+                                    <% menus.forEach(m => { %>
+                                        <tr>
+                                            <td class="text-center fw-bold">
+                                                <span class="badge bg-secondary-subtle text-dark border px-2 py-1"><%= m.display_order %></span>
+                                            </td>
+                                            <td>
+                                                <div class="fw-bold text-dark"><%= m.title %></div>
+                                                <% if (m.is_external) { %>
+                                                    <span class="badge bg-warning-subtle text-dark border border-warning extra-small">External Link</span>
+                                                <% } else { %>
+                                                    <span class="badge bg-info-subtle text-info border border-info extra-small">Internal Page</span>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <code class="text-primary bg-light px-2 py-1 rounded"><%= m.url %></code>
+                                            </td>
+                                            <td class="text-center">
+                                                <% if (m.target === '_blank') { %>
+                                                    <span class="badge bg-purple-subtle text-purple border" style="background-color: #f3e8ff; color: #7e22ce;"><i class="bi bi-box-arrow-up-right me-1"></i> Tab Baru</span>
+                                                <% } else { %>
+                                                    <span class="badge bg-light text-secondary border">Tab Sama</span>
+                                                <% } %>
+                                            </td>
+                                            <td class="text-center">
+                                                <form action="/settings/web/menus/toggle/<%= m.id %>" method="POST" class="d-inline">
+                                                    <% if (m.is_active) { %>
+                                                        <button type="submit" class="btn btn-link p-0 text-decoration-none" title="Klik untuk non-aktifkan">
+                                                            <span class="badge bg-success-subtle text-success border border-success"><i class="bi bi-check-circle me-1"></i> Aktif</span>
+                                                        </button>
+                                                    <% } else { %>
+                                                        <button type="submit" class="btn btn-link p-0 text-decoration-none" title="Klik untuk aktifkan">
+                                                            <span class="badge bg-secondary-subtle text-secondary border"><i class="bi bi-x-circle me-1"></i> Non-Aktif</span>
+                                                        </button>
+                                                    <% } %>
+                                                </form>
+                                            </td>
+                                            <td class="text-end px-3">
+                                                <button type="button" class="btn btn-outline-warning btn-sm me-1" data-bs-toggle="modal" data-bs-target="#modalEditMenu<%= m.id %>" title="Edit Menu"><i class="bi bi-pencil"></i></button>
+                                                <form action="/settings/web/menus/delete/<%= m.id %>" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus menu ini?')">
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus"><i class="bi bi-trash"></i></button>
+                                                </form>
+                                            </td>
+                                        </tr>
+
+                                        <!-- Modal Edit Menu -->
+                                        <div class="modal fade" id="modalEditMenu<%= m.id %>" tabindex="-1">
+                                            <div class="modal-dialog modal-dialog-centered">
+                                                <div class="modal-content border-0 shadow">
+                                                    <div class="modal-header bg-warning text-dark">
+                                                        <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i> Edit Menu Navigasi</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <form action="/settings/web/menus/update/<%= m.id %>" method="POST">
+                                                        <div class="modal-body p-4 text-start">
+                                                            <div class="mb-3">
+                                                                <label class="form-label fw-semibold">Nama Menu</label>
+                                                                <input type="text" name="title" class="form-control" value="<%= m.title %>" required>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label fw-semibold">URL / Link Target</label>
+                                                                <input type="text" name="url" class="form-control" value="<%= m.url %>" required>
+                                                                <small class="text-muted">Misal: <code>/jadwal-sholat</code> atau <code>https://instagram.com/masjid</code></small>
+                                                            </div>
+                                                            <div class="row g-2 mb-3">
+                                                                <div class="col-md-6">
+                                                                    <label class="form-label fw-semibold">Target Buka Link</label>
+                                                                    <select name="target" class="form-select">
+                                                                        <option value="_self" <%= m.target === '_self' ? 'selected' : '' %>>Buka di Tab yang Sama (_self)</option>
+                                                                        <option value="_blank" <%= m.target === '_blank' ? 'selected' : '' %>>Buka di Tab Baru (_blank)</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <label class="form-label fw-semibold">Urutan Tampil</label>
+                                                                    <input type="number" name="display_order" class="form-control" value="<%= m.display_order %>">
+                                                                </div>
+                                                            </div>
+                                                            <div class="row g-2">
+                                                                <div class="col-md-6">
+                                                                    <div class="form-check form-switch mt-2">
+                                                                        <input class="form-check-input" type="checkbox" name="is_active" id="isActiveCheck<%= m.id %>" <%= m.is_active ? 'checked' : '' %>>
+                                                                        <label class="form-check-label fw-semibold" for="isActiveCheck<%= m.id %>">Status Aktif</label>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <div class="form-check form-switch mt-2">
+                                                                        <input class="form-check-input" type="checkbox" name="is_external" id="isExtCheck<%= m.id %>" <%= m.is_external ? 'checked' : '' %>>
+                                                                        <label class="form-check-label fw-semibold" for="isExtCheck<%= m.id %>">Link Eksternal</label>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer bg-light">
+                                                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                                                            <button type="submit" class="btn btn-warning btn-sm fw-bold px-3">Simpan Perubahan</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="6" class="text-center py-5 text-muted">Belum ada menu navigasi yang dikonfigurasi.</td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
+                <h6 class="fw-bold mb-3 text-dark border-bottom pb-2"><i class="bi bi-lightning-charge me-2 text-warning"></i> Preset Shortcut Halaman SIMASJID</h6>
+                <p class="text-muted small">Klik untuk menyalin URL halaman internal SIMASJID ke form pembuatan menu:</p>
+                <div class="d-flex flex-column gap-2">
+                    <button type="button" class="btn btn-outline-light text-start text-dark border p-2 rounded d-flex justify-content-between align-items-center" onclick="applyPreset('Beranda', '/')">
+                        <span><i class="bi bi-house me-2 text-primary"></i> Beranda Utama</span>
+                        <code class="small text-muted">/</code>
+                    </button>
+                    <button type="button" class="btn btn-outline-light text-start text-dark border p-2 rounded d-flex justify-content-between align-items-center" onclick="applyPreset('Jadwal Sholat', '/jadwal-sholat')">
+                        <span><i class="bi bi-clock-history me-2 text-teal" style="color: #0d9488;"></i> Waktu Sholat</span>
+                        <code class="small text-muted">/jadwal-sholat</code>
+                    </button>
+                    <button type="button" class="btn btn-outline-light text-start text-dark border p-2 rounded d-flex justify-content-between align-items-center" onclick="applyPreset('Transparansi Kas', '/transparansi')">
+                        <span><i class="bi bi-wallet2 me-2 text-success"></i> Transparansi Kas</span>
+                        <code class="small text-muted">/transparansi</code>
+                    </button>
+                    <button type="button" class="btn btn-outline-light text-start text-dark border p-2 rounded d-flex justify-content-between align-items-center" onclick="applyPreset('Proyek Donasi', '/proyek-donasi')">
+                        <span><i class="bi bi-heart-fill me-2 text-danger"></i> Proyek Donasi</span>
+                        <code class="small text-muted">/proyek-donasi</code>
+                    </button>
+                    <button type="button" class="btn btn-outline-light text-start text-dark border p-2 rounded d-flex justify-content-between align-items-center" onclick="applyPreset('Berita & Artikel', '/berita')">
+                        <span><i class="bi bi-newspaper me-2 text-info"></i> Berita & Artikel</span>
+                        <code class="small text-muted">/berita</code>
+                    </button>
+                    <button type="button" class="btn btn-outline-light text-start text-dark border p-2 rounded d-flex justify-content-between align-items-center" onclick="applyPreset('Galeri Foto', '/galeri')">
+                        <span><i class="bi bi-camera me-2 text-warning"></i> Galeri Foto</span>
+                        <code class="small text-muted">/galeri</code>
+                    </button>
+                    <button type="button" class="btn btn-outline-light text-start text-dark border p-2 rounded d-flex justify-content-between align-items-center" onclick="applyPreset('Mode TV Digital', '/display-tv', '_blank')">
+                        <span><i class="bi bi-tv me-2 text-purple" style="color: #9333ea;"></i> Mode TV Masjid</span>
+                        <code class="small text-muted">/display-tv</code>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah Menu -->
+<div class="modal fade" id="modalAddMenu" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2"></i> Tambah Menu Navigasi</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/settings/web/menus/create" method="POST">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nama Menu</label>
+                        <input type="text" name="title" id="inputMenuTitle" class="form-control" placeholder="Misal: Kontak Pengurus" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">URL / Link Target</label>
+                        <input type="text" name="url" id="inputMenuUrl" class="form-control" placeholder="/halaman-atau-link" required>
+                        <small class="text-muted">Gunakan <code>/nama-halaman</code> untuk internal atau <code>https://...</code> untuk link luar.</small>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Target Buka Link</label>
+                            <select name="target" id="inputMenuTarget" class="form-select">
+                                <option value="_self">Tab yang Sama (_self)</option>
+                                <option value="_blank">Tab Baru (_blank)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Urutan Tampil</label>
+                            <input type="number" name="display_order" class="form-control" value="<%= (menus ? menus.length + 1 : 1) %>">
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" name="is_active" id="inputMenuIsActive" checked>
+                                <label class="form-check-label fw-semibold" for="inputMenuIsActive">Status Aktif</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" name="is_external" id="inputMenuIsExternal">
+                                <label class="form-check-label fw-semibold" for="inputMenuIsExternal">Link Eksternal</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary btn-sm fw-bold px-3">Simpan Menu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function applyPreset(title, url, target = '_self') {
+        document.getElementById('inputMenuTitle').value = title;
+        document.getElementById('inputMenuUrl').value = url;
+        document.getElementById('inputMenuTarget').value = target;
+        document.getElementById('inputMenuIsExternal').checked = url.startsWith('http');
+        
+        const modal = new bootstrap.Modal(document.getElementById('modalAddMenu'));
+        modal.show();
+    }
+</script>
