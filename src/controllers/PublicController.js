@@ -87,7 +87,7 @@ class PublicController {
         }
     }
 
-    // 4. Proyek & Penggalangan Donasi (Dengan Search, Filter Kategori & Jenis Donasi)
+    // 4. Proyek & Penggalangan Donasi (Dengan Search, Filter Kategori, Jenis Donasi & Kategori Donatur)
     static async getProyekDonasi(req, res) {
         try {
             const page = parseInt(req.query.page) || 1;
@@ -97,6 +97,7 @@ class PublicController {
             const search = (req.query.q || req.query.search || '').trim();
             const categoryId = req.query.category_id || '';
             const jenis = req.query.jenis || ''; // 'uang' or 'barang'
+            const donorCategory = req.query.donor_category || ''; // Perorangan, OPD, dll
 
             const [cashAccounts] = await db.query(
                 `SELECT * FROM cash_accounts WHERE is_active = 1 AND bank_name != 'Kas Tunai'`
@@ -108,7 +109,12 @@ class PublicController {
                 `SELECT * FROM categories WHERE type = 'Penerimaan' OR type IS NULL ORDER BY name ASC`
             );
 
-            // Build dynamic WHERE clause
+            // Fetch distinct donor categories for filter dropdown
+            const [donorCategories] = await db.query(
+                `SELECT DISTINCT category FROM donors_mustahik WHERE type = 'Donatur' AND category IS NOT NULL AND category != '' ORDER BY category ASC`
+            );
+
+            // Build dynamic WHERE clause (with LEFT JOIN to donors_mustahik)
             let whereSql = ` WHERE t.type = 'Penerimaan'`;
             const params = [];
 
@@ -128,9 +134,20 @@ class PublicController {
                 whereSql += ` AND (t.is_in_kind = 1 OR t.payment_mode = 'Donasi Barang')`;
             }
 
+            if (donorCategory) {
+                whereSql += ` AND dm.category = ?`;
+                params.push(donorCategory);
+            }
+
+            // JOIN clause used for both count and data queries
+            const joinSql = `
+                LEFT JOIN categories c ON t.category_id = c.id
+                LEFT JOIN cash_accounts ca ON t.account_id = ca.id
+                LEFT JOIN donors_mustahik dm ON dm.name = t.donor_name AND dm.type = 'Donatur'`;
+
             // Total count for pagination
             const [countRows] = await db.query(
-                `SELECT COUNT(*) as total FROM transactions t ${whereSql}`,
+                `SELECT COUNT(DISTINCT t.id) as total FROM transactions t ${joinSql} ${whereSql}`,
                 params
             );
             const totalDonationsCount = countRows[0]?.total || 0;
@@ -138,11 +155,11 @@ class PublicController {
 
             // Fetch filtered paginated transactions
             const [recentDonations] = await db.query(
-                `SELECT t.*, c.name as category_name, ca.bank_name 
+                `SELECT t.*, c.name as category_name, ca.bank_name, dm.category as donor_category_name
                  FROM transactions t
-                 LEFT JOIN categories c ON t.category_id = c.id
-                 LEFT JOIN cash_accounts ca ON t.account_id = ca.id
+                 ${joinSql}
                  ${whereSql}
+                 GROUP BY t.id
                  ORDER BY t.transaction_date DESC, t.id DESC 
                  LIMIT ? OFFSET ?`,
                 [...params, limit, offset]
@@ -164,11 +181,13 @@ class PublicController {
                 cashAccounts,
                 projects,
                 categories,
+                donorCategories,
                 recentDonations,
                 donationSummary: donationSummary[0] || { total_donations: 0, total_count: 0 },
                 search,
                 selectedCategory: categoryId,
                 selectedJenis: jenis,
+                selectedDonorCategory: donorCategory,
                 currentPage: page,
                 totalPages,
                 totalDonationsCount
