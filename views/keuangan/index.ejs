@@ -778,7 +778,31 @@
         document.getElementById('edit_account_id').value = trx.account_id;
         document.getElementById('edit_category_id').value = trx.category_id;
         document.getElementById('edit_amount').value = trx.amount;
-        document.getElementById('edit_donor_name').value = trx.donor_name || 'Hamba Allah';
+
+        const donorName = trx.donor_name || '';
+        const isRegistered = (typeof allRegisteredDonors !== 'undefined' && Array.isArray(allRegisteredDonors))
+            ? allRegisteredDonors.some(d => d.name && d.name.trim().toLowerCase() === donorName.trim().toLowerCase())
+            : false;
+
+        const editDonorOptIncidental = document.getElementById('editDonorOptIncidental');
+        const editDonorOptRegistered = document.getElementById('editDonorOptRegistered');
+        const editDonorNameInput = document.getElementById('edit_donor_name');
+        const editBtnSearchDonor = document.getElementById('edit_btnSearchDonor');
+
+        editDonorNameInput.value = donorName || 'Hamba Allah';
+
+        if (isRegistered && donorName !== '' && donorName !== 'Hamba Allah') {
+            if (editDonorOptRegistered) editDonorOptRegistered.checked = true;
+            if (editDonorOptIncidental) editDonorOptIncidental.checked = false;
+            editDonorNameInput.readOnly = true;
+            if (editBtnSearchDonor) editBtnSearchDonor.classList.remove('d-none');
+        } else {
+            if (editDonorOptIncidental) editDonorOptIncidental.checked = true;
+            if (editDonorOptRegistered) editDonorOptRegistered.checked = false;
+            editDonorNameInput.readOnly = false;
+            if (editBtnSearchDonor) editBtnSearchDonor.classList.add('d-none');
+        }
+
         if (document.getElementById('edit_creditor_name')) {
             document.getElementById('edit_creditor_name').value = trx.creditor_name || '';
         }
@@ -1205,6 +1229,7 @@
 
 <script>
     const allMasterItems = <%- JSON.stringify(masterItems || []) %>;
+    const allRegisteredDonors = <%- JSON.stringify(donors || []) %>;
     let currentDonorTarget = 'add';
     let currentItemTarget = { type: 'Aset', mode: 'add' };
 
@@ -1228,12 +1253,22 @@
     function toggleEditDonorType(type) {
         const input = document.getElementById('edit_donor_name');
         const btn = document.getElementById('edit_btnSearchDonor');
+        const radInc = document.getElementById('editDonorOptIncidental');
+        const radReg = document.getElementById('editDonorOptRegistered');
+
         if (type === 'registered') {
+            if (radReg) radReg.checked = true;
+            if (radInc) radInc.checked = false;
             input.readOnly = true;
-            input.placeholder = "Klik 'Cari' untuk memilih donatur...";
+            if (!input.value || input.value === 'Hamba Allah') {
+                input.value = '';
+                input.placeholder = "Klik 'Cari' untuk memilih donatur...";
+            }
             btn.classList.remove('d-none');
             openDonorSearchModal('edit');
         } else {
+            if (radInc) radInc.checked = true;
+            if (radReg) radReg.checked = false;
             input.readOnly = false;
             btn.classList.add('d-none');
         }
