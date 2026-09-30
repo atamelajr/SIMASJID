@@ -4,13 +4,14 @@ const MasterModel = require('../models/MasterModel');
 class KeuanganController {
     static async index(req, res) {
         try {
-            const { account_id, type, payment_mode, start_date, end_date, page, limit } = req.query;
+            const { account_id, category_id, type, payment_mode, start_date, end_date, page, limit } = req.query;
             
             const currentPage = parseInt(page) || 1;
             const currentLimit = limit || '10';
 
             const filters = {
                 account_id: account_id || '',
+                category_id: category_id || '',
                 type: type || '',
                 payment_mode: payment_mode || '',
                 start_date: start_date || '',

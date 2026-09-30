@@ -79,6 +79,15 @@
                 </select>
             </div>
             <div class="col-md-2">
+                <label class="form-label extra-small fw-bold text-muted mb-1"><i class="bi bi-tags me-1"></i>Kategori Transaksi</label>
+                <select name="category_id" class="form-select form-select-sm">
+                    <option value="">-- Semua Kategori --</option>
+                    <% categories.forEach(cat => { %>
+                        <option value="<%= cat.id %>" <%= filters.category_id == cat.id ? 'selected' : '' %>><%= cat.account_code %> - <%= cat.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <div class="col-md-2">
                 <label class="form-label extra-small fw-bold text-muted mb-1"><i class="bi bi-box-seam me-1"></i>Bentuk Transaksi</label>
                 <select name="payment_mode" class="form-select form-select-sm">
                     <option value="">-- Semua Bentuk --</option>
@@ -228,6 +237,7 @@
             if (filters.start_date) queryParams.set('start_date', filters.start_date);
             if (filters.end_date) queryParams.set('end_date', filters.end_date);
             if (filters.type) queryParams.set('type', filters.type);
+            if (filters.category_id) queryParams.set('category_id', filters.category_id);
             if (filters.payment_mode) queryParams.set('payment_mode', filters.payment_mode);
             if (filters.account_id) queryParams.set('account_id', filters.account_id);
             queryParams.set('limit', pagination.limit);
@@ -240,6 +250,7 @@
                         <% if (filters.start_date) { %><input type="hidden" name="start_date" value="<%= filters.start_date %>"><% } %>
                         <% if (filters.end_date) { %><input type="hidden" name="end_date" value="<%= filters.end_date %>"><% } %>
                         <% if (filters.type) { %><input type="hidden" name="type" value="<%= filters.type %>"><% } %>
+                        <% if (filters.category_id) { %><input type="hidden" name="category_id" value="<%= filters.category_id %>"><% } %>
                         <% if (filters.payment_mode) { %><input type="hidden" name="payment_mode" value="<%= filters.payment_mode %>"><% } %>
                         <% if (filters.account_id) { %><input type="hidden" name="account_id" value="<%= filters.account_id %>"><% } %>
                         

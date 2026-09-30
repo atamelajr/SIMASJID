@@ -167,6 +167,10 @@ class TransactionModel {
             whereSql += ` AND (t.account_id = ? OR t.target_account_id = ?)`;
             params.push(filters.account_id, filters.account_id);
         }
+        if (filters.category_id) {
+            whereSql += ` AND t.category_id = ?`;
+            params.push(filters.category_id);
+        }
         if (filters.type) {
             whereSql += ` AND t.type = ?`;
             params.push(filters.type);
