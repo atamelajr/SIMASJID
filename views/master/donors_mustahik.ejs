@@ -54,7 +54,7 @@
                     <% 
                     const availableCats = activeTab === 'Mustahik' 
                         ? ['Fakir', 'Miskin', 'Amil', 'Mualaf', 'Riqab', 'Gharim', 'Fisabilillah', 'Ibnu Sabil']
-                        : ['Perorangan', 'OPD', 'Pemerintah Kampung', 'Instansi Vertikal', 'Badan Usaha', 'LSM', 'Komunitas'];
+                        : ['Perorangan', 'OPD', 'Sekolah', 'Pemerintah Kampung', 'Instansi Vertikal', 'Badan Usaha', 'LSM', 'Komunitas'];
                     availableCats.forEach(cat => { 
                     %>
                         <option value="<%= cat %>" <%= filters.category === cat ? 'selected' : '' %>><%= cat %></option>
@@ -291,7 +291,7 @@
 </div>
 
 <script>
-const donorCategories = ['Perorangan', 'OPD', 'Pemerintah Kampung', 'Instansi Vertikal', 'Badan Usaha', 'LSM', 'Komunitas'];
+const donorCategories = ['Perorangan', 'OPD', 'Sekolah', 'Pemerintah Kampung', 'Instansi Vertikal', 'Badan Usaha', 'LSM', 'Komunitas'];
 const mustahikCategories = ['Fakir', 'Miskin', 'Amil', 'Mualaf', 'Riqab', 'Gharim', 'Fisabilillah', 'Ibnu Sabil'];
 
 function populateCategories(typeVal, selectEl, labelEl, selectedVal) {
