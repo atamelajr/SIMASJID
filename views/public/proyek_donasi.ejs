@@ -143,4 +143,114 @@
             </div>
         <% } %>
     </div>
+
+    <!-- Section: Transparansi Infaq & Donasi Masuk -->
+    <div class="mt-5 pt-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+            <div>
+                <h3 class="fw-bold text-slate-800 m-0">
+                    <i class="bi bi-journal-check text-emerald me-2" style="color: #0d9488;"></i> 
+                    Daftar Infaq & Donasi Masuk (Transparansi Donatur)
+                </h3>
+                <p class="text-muted small m-0 mt-1">
+                    Catatan penerimaan donasi dan infaq terupdate secara real-time dari sistem kas masjid.
+                </p>
+            </div>
+        </div>
+
+        <!-- Ringkasan Stat Donasi -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-6 col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-start border-4 border-emerald" style="border-color: #0d9488 !important;">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle p-3 me-3" style="background-color: #ccfbf1; color: #0f766e;">
+                            <i class="bi bi-wallet2 fs-3"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small fw-semibold">Total Penerimaan Infaq/Donasi</div>
+                            <div class="fs-4 fw-extrabold text-teal" style="color: #0f766e;">
+                                <%= formatRupiah(donationSummary ? donationSummary.total_donations : 0) %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-start border-4 border-amber" style="border-color: #f59e0b !important;">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle p-3 me-3" style="background-color: #fef3c7; color: #d97706;">
+                            <i class="bi bi-receipt-cutoff fs-3"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small fw-semibold">Total Transaksi Infaq</div>
+                            <div class="fs-4 fw-extrabold text-dark">
+                                <%= donationSummary ? donationSummary.total_count : 0 %> Transaksi
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabel Daftar Donasi -->
+        <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="fw-bold m-0 text-slate-800"><i class="bi bi-list-stars me-2 text-warning"></i> 30 Transaksi Donasi Terbaru</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-secondary small text-uppercase">
+                        <tr>
+                            <th class="ps-4">Tanggal</th>
+                            <th>Donatur / Keterangan</th>
+                            <th>Peruntukan / Kategori</th>
+                            <th>Metode Pembayaran</th>
+                            <th class="text-end pe-4">Jumlah (Rp)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (recentDonations && recentDonations.length > 0) { %>
+                            <% recentDonations.forEach(d => { %>
+                                <tr>
+                                    <td class="ps-4 fw-semibold text-slate-700">
+                                        <i class="bi bi-calendar-check me-1 text-muted"></i>
+                                        <%= formatDate(d.transaction_date) %>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-slate-800">
+                                            <%= d.donor_name || d.description || 'Hamba Allah' %>
+                                        </div>
+                                        <% if (d.donor_name && d.description) { %>
+                                            <div class="extra-small text-muted"><%= d.description %></div>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border px-2 py-1">
+                                            <i class="bi bi-tag-fill me-1" style="color: #0d9488;"></i>
+                                            <%= d.category_name || 'Infaq Umum' %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border px-2 py-1">
+                                            <%= d.payment_mode || d.bank_name || 'Transfer' %>
+                                        </span>
+                                    </td>
+                                    <td class="text-end pe-4 font-monospace fw-bold text-success fs-6">
+                                        + <%= formatRupiah(d.amount) %>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                    Belum ada catatan transaksi donasi/infaq masuk.
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>

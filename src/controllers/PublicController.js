@@ -84,12 +84,32 @@ class PublicController {
             );
             const projects = await ProjectModel.getActiveProjects();
 
+            const [recentDonations] = await db.query(
+                `SELECT t.*, c.name as category_name, ca.bank_name 
+                 FROM transactions t
+                 LEFT JOIN categories c ON t.category_id = c.id
+                 LEFT JOIN cash_accounts ca ON t.account_id = ca.id
+                 WHERE t.type = 'Penerimaan'
+                 ORDER BY t.transaction_date DESC, t.id DESC 
+                 LIMIT 30`
+            );
+
+            const [donationSummary] = await db.query(
+                `SELECT 
+                    COALESCE(SUM(amount), 0) AS total_donations, 
+                    COUNT(*) AS total_count 
+                 FROM transactions 
+                 WHERE type = 'Penerimaan'`
+            );
+
             res.render('public/proyek_donasi', {
                 title: 'Proyek & Penggalangan Donasi Masjid - SIMASJID',
                 layout: 'layout_public',
                 currentRoute: 'proyek',
                 cashAccounts,
-                projects
+                projects,
+                recentDonations,
+                donationSummary: donationSummary[0] || { total_donations: 0, total_count: 0 }
             });
         } catch (error) {
             console.error('Error PublicController getProyekDonasi:', error);
