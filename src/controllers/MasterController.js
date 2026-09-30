@@ -209,13 +209,35 @@ class MasterController {
     // 5. Donatur & Mustahik
     static async donorsMustahikIndex(req, res) {
         try {
-            const donors = await MasterModel.getDonorsMustahik('Donatur');
-            const mustahik = await MasterModel.getDonorsMustahik('Mustahik');
+            const { tab, search, category, page, limit } = req.query;
+
+            const activeTab = (tab === 'Mustahik') ? 'Mustahik' : 'Donatur';
+            const currentPage = parseInt(page) || 1;
+            const currentLimit = limit || '10';
+
+            const filters = {
+                type: activeTab,
+                search: search || '',
+                category: category || '',
+                page: currentPage,
+                limit: currentLimit
+            };
+
+            const result = await MasterModel.getPaginatedDonorsMustahik(filters);
+            const counts = await MasterModel.getCountsDonorsMustahik();
+
             res.render('master/donors_mustahik', {
                 title: 'Master Parameter - Donatur & Mustahik',
                 activeSubmenu: 'donors-mustahik',
-                donors,
-                mustahik
+                items: result.rows,
+                pagination: result.pagination,
+                activeTab,
+                donorCount: counts.donorCount,
+                mustahikCount: counts.mustahikCount,
+                filters: {
+                    search: search || '',
+                    category: category || ''
+                }
             });
         } catch (err) {
             console.error('Master Donors/Mustahik Error:', err);
@@ -226,7 +248,8 @@ class MasterController {
     static async createDonorMustahik(req, res) {
         try {
             await MasterModel.createDonorMustahik(req.body);
-            res.redirect('/master/donors-mustahik');
+            const tabParam = encodeURIComponent(req.body.type || 'Donatur');
+            res.redirect(`/master/donors-mustahik?tab=${tabParam}`);
         } catch (err) {
             console.error('Create Donor/Mustahik Error:', err);
             res.redirect('/master/donors-mustahik');
@@ -236,7 +259,8 @@ class MasterController {
     static async updateDonorMustahik(req, res) {
         try {
             await MasterModel.updateDonorMustahik(req.params.id, req.body);
-            res.redirect('/master/donors-mustahik');
+            const tabParam = encodeURIComponent(req.body.type || 'Donatur');
+            res.redirect(`/master/donors-mustahik?tab=${tabParam}`);
         } catch (err) {
             console.error('Update Donor/Mustahik Error:', err);
             res.redirect('/master/donors-mustahik');
@@ -246,7 +270,7 @@ class MasterController {
     static async deleteDonorMustahik(req, res) {
         try {
             await MasterModel.deleteDonorMustahik(req.params.id);
-            res.redirect('/master/donors-mustahik');
+            res.redirect(req.get('Referer') || '/master/donors-mustahik');
         } catch (err) {
             console.error('Delete Donor/Mustahik Error:', err);
             res.redirect('/master/donors-mustahik');

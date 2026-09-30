@@ -277,6 +277,68 @@ class MasterModel {
         return rows;
     }
 
+    static async getCountsDonorsMustahik() {
+        const [donorRow] = await db.query(`SELECT COUNT(*) as total FROM donors_mustahik WHERE type = 'Donatur'`);
+        const [mustahikRow] = await db.query(`SELECT COUNT(*) as total FROM donors_mustahik WHERE type = 'Mustahik'`);
+        return {
+            donorCount: donorRow[0]?.total || 0,
+            mustahikCount: mustahikRow[0]?.total || 0
+        };
+    }
+
+    static async getPaginatedDonorsMustahik(filters = {}) {
+        let whereSql = ` WHERE 1=1`;
+        const params = [];
+
+        if (filters.type) {
+            whereSql += ` AND type = ?`;
+            params.push(filters.type);
+        }
+        if (filters.category) {
+            whereSql += ` AND category = ?`;
+            params.push(filters.category);
+        }
+        if (filters.search && filters.search.trim() !== '') {
+            whereSql += ` AND (name LIKE ? OR phone LIKE ? OR address LIKE ?)`;
+            const q = `%${filters.search.trim()}%`;
+            params.push(q, q, q);
+        }
+
+        // Count Total Records matching filters
+        const countSql = `SELECT COUNT(*) as total FROM donors_mustahik ${whereSql}`;
+        const [countRows] = await db.query(countSql, params);
+        const totalCount = countRows[0]?.total || 0;
+
+        // Build SELECT Query
+        let sql = `SELECT * FROM donors_mustahik ${whereSql} ORDER BY name ASC`;
+
+        let pageNum = parseInt(filters.page) || 1;
+        let limitStr = (filters.limit || '10').toString();
+        let limitNum = limitStr === 'all' ? (totalCount || 1) : (parseInt(limitStr) || 10);
+        if (limitNum <= 0) limitNum = 10;
+        
+        let totalPages = limitStr === 'all' ? 1 : Math.ceil(totalCount / limitNum);
+        if (totalPages === 0) totalPages = 1;
+
+        if (limitStr !== 'all') {
+            const offset = (pageNum - 1) * limitNum;
+            sql += ` LIMIT ? OFFSET ?`;
+            params.push(limitNum, offset);
+        }
+
+        const [rows] = await db.query(sql, params);
+
+        return {
+            rows,
+            pagination: {
+                totalCount,
+                page: pageNum,
+                limit: limitStr,
+                totalPages
+            }
+        };
+    }
+
     static async createDonorMustahik({ type, name, category, phone, address }) {
         const [result] = await db.query(
             `INSERT INTO donors_mustahik (type, name, category, phone, address) VALUES (?, ?, ?, ?, ?)`,

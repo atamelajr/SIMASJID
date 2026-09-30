@@ -8,99 +8,199 @@
     </button>
 </div>
 
-<div class="row g-4">
-    <!-- Tabel Donatur -->
-    <div class="col-md-6">
-        <div class="card card-custom p-3 h-100 border-start border-4 border-success">
-            <div class="card-body">
-                <h5 class="fw-bold text-dark mb-3"><i class="bi bi-heart-fill text-success me-2"></i>Daftar Donatur Tetap / Instansi</h5>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Nama Donatur</th>
-                                <th>Kategori</th>
-                                <th>No. HP</th>
-                                <th class="text-end">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (donors.length > 0) { %>
-                                <% donors.forEach(d => { %>
-                                    <tr>
-                                        <td class="fw-bold text-dark"><%= d.name %></td>
-                                        <td><span class="badge bg-success-subtle text-success-emphasis border"><%= d.category %></span></td>
-                                        <td class="small text-muted"><%= d.phone || '-' %></td>
-                                        <td class="text-end">
-                                            <button class="btn btn-sm btn-outline-warning me-1" 
-                                                    onclick="editDonorMustahik(<%= JSON.stringify(d) %>)" title="Edit Data">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                            <% if (user.role_name === 'Admin') { %>
-                                                <form action="/master/donors-mustahik/delete/<%= d.id %>" method="POST" class="d-inline" onsubmit="return confirm('Hapus donatur ini?')">
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Data"><i class="bi bi-trash"></i></button>
-                                                </form>
-                                            <% } %>
-                                        </td>
-                                    </tr>
-                                <% }) %>
-                            <% } else { %>
-                                <tr>
-                                    <td colspan="4" class="text-center text-muted py-3">Belum ada data donatur.</td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
+<!-- Nav Tabs Segregation: Donatur vs Mustahik -->
+<ul class="nav nav-pills custom-pills mb-4 gap-2">
+    <li class="nav-item">
+        <a class="nav-link rounded-3 px-4 py-2 fw-bold <%= activeTab === 'Donatur' ? 'active bg-success text-white shadow-sm' : 'bg-white text-dark border' %>" 
+           href="/master/donors-mustahik?tab=Donatur">
+            <i class="bi bi-heart-fill me-2 <%= activeTab === 'Donatur' ? 'text-white' : 'text-success' %>"></i>
+            Daftar Donatur Tetap / Instansi 
+            <span class="badge rounded-pill ms-2 <%= activeTab === 'Donatur' ? 'bg-white text-success' : 'bg-success text-white' %>"><%= donorCount %></span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link rounded-3 px-4 py-2 fw-bold <%= activeTab === 'Mustahik' ? 'active bg-warning text-dark shadow-sm' : 'bg-white text-dark border' %>" 
+           href="/master/donors-mustahik?tab=Mustahik">
+            <i class="bi bi-people-fill me-2 <%= activeTab === 'Mustahik' ? 'text-dark' : 'text-warning' %>"></i>
+            Daftar Mustahik ZIS (Asnaf) 
+            <span class="badge rounded-pill ms-2 <%= activeTab === 'Mustahik' ? 'bg-dark text-white' : 'bg-warning text-dark' %>"><%= mustahikCount %></span>
+        </a>
+    </li>
+</ul>
 
-    <!-- Tabel Mustahik -->
-    <div class="col-md-6">
-        <div class="card card-custom p-3 h-100 border-start border-4 border-warning">
-            <div class="card-body">
-                <h5 class="fw-bold text-dark mb-3"><i class="bi bi-people-fill text-warning me-2"></i>Daftar Mustahik ZIS (Asnaf)</h5>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Nama Mustahik</th>
-                                <th>Golongan Asnaf</th>
-                                <th>No. HP</th>
-                                <th class="text-end">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (mustahik.length > 0) { %>
-                                <% mustahik.forEach(m => { %>
-                                    <tr>
-                                        <td class="fw-bold text-dark"><%= m.name %></td>
-                                        <td><span class="badge bg-warning-subtle text-warning-emphasis border"><%= m.category %></span></td>
-                                        <td class="small text-muted"><%= m.phone || '-' %></td>
-                                        <td class="text-end">
-                                            <button class="btn btn-sm btn-outline-warning me-1" 
-                                                    onclick="editDonorMustahik(<%= JSON.stringify(m) %>)" title="Edit Data">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                            <% if (user.role_name === 'Admin') { %>
-                                                <form action="/master/donors-mustahik/delete/<%= m.id %>" method="POST" class="d-inline" onsubmit="return confirm('Hapus data mustahik ini?')">
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Data"><i class="bi bi-trash"></i></button>
-                                                </form>
-                                            <% } %>
-                                        </td>
-                                    </tr>
-                                <% }) %>
-                            <% } else { %>
-                                <tr>
-                                    <td colspan="4" class="text-center text-muted py-3">Belum ada data mustahik.</td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
+<!-- Card Container for Active Tab Data -->
+<div class="card card-custom p-3 shadow-sm border-0 mb-4">
+    <div class="card-body p-2">
+
+        <!-- Search & Filter Bar -->
+        <form action="/master/donors-mustahik" method="GET" class="row g-2 align-items-end mb-3">
+            <input type="hidden" name="tab" value="<%= activeTab %>">
+            <input type="hidden" name="limit" value="<%= pagination.limit %>">
+
+            <div class="col-md-5">
+                <label class="form-label extra-small fw-bold text-muted mb-1"><i class="bi bi-search me-1"></i>Cari Nama / No. HP / Alamat</label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Ketik kata kunci pencarian..." value="<%= filters.search || '' %>">
                 </div>
             </div>
+
+            <div class="col-md-4">
+                <label class="form-label extra-small fw-bold text-muted mb-1">
+                    <i class="bi bi-funnel me-1"></i><%= activeTab === 'Mustahik' ? 'Filter Golongan Asnaf' : 'Filter Kategori Donatur' %>
+                </label>
+                <select name="category" class="form-select form-select-sm">
+                    <option value="">-- Semua Kategori / Golongan --</option>
+                    <% 
+                    const availableCats = activeTab === 'Mustahik' 
+                        ? ['Fakir', 'Miskin', 'Amil', 'Mualaf', 'Riqab', 'Gharim', 'Fisabilillah', 'Ibnu Sabil']
+                        : ['Perorangan', 'OPD', 'Pemerintah Kampung', 'Instansi Vertikal', 'Badan Usaha', 'LSM', 'Komunitas'];
+                    availableCats.forEach(cat => { 
+                    %>
+                        <option value="<%= cat %>" <%= filters.category === cat ? 'selected' : '' %>><%= cat %></option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="col-md-3 d-flex gap-1">
+                <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-filter me-1"></i>Cari & Filter</button>
+                <a href="/master/donors-mustahik?tab=<%= activeTab %>" class="btn btn-sm btn-light border w-100" title="Reset Filter"><i class="bi bi-arrow-counterclockwise me-1"></i>Reset</a>
+            </div>
+        </form>
+
+        <!-- Table Display -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 50px;">No</th>
+                        <th><%= activeTab === 'Mustahik' ? 'Nama Mustahik' : 'Nama Donatur / Instansi' %></th>
+                        <th><%= activeTab === 'Mustahik' ? 'Golongan Asnaf' : 'Kategori Donatur' %></th>
+                        <th>No. HP / WA</th>
+                        <th>Alamat Lengkap</th>
+                        <th class="text-end" style="width: 100px;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (items && items.length > 0) { 
+                        const startIndex = pagination.limit === 'all' ? 1 : ((pagination.page - 1) * parseInt(pagination.limit) + 1);
+                    %>
+                        <% items.forEach((item, idx) => { %>
+                            <tr>
+                                <td class="text-muted small"><%= startIndex + idx %></td>
+                                <td class="fw-bold text-dark">
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle p-2 me-2 <%= activeTab === 'Mustahik' ? 'bg-warning-subtle text-warning' : 'bg-success-subtle text-success' %> d-flex align-items-center justify-content-center" style="width:32px; height:32px;">
+                                            <i class="bi <%= activeTab === 'Mustahik' ? 'bi-person' : 'bi-building' %>"></i>
+                                        </div>
+                                        <div><%= item.name %></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge <%= activeTab === 'Mustahik' ? 'bg-warning-subtle text-warning-emphasis border' : 'bg-success-subtle text-success-emphasis border' %>">
+                                        <%= item.category %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <% if (item.phone && item.phone.trim() !== '') { %>
+                                        <a href="https://wa.me/<%= item.phone.replace(/[^0-9]/g, '') %>" target="_blank" class="text-decoration-none small text-success fw-semibold">
+                                            <i class="bi bi-whatsapp me-1"></i><%= item.phone %>
+                                        </a>
+                                    <% } else { %>
+                                        <span class="small text-muted">-</span>
+                                    <% } %>
+                                </td>
+                                <td class="small text-muted text-truncate" style="max-width: 250px;" title="<%= item.address || '-' %>">
+                                    <%= item.address || '-' %>
+                                </td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-warning me-1" 
+                                            onclick="editDonorMustahik(<%= JSON.stringify(item) %>)" title="Edit Data">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <% if (user && user.role_name === 'Admin') { %>
+                                        <form action="/master/donors-mustahik/delete/<%= item.id %>" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Data"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox fs-3 d-block mb-1 text-muted opacity-50"></i>
+                                Belum ada data <%= activeTab === 'Mustahik' ? 'mustahik' : 'donatur' %> yang sesuai kriteria pencarian.
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
         </div>
+
+        <!-- Pagination Bar -->
+        <% if (pagination && pagination.totalCount > 0) { 
+            const startItem = pagination.limit === 'all' ? 1 : Math.min((pagination.page - 1) * parseInt(pagination.limit) + 1, pagination.totalCount);
+            const endItem = pagination.limit === 'all' ? pagination.totalCount : Math.min(pagination.page * parseInt(pagination.limit), pagination.totalCount);
+            
+            const queryParams = new URLSearchParams();
+            queryParams.set('tab', activeTab);
+            if (filters.search) queryParams.set('search', filters.search);
+            if (filters.category) queryParams.set('category', filters.category);
+            queryParams.set('limit', pagination.limit);
+        %>
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-3 pt-3 border-top gap-2">
+                <!-- Row Limit Selector & Total Summary -->
+                <div class="d-flex align-items-center gap-2">
+                    <span class="small text-muted">Tampilkan:</span>
+                    <form action="/master/donors-mustahik" method="GET" class="d-inline-block">
+                        <input type="hidden" name="tab" value="<%= activeTab %>">
+                        <% if (filters.search) { %><input type="hidden" name="search" value="<%= filters.search %>"><% } %>
+                        <% if (filters.category) { %><input type="hidden" name="category" value="<%= filters.category %>"><% } %>
+                        
+                        <select name="limit" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+                            <option value="10" <%= pagination.limit === '10' ? 'selected' : '' %>>10</option>
+                            <option value="25" <%= pagination.limit === '25' ? 'selected' : '' %>>25</option>
+                            <option value="50" <%= pagination.limit === '50' ? 'selected' : '' %>>50</option>
+                            <option value="100" <%= pagination.limit === '100' ? 'selected' : '' %>>100</option>
+                            <option value="all" <%= pagination.limit === 'all' ? 'selected' : '' %>>Semua (<%= pagination.totalCount %>)</option>
+                        </select>
+                    </form>
+                    <span class="small text-muted ms-2">
+                        Menampilkan <strong><%= startItem %></strong> - <strong><%= endItem %></strong> dari <strong><%= pagination.totalCount %></strong> data
+                    </span>
+                </div>
+
+                <!-- Page Navigation Links -->
+                <% if (pagination.limit !== 'all' && pagination.totalPages > 1) { %>
+                    <nav aria-label="Navigasi Halaman">
+                        <ul class="pagination pagination-sm mb-0">
+                            <!-- Previous Page -->
+                            <li class="page-item <%= pagination.page <= 1 ? 'disabled' : '' %>">
+                                <% queryParams.set('page', pagination.page - 1); %>
+                                <a class="page-link" href="/master/donors-mustahik?<%= queryParams.toString() %>">Sebelumnya</a>
+                            </li>
+
+                            <!-- Page Numbers -->
+                            <% for (let p = 1; p <= pagination.totalPages; p++) { 
+                                queryParams.set('page', p);
+                            %>
+                                <li class="page-item <%= p === pagination.page ? 'active' : '' %>">
+                                    <a class="page-link" href="/master/donors-mustahik?<%= queryParams.toString() %>"><%= p %></a>
+                                </li>
+                            <% } %>
+
+                            <!-- Next Page -->
+                            <li class="page-item <%= pagination.page >= pagination.totalPages ? 'disabled' : '' %>">
+                                <% queryParams.set('page', pagination.page + 1); %>
+                                <a class="page-link" href="/master/donors-mustahik?<%= queryParams.toString() %>">Selanjutnya</a>
+                            </li>
+                        </ul>
+                    </nav>
+                <% } %>
+            </div>
+        <% } %>
+
     </div>
 </div>
 
@@ -250,6 +350,11 @@ function editDonorMustahik(dm) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    onAddTypeChange();
+    const defaultType = '<%= activeTab %>';
+    const addTypeEl = document.getElementById('add_dm_type');
+    if (addTypeEl) {
+        addTypeEl.value = defaultType;
+        onAddTypeChange();
+    }
 });
 </script>
