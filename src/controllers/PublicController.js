@@ -143,7 +143,7 @@ class PublicController {
             const joinSql = `
                 LEFT JOIN categories c ON t.category_id = c.id
                 LEFT JOIN cash_accounts ca ON t.account_id = ca.id
-                LEFT JOIN donors_mustahik dm ON dm.name = t.donor_name AND dm.type = 'Donatur'`;
+                LEFT JOIN donors_mustahik dm ON ((t.donor_id IS NOT NULL AND t.donor_id = dm.id) OR (t.donor_id IS NULL AND dm.name = t.donor_name AND dm.type = 'Donatur'))`;
 
             // Total count for pagination
             const [countRows] = await db.query(

@@ -381,6 +381,7 @@
                                 </div>
                             </div>
                             <div class="input-group">
+                                <input type="hidden" name="donor_id" id="donor_id_input" value="">
                                 <input type="text" name="donor_name" id="donor_name_input" class="form-control" value="Hamba Allah" placeholder="Isi nama donatur / Hamba Allah" required>
                                 <button type="button" class="btn btn-outline-primary d-none" id="btnSearchDonor" onclick="openDonorSearchModal('add')" title="Cari Donatur">
                                     <i class="bi bi-search me-1"></i> Cari
@@ -587,6 +588,7 @@
                                 </div>
                             </div>
                             <div class="input-group">
+                                <input type="hidden" name="donor_id" id="edit_donor_id" value="">
                                 <input type="text" name="donor_name" id="edit_donor_name" class="form-control" placeholder="Nama Donatur">
                                 <button type="button" class="btn btn-outline-primary d-none" id="edit_btnSearchDonor" onclick="openDonorSearchModal('edit')" title="Cari Donatur">
                                     <i class="bi bi-search me-1"></i> Cari
@@ -780,15 +782,18 @@
         document.getElementById('edit_amount').value = trx.amount;
 
         const donorName = trx.donor_name || '';
-        const isRegistered = (typeof allRegisteredDonors !== 'undefined' && Array.isArray(allRegisteredDonors))
-            ? allRegisteredDonors.some(d => d.name && d.name.trim().toLowerCase() === donorName.trim().toLowerCase())
-            : false;
+        const donorId = trx.donor_id || '';
+        const isRegistered = Boolean(donorId) || ((typeof allRegisteredDonors !== 'undefined' && Array.isArray(allRegisteredDonors))
+            ? allRegisteredDonors.some(d => (d.id && d.id == donorId) || (d.name && d.name.trim().toLowerCase() === donorName.trim().toLowerCase()))
+            : false);
 
         const editDonorOptIncidental = document.getElementById('editDonorOptIncidental');
         const editDonorOptRegistered = document.getElementById('editDonorOptRegistered');
         const editDonorNameInput = document.getElementById('edit_donor_name');
+        const editDonorIdInput = document.getElementById('edit_donor_id');
         const editBtnSearchDonor = document.getElementById('edit_btnSearchDonor');
 
+        if (editDonorIdInput) editDonorIdInput.value = donorId;
         editDonorNameInput.value = donorName || 'Hamba Allah';
 
         if (isRegistered && donorName !== '' && donorName !== 'Hamba Allah') {
@@ -1163,7 +1168,7 @@
                                         <td class="small text-muted"><%= d.phone || '-' %></td>
                                         <td class="small text-muted"><%= d.address || '-' %></td>
                                         <td class="text-end">
-                                            <button type="button" class="btn btn-sm btn-primary fw-semibold" onclick="selectDonor('<%= d.name.replace(/'/g, "\\'") %>')">
+                                            <button type="button" class="btn btn-sm btn-primary fw-semibold" onclick="selectDonor('<%= d.name.replace(/'/g, "\\'") %>', '<%= d.id %>')">
                                                 <i class="bi bi-check-lg me-1"></i> Pilih
                                             </button>
                                         </td>
@@ -1236,6 +1241,7 @@
     function toggleDonorType(type) {
         const input = document.getElementById('donor_name_input');
         const btn = document.getElementById('btnSearchDonor');
+        const idInput = document.getElementById('donor_id_input');
         if (type === 'registered') {
             input.readOnly = true;
             input.value = '';
@@ -1243,6 +1249,7 @@
             btn.classList.remove('d-none');
             openDonorSearchModal('add');
         } else {
+            if (idInput) idInput.value = '';
             input.readOnly = false;
             input.value = "Hamba Allah";
             input.placeholder = "Isi nama donatur / Hamba Allah";
@@ -1255,6 +1262,7 @@
         const btn = document.getElementById('edit_btnSearchDonor');
         const radInc = document.getElementById('editDonorOptIncidental');
         const radReg = document.getElementById('editDonorOptRegistered');
+        const idInput = document.getElementById('edit_donor_id');
 
         if (type === 'registered') {
             if (radReg) radReg.checked = true;
@@ -1267,6 +1275,7 @@
             btn.classList.remove('d-none');
             openDonorSearchModal('edit');
         } else {
+            if (idInput) idInput.value = '';
             if (radInc) radInc.checked = true;
             if (radReg) radReg.checked = false;
             input.readOnly = false;
@@ -1290,11 +1299,15 @@
         });
     }
 
-    function selectDonor(donorName) {
+    function selectDonor(donorName, donorId) {
         if (currentDonorTarget === 'edit') {
             document.getElementById('edit_donor_name').value = donorName;
+            const editIdInput = document.getElementById('edit_donor_id');
+            if (editIdInput) editIdInput.value = donorId || '';
         } else {
             document.getElementById('donor_name_input').value = donorName;
+            const addIdInput = document.getElementById('donor_id_input');
+            if (addIdInput) addIdInput.value = donorId || '';
         }
         const modalEl = document.getElementById('modalSearchDonor');
         const modal = bootstrap.Modal.getInstance(modalEl);
