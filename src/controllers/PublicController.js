@@ -16,6 +16,16 @@ class PublicController {
             const galleries = await WebSettingModel.getAllGalleries({ limit: 4 });
             const announcements = await WebSettingModel.getActiveAnnouncements();
 
+            const [recentDonations] = await db.query(
+                `SELECT t.*, c.name as category_name, ca.bank_name 
+                 FROM transactions t
+                 LEFT JOIN categories c ON t.category_id = c.id
+                 LEFT JOIN cash_accounts ca ON t.account_id = ca.id
+                 WHERE t.type = 'Penerimaan'
+                 ORDER BY t.transaction_date DESC, t.id DESC 
+                 LIMIT 6`
+            );
+
             res.render('public/index', {
                 title: 'Beranda - SIMASJID Portal Publik',
                 layout: 'layout_public',
@@ -26,7 +36,8 @@ class PublicController {
                 banners,
                 articles,
                 galleries,
-                announcements
+                announcements,
+                recentDonations
             });
         } catch (error) {
             console.error('Error PublicController getHome:', error);
@@ -76,24 +87,68 @@ class PublicController {
         }
     }
 
-    // 4. Proyek & Penggalangan Donasi
+    // 4. Proyek & Penggalangan Donasi (Dengan Search, Filter Kategori & Jenis Donasi)
     static async getProyekDonasi(req, res) {
         try {
+            const page = parseInt(req.query.page) || 1;
+            const limit = 15;
+            const offset = (page - 1) * limit;
+
+            const search = (req.query.q || req.query.search || '').trim();
+            const categoryId = req.query.category_id || '';
+            const jenis = req.query.jenis || ''; // 'uang' or 'barang'
+
             const [cashAccounts] = await db.query(
                 `SELECT * FROM cash_accounts WHERE is_active = 1 AND bank_name != 'Kas Tunai'`
             );
             const projects = await ProjectModel.getActiveProjects();
 
+            // Fetch categories for filter dropdown
+            const [categories] = await db.query(
+                `SELECT * FROM categories WHERE type = 'Penerimaan' OR type IS NULL ORDER BY name ASC`
+            );
+
+            // Build dynamic WHERE clause
+            let whereSql = ` WHERE t.type = 'Penerimaan'`;
+            const params = [];
+
+            if (search) {
+                whereSql += ` AND (t.donor_name LIKE ? OR t.description LIKE ?)`;
+                params.push(`%${search}%`, `%${search}%`);
+            }
+
+            if (categoryId) {
+                whereSql += ` AND t.category_id = ?`;
+                params.push(categoryId);
+            }
+
+            if (jenis === 'uang') {
+                whereSql += ` AND (t.is_in_kind = 0 OR t.is_in_kind IS NULL) AND t.payment_mode != 'Donasi Barang'`;
+            } else if (jenis === 'barang') {
+                whereSql += ` AND (t.is_in_kind = 1 OR t.payment_mode = 'Donasi Barang')`;
+            }
+
+            // Total count for pagination
+            const [countRows] = await db.query(
+                `SELECT COUNT(*) as total FROM transactions t ${whereSql}`,
+                params
+            );
+            const totalDonationsCount = countRows[0]?.total || 0;
+            const totalPages = Math.ceil(totalDonationsCount / limit) || 1;
+
+            // Fetch filtered paginated transactions
             const [recentDonations] = await db.query(
                 `SELECT t.*, c.name as category_name, ca.bank_name 
                  FROM transactions t
                  LEFT JOIN categories c ON t.category_id = c.id
                  LEFT JOIN cash_accounts ca ON t.account_id = ca.id
-                 WHERE t.type = 'Penerimaan'
+                 ${whereSql}
                  ORDER BY t.transaction_date DESC, t.id DESC 
-                 LIMIT 30`
+                 LIMIT ? OFFSET ?`,
+                [...params, limit, offset]
             );
 
+            // Summary stats across ALL incoming donations
             const [donationSummary] = await db.query(
                 `SELECT 
                     COALESCE(SUM(amount), 0) AS total_donations, 
@@ -108,8 +163,15 @@ class PublicController {
                 currentRoute: 'proyek',
                 cashAccounts,
                 projects,
+                categories,
                 recentDonations,
-                donationSummary: donationSummary[0] || { total_donations: 0, total_count: 0 }
+                donationSummary: donationSummary[0] || { total_donations: 0, total_count: 0 },
+                search,
+                selectedCategory: categoryId,
+                selectedJenis: jenis,
+                currentPage: page,
+                totalPages,
+                totalDonationsCount
             });
         } catch (error) {
             console.error('Error PublicController getProyekDonasi:', error);

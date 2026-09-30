@@ -145,7 +145,7 @@
     </div>
 
     <!-- Section: Transparansi Infaq & Donasi Masuk -->
-    <div class="mt-5 pt-3">
+    <div class="mt-5 pt-3" id="daftar-donasi">
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
             <div>
                 <h3 class="fw-bold text-slate-800 m-0">
@@ -192,10 +192,64 @@
             </div>
         </div>
 
+        <!-- Form Pencarian & Filter Donasi -->
+        <div class="card border-0 shadow-sm rounded-4 bg-white p-3 p-md-4 mb-4">
+            <form action="/proyek-donasi#daftar-donasi" method="GET" class="row g-3">
+                <div class="col-lg-4 col-md-6">
+                    <label class="form-label small fw-bold text-secondary mb-1">
+                        <i class="bi bi-search me-1"></i> Cari Donatur / Keterangan
+                    </label>
+                    <input type="text" name="q" class="form-control rounded-3" placeholder="Ketik nama donatur atau uraian..." value="<%= search %>">
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label small fw-bold text-secondary mb-1">
+                        <i class="bi bi-tag me-1"></i> Kategori Infaq
+                    </label>
+                    <select name="category_id" class="form-select rounded-3">
+                        <option value="">-- Semua Kategori --</option>
+                        <% if (categories && categories.length > 0) { %>
+                            <% categories.forEach(c => { %>
+                                <option value="<%= c.id %>" <%= selectedCategory == c.id ? 'selected' : '' %>><%= c.name %></option>
+                            <% }); %>
+                        <% } %>
+                    </select>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label small fw-bold text-secondary mb-1">
+                        <i class="bi bi-funnel me-1"></i> Jenis Donasi
+                    </label>
+                    <select name="jenis" class="form-select rounded-3">
+                        <option value="">-- Semua Jenis --</option>
+                        <option value="uang" <%= selectedJenis === 'uang' ? 'selected' : '' %>>Donasi Uang (Tunai / Transfer / QRIS)</option>
+                        <option value="barang" <%= selectedJenis === 'barang' ? 'selected' : '' %>>Donasi Barang (In-Kind)</option>
+                    </select>
+                </div>
+
+                <div class="col-lg-2 col-md-6 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-emerald text-white rounded-3 w-100 fw-bold" style="background-color: #0d9488;">
+                        <i class="bi bi-filter me-1"></i> Filter
+                    </button>
+                    <% if (search || selectedCategory || selectedJenis) { %>
+                        <a href="/proyek-donasi#daftar-donasi" class="btn btn-outline-secondary rounded-3" title="Reset Filter">
+                            <i class="bi bi-x-circle"></i>
+                        </a>
+                    <% } %>
+                </div>
+            </form>
+        </div>
+
         <!-- Tabel Daftar Donasi -->
         <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
-            <div class="card-header bg-white py-3 border-0">
-                <h5 class="fw-bold m-0 text-slate-800"><i class="bi bi-list-stars me-2 text-warning"></i> 30 Transaksi Donasi Terbaru</h5>
+            <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="fw-bold m-0 text-slate-800">
+                    <i class="bi bi-list-stars me-2 text-warning"></i> 
+                    Daftar Transaksi Donasi
+                </h5>
+                <span class="badge bg-light text-secondary border">
+                    Menampilkan <%= recentDonations ? recentDonations.length : 0 %> dari total <%= totalDonationsCount || 0 %> donasi
+                </span>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
@@ -204,8 +258,8 @@
                             <th class="ps-4">Tanggal</th>
                             <th>Donatur / Keterangan</th>
                             <th>Peruntukan / Kategori</th>
-                            <th>Metode Pembayaran</th>
-                            <th class="text-end pe-4">Jumlah (Rp)</th>
+                            <th>Jenis / Metode</th>
+                            <th class="text-end pe-4">Jumlah / Nilai (Rp)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -231,9 +285,15 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <span class="badge bg-light text-dark border px-2 py-1">
-                                            <%= d.payment_mode || d.bank_name || 'Transfer' %>
-                                        </span>
+                                        <% if (d.is_in_kind == 1 || d.payment_mode === 'Donasi Barang') { %>
+                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning px-2 py-1">
+                                                <i class="bi bi-box-seam me-1"></i> Donasi Barang
+                                            </span>
+                                        <% } else { %>
+                                            <span class="badge bg-light text-dark border px-2 py-1">
+                                                <i class="bi bi-cash-stack me-1 text-success"></i> <%= d.payment_mode || d.bank_name || 'Transfer' %>
+                                            </span>
+                                        <% } %>
                                     </td>
                                     <td class="text-end pe-4 font-monospace fw-bold text-success fs-6">
                                         + <%= formatRupiah(d.amount) %>
@@ -242,15 +302,49 @@
                             <% }); %>
                         <% } else { %>
                             <tr>
-                                <td colspan="5" class="text-center py-4 text-muted">
-                                    <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-                                    Belum ada catatan transaksi donasi/infaq masuk.
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    <i class="bi bi-search fs-1 d-block mb-3 opacity-50"></i>
+                                    <h6 class="fw-bold">Tidak ada transaksi donasi yang sesuai kriteria pencarian.</h6>
+                                    <p class="small text-muted mb-0">Coba ubah kata kunci pencarian atau reset filter.</p>
                                 </td>
                             </tr>
                         <% } %>
                     </tbody>
                 </table>
             </div>
+
+            <!-- Pagination Controls -->
+            <% if (totalPages > 1) { %>
+                <div class="card-footer bg-white border-0 py-3 d-flex justify-content-center">
+                    <nav aria-label="Donation pagination">
+                        <ul class="pagination pagination-sm m-0 gap-1">
+                            <li class="page-item <%= currentPage <= 1 ? 'disabled' : '' %>">
+                                <a class="page-link rounded-circle px-3" href="/proyek-donasi?page=<%= currentPage - 1 %>&q=<%= encodeURIComponent(search) %>&category_id=<%= selectedCategory %>&jenis=<%= selectedJenis %>#daftar-donasi">
+                                    &laquo;
+                                </a>
+                            </li>
+
+                            <% for (let p = 1; p <= totalPages; p++) { %>
+                                <% if (p === 1 || p === totalPages || (p >= currentPage - 2 && p <= currentPage + 2)) { %>
+                                    <li class="page-item <%= p === currentPage ? 'active' : '' %>">
+                                        <a class="page-link rounded-circle px-3 <%= p === currentPage ? 'bg-teal text-white border-teal' : '' %>" style="<%= p === currentPage ? 'background-color: #0d9488 !important; border-color: #0d9488 !important;' : '' %>" href="/proyek-donasi?page=<%= p %>&q=<%= encodeURIComponent(search) %>&category_id=<%= selectedCategory %>&jenis=<%= selectedJenis %>#daftar-donasi">
+                                            <%= p %>
+                                        </a>
+                                    </li>
+                                <% } else if (p === currentPage - 3 || p === currentPage + 3) { %>
+                                    <li class="page-item disabled"><span class="page-link border-0">...</span></li>
+                                <% } %>
+                            <% } %>
+
+                            <li class="page-item <%= currentPage >= totalPages ? 'disabled' : '' %>">
+                                <a class="page-link rounded-circle px-3" href="/proyek-donasi?page=<%= currentPage + 1 %>&q=<%= encodeURIComponent(search) %>&category_id=<%= selectedCategory %>&jenis=<%= selectedJenis %>#daftar-donasi">
+                                    &raquo;
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            <% } %>
         </div>
     </div>
 </div>

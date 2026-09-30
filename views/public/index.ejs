@@ -182,6 +182,65 @@
     </div>
 </section>
 
+<!-- Section Widget Donasi Terbaru -->
+<% if (recentDonations && recentDonations.length > 0) { %>
+<section class="py-5 bg-white border-bottom">
+    <div class="container">
+        <div class="d-flex flex-wrap justify-content-between align-items-end mb-4 gap-2">
+            <div>
+                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning px-3 py-1 rounded-pill fw-bold mb-2">
+                    <i class="bi bi-heart-fill text-danger me-1"></i> Donasi Masuk
+                </span>
+                <h2 class="fw-bold m-0 text-slate-800">Donasi & Infaq Terbaru</h2>
+                <p class="text-muted small m-0 mt-1">Daftar donatur dan penerimaan infaq terupdate real-time.</p>
+            </div>
+            <a href="/proyek-donasi#daftar-donasi" class="btn btn-emerald text-white rounded-pill px-4 fw-bold shadow-sm" style="background-color: #0d9488;">
+                Lihat Seluruh Donasi <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+
+        <div class="row g-3">
+            <% recentDonations.forEach(d => { %>
+                <div class="col-md-6 col-lg-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-light border-start border-4" style="border-color: #0d9488 !important;">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-white text-dark border px-2 py-1 small">
+                                <i class="bi bi-tag-fill me-1" style="color: #0d9488;"></i>
+                                <%= d.category_name || 'Infaq Umum' %>
+                            </span>
+                            <small class="text-muted extra-small">
+                                <i class="bi bi-clock me-1"></i><%= formatDate(d.transaction_date) %>
+                            </small>
+                        </div>
+                        <h6 class="fw-bold text-slate-800 mb-1 text-truncate" title="<%= d.donor_name || d.description || 'Hamba Allah' %>">
+                            <i class="bi bi-person-circle me-1 text-teal" style="color: #0f766e;"></i>
+                            <%= d.donor_name || d.description || 'Hamba Allah' %>
+                        </h6>
+                        <% if (d.donor_name && d.description) { %>
+                            <p class="text-muted extra-small mb-2 text-truncate" title="<%= d.description %>"><%= d.description %></p>
+                        <% } %>
+                        <div class="d-flex justify-content-between align-items-center mt-auto pt-2 border-top">
+                            <span class="badge bg-white text-secondary extra-small border">
+                                <%= d.payment_mode || d.bank_name || 'Transfer' %>
+                            </span>
+                            <span class="font-monospace fw-extrabold text-success fs-6">
+                                + <%= formatRupiah(d.amount) %>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="/proyek-donasi#daftar-donasi" class="btn btn-outline-secondary rounded-pill px-4 fw-semibold">
+                Cari & Filter Seluruh Riwayat Donasi <i class="bi bi-search ms-1"></i>
+            </a>
+        </div>
+    </div>
+</section>
+<% } %>
+
 <!-- Section Berita & Artikel Terbaru -->
 <% if (articles && articles.length > 0) { %>
 <section class="py-5 bg-white">
