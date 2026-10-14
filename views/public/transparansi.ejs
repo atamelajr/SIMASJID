@@ -8,15 +8,44 @@
 </div>
 
 <div class="container pb-5">
+    <!-- Header Seksi Rekening Bank Resmi -->
+    <% 
+        const validBankAccounts = (cashAccounts || []).filter(acc => {
+            const bName = (acc.bank_name || '').toLowerCase();
+            const aName = (acc.name || '').toLowerCase();
+            return bName !== 'kas tunai' && !bName.includes('tunai') && !aName.includes('tunai');
+        });
+        const totalBankBalance = validBankAccounts.reduce((sum, a) => sum + parseFloat(a.balance || 0), 0);
+    %>
+    <div class="d-flex flex-wrap justify-content-between align-items-end mb-4 gap-3">
+        <div>
+            <span class="badge bg-teal-subtle text-teal border px-3 py-1 rounded-pill fw-bold mb-2" style="background-color: #ccfbf1; color: #0f766e; border-color: #99f6e4 !important;">
+                <i class="bi bi-shield-check me-1"></i> Rekening Resmi
+            </span>
+            <h3 class="fw-bold text-slate-800 m-0">Saldo Rekening Bank Kas Masjid</h3>
+            <p class="text-muted small m-0 mt-1">
+                Laporan saldo rekening perbankan resmi yang dikelola pengurus masjid secara terbuka dan akuntabel.
+            </p>
+        </div>
+        <% if (validBankAccounts.length > 0) { %>
+            <div class="p-2 px-3 rounded-pill bg-white border shadow-sm d-flex align-items-center gap-2">
+                <span class="small text-muted fw-semibold"><i class="bi bi-bank text-teal me-1" style="color: #0f766e;"></i> Total Saldo Bank:</span>
+                <span class="fw-extrabold text-teal fs-6" style="color: #0f766e;"><%= formatRupiah(totalBankBalance) %></span>
+            </div>
+        <% } %>
+    </div>
+
     <!-- Rekening Kas & Bank -->
     <div class="row g-4 mb-5">
-        <% if (cashAccounts && cashAccounts.length > 0) { %>
-            <% cashAccounts.forEach(acc => { %>
+        <% if (validBankAccounts.length > 0) { %>
+            <% validBankAccounts.forEach(acc => { %>
                 <div class="col-lg-4 col-md-6">
                     <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100 border-top border-4" style="border-color: #0d9488 !important;">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <span class="badge bg-light text-dark border fw-bold"><%= acc.bank_name %></span>
-                            <i class="bi bi-bank fs-4 text-emerald" style="color: #0d9488;"></i>
+                            <div class="rounded-circle p-2 bg-teal-subtle text-teal d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; background-color: #ccfbf1; color: #0f766e;">
+                                <i class="bi bi-bank fs-5"></i>
+                            </div>
                         </div>
                         <h6 class="text-muted fw-bold mb-1"><%= acc.name %></h6>
                         <h3 class="fw-extrabold mb-2" style="color: #0f766e;"><%= formatRupiah(acc.balance) %></h3>
@@ -27,6 +56,13 @@
                     </div>
                 </div>
             <% }); %>
+        <% } else { %>
+            <div class="col-12">
+                <div class="alert alert-light border text-center py-4 rounded-4">
+                    <i class="bi bi-info-circle text-muted fs-3 d-block mb-2"></i>
+                    <p class="text-muted mb-0">Belum ada data rekening bank yang terdaftar.</p>
+                </div>
+            </div>
         <% } %>
     </div>
 

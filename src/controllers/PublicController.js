@@ -79,7 +79,13 @@ class PublicController {
     static async getTransparansi(req, res) {
         try {
             const [cashAccounts] = await db.query(
-                `SELECT * FROM cash_accounts WHERE is_active = 1 ORDER BY id ASC`
+                `SELECT * FROM cash_accounts 
+                 WHERE is_active = 1 
+                   AND bank_name != 'Kas Tunai' 
+                   AND LOWER(bank_name) NOT LIKE '%tunai%'
+                   AND LOWER(name) NOT LIKE '%kas tunai%' 
+                   AND LOWER(name) NOT LIKE '%operasional tunai%'
+                 ORDER BY id ASC`
             );
 
             const [recentTransactions] = await db.query(
