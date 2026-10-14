@@ -57,8 +57,10 @@ router.post('/web/articles/delete/:id', checkAuth, checkRole('Admin', 'Operator'
 // 6. Galeri Foto
 router.get('/web/galleries', checkAuth, checkRole('Admin', 'Operator', 'Pengelola Web'), WebSettingController.getGalleries);
 router.post('/web/galleries/create', checkAuth, checkRole('Admin', 'Operator', 'Pengelola Web'), upload.single('image'), WebSettingController.createGallery);
+router.post('/web/galleries/create-multiple', checkAuth, checkRole('Admin', 'Operator', 'Pengelola Web'), upload.array('images', 30), WebSettingController.createMultipleGalleries);
 router.post('/web/galleries/update/:id', checkAuth, checkRole('Admin', 'Operator', 'Pengelola Web'), upload.single('image'), WebSettingController.updateGallery);
 router.post('/web/galleries/delete/:id', checkAuth, checkRole('Admin', 'Operator', 'Pengelola Web'), WebSettingController.deleteGallery);
+router.post('/web/galleries/bulk-delete', checkAuth, checkRole('Admin', 'Operator', 'Pengelola Web'), WebSettingController.bulkDeleteGalleries);
 
 // 7. Pengaturan Jadwal Sholat & Petugas Jumat
 router.get('/web/prayer', checkAuth, checkRole('Admin', 'Operator', 'Pengelola Web'), WebSettingController.getPrayer);

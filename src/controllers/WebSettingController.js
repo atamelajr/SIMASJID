@@ -397,12 +397,14 @@ class WebSettingController {
     static async getGalleries(req, res) {
         try {
             const selectedCategory = req.query.category || 'Semua';
-            const galleries = await WebSettingModel.getAllGalleries({ category: selectedCategory });
+            const galleries = await WebSettingModel.getAllGalleries({ category: selectedCategory, limit: 100 });
+            const categoryCounts = await WebSettingModel.getGalleryCategoryCounts();
             res.render('settings/web_galleries', {
                 title: 'Kelola Galeri Foto',
                 activeSubmenu: 'web-galleries',
                 galleries,
                 selectedCategory,
+                categoryCounts,
                 successMsg: req.query.success || null,
                 errorMsg: req.query.error || null
             });
@@ -419,12 +421,51 @@ class WebSettingController {
                 return res.redirect('/settings/web/galleries?error=Pilih+file+foto+terlebih+dahulu');
             }
             const image_url = '/uploads/' + req.file.filename;
+            const finalTitle = title && title.trim() 
+                ? title.trim() 
+                : (req.file.originalname.replace(/\.[^/.]+$/, "") || 'Foto Galeri');
 
-            await WebSettingModel.createGallery({ title, category, image_url, description, event_date });
+            await WebSettingModel.createGallery({ 
+                title: finalTitle, 
+                category, 
+                image_url, 
+                description, 
+                event_date: event_date || null 
+            });
             res.redirect('/settings/web/galleries?success=Foto+berhasil+diunggah+ke+galeri');
         } catch (error) {
             console.error('Error WebSettingController createGallery:', error);
             res.redirect('/settings/web/galleries?error=Gagal+mengunggah+foto');
+        }
+    }
+
+    static async createMultipleGalleries(req, res) {
+        try {
+            const { base_title, category, description, event_date } = req.body;
+            if (!req.files || req.files.length === 0) {
+                return res.redirect('/settings/web/galleries?error=Pilih+minimal+satu+file+foto');
+            }
+
+            const items = req.files.map((file, idx) => {
+                const defaultName = file.originalname.replace(/\.[^/.]+$/, "");
+                const title = base_title && base_title.trim()
+                    ? (req.files.length > 1 ? `${base_title.trim()} (${idx + 1})` : base_title.trim())
+                    : defaultName;
+
+                return {
+                    title,
+                    category: category || 'Kegiatan',
+                    image_url: '/uploads/' + file.filename,
+                    description: description || '',
+                    event_date: event_date || null
+                };
+            });
+
+            await WebSettingModel.createMultipleGalleries(items);
+            res.redirect(`/settings/web/galleries?success=${req.files.length}+foto+berhasil+diunggah+ke+galeri`);
+        } catch (error) {
+            console.error('Error WebSettingController createMultipleGalleries:', error);
+            res.redirect('/settings/web/galleries?error=Gagal+mengunggah+foto+massal');
         }
     }
 
@@ -437,7 +478,7 @@ class WebSettingController {
                 image_url = '/uploads/' + req.file.filename;
             }
 
-            await WebSettingModel.updateGallery(id, { title, category, image_url, description, event_date });
+            await WebSettingModel.updateGallery(id, { title, category, image_url, description, event_date: event_date || null });
             res.redirect('/settings/web/galleries?success=Foto+galeri+berhasil+diperbarui');
         } catch (error) {
             console.error('Error WebSettingController updateGallery:', error);
@@ -445,8 +486,37 @@ class WebSettingController {
         }
     }
 
-    static async deleteGallery(id) {
-        await WebSettingModel.deleteGallery(id);
+    static async deleteGallery(req, res) {
+        try {
+            const { id } = req.params;
+            await WebSettingModel.deleteGallery(id);
+            res.redirect('/settings/web/galleries?success=Foto+galeri+berhasil+dihapus');
+        } catch (error) {
+            console.error('Error WebSettingController deleteGallery:', error);
+            res.redirect('/settings/web/galleries?error=Gagal+menghapus+foto');
+        }
+    }
+
+    static async bulkDeleteGalleries(req, res) {
+        try {
+            const { ids } = req.body;
+            let idList = [];
+            if (Array.isArray(ids)) {
+                idList = ids.map(x => parseInt(x)).filter(Boolean);
+            } else if (typeof ids === 'string') {
+                idList = ids.split(',').map(x => parseInt(x.trim())).filter(Boolean);
+            }
+
+            if (idList.length === 0) {
+                return res.redirect('/settings/web/galleries?error=Pilih+minimal+satu+foto+untuk+dihapus');
+            }
+
+            await WebSettingModel.bulkDeleteGalleries(idList);
+            res.redirect(`/settings/web/galleries?success=${idList.length}+foto+berhasil+dihapus`);
+        } catch (error) {
+            console.error('Error WebSettingController bulkDeleteGalleries:', error);
+            res.redirect('/settings/web/galleries?error=Gagal+menghapus+foto');
+        }
     }
 
     // 7. Pengaturan Jadwal Sholat & Petugas Jumat (/settings/web/prayer)

@@ -360,7 +360,7 @@ class WebSettingModel {
     }
 
     // === 6. KELOLA GALERI FOTO ===
-    static async getAllGalleries({ category, limit = 50 } = {}) {
+    static async getAllGalleries({ category, limit = 100 } = {}) {
         let sql = `SELECT * FROM web_galleries WHERE 1=1`;
         const params = [];
 
@@ -376,6 +376,18 @@ class WebSettingModel {
         return rows;
     }
 
+    static async getGalleryCategoryCounts() {
+        const [rows] = await db.query(`
+            SELECT category, COUNT(*) as count 
+            FROM web_galleries 
+            GROUP BY category
+        `);
+        const [totalRow] = await db.query(`SELECT COUNT(*) as total FROM web_galleries`);
+        const map = { 'Semua': totalRow[0]?.total || 0 };
+        rows.forEach(r => { map[r.category] = r.count; });
+        return map;
+    }
+
     static async createGallery({ title, category, image_url, description, event_date }) {
         await db.query(`
             INSERT INTO web_galleries (title, category, image_url, description, event_date)
@@ -383,10 +395,33 @@ class WebSettingModel {
         `, [title, category || 'Kegiatan', image_url, description || '', event_date || null]);
     }
 
+    static async createMultipleGalleries(items) {
+        if (!items || items.length === 0) return;
+        const values = items.map(g => [
+            g.title,
+            g.category || 'Kegiatan',
+            g.image_url,
+            g.description || '',
+            g.event_date || null
+        ]);
+        await db.query(`
+            INSERT INTO web_galleries (title, category, image_url, description, event_date)
+            VALUES ?
+        `, [values]);
+    }
+
     static async updateGallery(id, { title, category, image_url, description, event_date }) {
         const [rows] = await db.query(`SELECT image_url FROM web_galleries WHERE id = ?`, [id]);
         const oldImage = rows[0]?.image_url;
         const newImage = image_url || oldImage;
+
+        // Jika gambar diganti dan ada gambar lama, hapus gambar lama dari disk
+        if (image_url && oldImage && oldImage !== image_url && oldImage.startsWith('/uploads/')) {
+            const fs = require('fs');
+            const path = require('path');
+            const oldPath = path.join(__dirname, '../../public', oldImage);
+            fs.unlink(oldPath, () => {});
+        }
 
         await db.query(`
             UPDATE web_galleries SET
@@ -396,7 +431,30 @@ class WebSettingModel {
     }
 
     static async deleteGallery(id) {
+        const [rows] = await db.query(`SELECT image_url FROM web_galleries WHERE id = ?`, [id]);
         await db.query(`DELETE FROM web_galleries WHERE id = ?`, [id]);
+
+        if (rows[0]?.image_url && rows[0].image_url.startsWith('/uploads/')) {
+            const fs = require('fs');
+            const path = require('path');
+            const filePath = path.join(__dirname, '../../public', rows[0].image_url);
+            fs.unlink(filePath, () => {});
+        }
+    }
+
+    static async bulkDeleteGalleries(ids) {
+        if (!ids || ids.length === 0) return;
+        const [rows] = await db.query(`SELECT image_url FROM web_galleries WHERE id IN (?)`, [ids]);
+        await db.query(`DELETE FROM web_galleries WHERE id IN (?)`, [ids]);
+
+        const fs = require('fs');
+        const path = require('path');
+        rows.forEach(r => {
+            if (r.image_url && r.image_url.startsWith('/uploads/')) {
+                const filePath = path.join(__dirname, '../../public', r.image_url);
+                fs.unlink(filePath, () => {});
+            }
+        });
     }
 }
 

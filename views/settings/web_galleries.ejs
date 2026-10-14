@@ -1,14 +1,18 @@
 <div class="container-fluid px-0">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <!-- Header Page -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
             <h4 class="fw-bold mb-1"><i class="bi bi-camera me-2 text-primary"></i> Kelola Galeri Foto Kegiatan</h4>
-            <p class="text-muted small m-0">Unggah foto kegiatan, fasilitas, & dokumentasi momen masjid.</p>
+            <p class="text-muted small m-0">Unggah foto kegiatan, fasilitas, & dokumentasi momen masjid dengan pratinjau instan & upload massal.</p>
         </div>
-        <button type="button" class="btn btn-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#modalAddGallery">
-            <i class="bi bi-upload me-1"></i> Unggah Foto Baru
-        </button>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-primary btn-sm fw-semibold shadow-sm px-3" data-bs-toggle="modal" data-bs-target="#modalAddGallery">
+                <i class="bi bi-cloud-arrow-up-fill me-1"></i> Unggah Foto Baru
+            </button>
+        </div>
     </div>
 
+    <!-- Alert Flash Message -->
     <% if (typeof successMsg !== 'undefined' && successMsg) { %>
         <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
             <i class="bi bi-check-circle-fill me-2"></i> <%= successMsg %>
@@ -22,149 +26,694 @@
         </div>
     <% } %>
 
-    <!-- Filter Kategori Nav -->
+    <!-- Filter & Toolbar Bar -->
     <div class="card border-0 shadow-sm rounded-3 p-3 bg-white mb-4">
-        <div class="d-flex flex-wrap align-items-center gap-2">
-            <span class="fw-bold text-muted me-2 small"><i class="bi bi-funnel me-1"></i> Filter Kategori:</span>
-            <a href="/settings/web/galleries?category=Semua" class="btn btn-sm rounded-pill <%= selectedCategory === 'Semua' ? 'btn-primary fw-bold' : 'btn-outline-secondary' %>">Semua Foto</a>
-            <a href="/settings/web/galleries?category=Kegiatan" class="btn btn-sm rounded-pill <%= selectedCategory === 'Kegiatan' ? 'btn-primary fw-bold' : 'btn-outline-secondary' %>">Kegiatan Ibadah & PHBI</a>
-            <a href="/settings/web/galleries?category=Fasilitas" class="btn btn-sm rounded-pill <%= selectedCategory === 'Fasilitas' ? 'btn-primary fw-bold' : 'btn-outline-secondary' %>">Fasilitas Masjid</a>
-            <a href="/settings/web/galleries?category=Pembangunan" class="btn btn-sm rounded-pill <%= selectedCategory === 'Pembangunan' ? 'btn-primary fw-bold' : 'btn-outline-secondary' %>">Proyek Pembangunan</a>
-            <a href="/settings/web/galleries?category=Kajian" class="btn btn-sm rounded-pill <%= selectedCategory === 'Kajian' ? 'btn-primary fw-bold' : 'btn-outline-secondary' %>">Kajian & Pendidikan</a>
-            <a href="/settings/web/galleries?category=Bakti Social" class="btn btn-sm rounded-pill <%= selectedCategory === 'Bakti Social' ? 'btn-primary fw-bold' : 'btn-outline-secondary' %>">Bakti Sosial</a>
+        <div class="row g-3 align-items-center">
+            <!-- Search Input -->
+            <div class="col-lg-4 col-md-5">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                    <input type="text" id="gallerySearchInput" class="form-control bg-light border-start-0" placeholder="Cari nama foto atau kegiatan...">
+                    <button class="btn btn-outline-secondary d-none" type="button" id="clearSearchBtn"><i class="bi bi-x-lg"></i></button>
+                </div>
+            </div>
+
+            <!-- Kategori Tabs -->
+            <div class="col-lg-8 col-md-7">
+                <div class="d-flex flex-wrap align-items-center gap-1 justify-content-md-end">
+                    <% 
+                        const counts = typeof categoryCounts !== 'undefined' ? categoryCounts : {};
+                        const catList = [
+                            { key: 'Semua', label: 'Semua Foto' },
+                            { key: 'Kegiatan', label: 'Kegiatan Ibadah & PHBI' },
+                            { key: 'Fasilitas', label: 'Fasilitas Masjid' },
+                            { key: 'Pembangunan', label: 'Pembangunan' },
+                            { key: 'Kajian', label: 'Kajian & Pendidikan' },
+                            { key: 'Bakti Social', label: 'Bakti Sosial' }
+                        ];
+                    %>
+                    <% catList.forEach(c => { %>
+                        <a href="/settings/web/galleries?category=<%= encodeURIComponent(c.key) %>" 
+                           class="btn btn-sm rounded-pill <%= selectedCategory === c.key ? 'btn-primary fw-bold' : 'btn-outline-secondary' %>">
+                            <%= c.label %>
+                            <% if (typeof counts[c.key] !== 'undefined') { %>
+                                <span class="badge <%= selectedCategory === c.key ? 'bg-white text-primary' : 'bg-light text-secondary border' %> ms-1 rounded-pill">
+                                    <%= counts[c.key] %>
+                                </span>
+                            <% } %>
+                        </a>
+                    <% }); %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Action Bar (Muncul saat foto dicentang) -->
+    <div id="bulkActionBar" class="card border-0 shadow rounded-3 bg-dark text-white p-3 mb-4 d-none">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div class="d-flex align-items-center gap-3">
+                <div class="form-check m-0">
+                    <input class="form-check-input" type="checkbox" id="selectAllCheckbox">
+                    <label class="form-check-label fw-semibold text-white small" for="selectAllCheckbox">Pilih Semua</label>
+                </div>
+                <span class="badge bg-primary px-3 py-2" id="selectedCountBadge">0 foto dipilih</span>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-outline-light" id="cancelSelectionBtn">Batal Pilihan</button>
+                <form id="bulkDeleteForm" action="/settings/web/galleries/bulk-delete" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus foto yang dipilih?')">
+                    <input type="hidden" name="ids" id="bulkDeleteIds">
+                    <button type="submit" class="btn btn-sm btn-danger fw-semibold">
+                        <i class="bi bi-trash-fill me-1"></i> Hapus Foto Terpilih
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 
     <!-- Grid Galeri Foto -->
-    <div class="row g-4">
+    <div class="row g-4" id="galleryGrid">
         <% if (galleries && galleries.length > 0) { %>
             <% galleries.forEach(g => { %>
-                <div class="col-lg-3 col-md-4 col-sm-6">
-                    <div class="card border-0 shadow-sm rounded-3 overflow-hidden bg-white h-100 position-relative group-gallery">
-                        <img src="<%= g.image_url %>" class="card-img-top object-fit-cover" style="height: 180px;" alt="<%= g.title %>" onerror="this.src='/images/hero-default.jpg'">
-                        <div class="card-body p-3">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span class="badge bg-primary-subtle text-primary border border-primary small"><%= g.category %></span>
-                                <% if (g.event_date) { %>
-                                    <small class="text-muted extra-small"><i class="bi bi-calendar3 me-1"></i> <%= formatDate(g.event_date) %></small>
-                                <% } %>
+                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 gallery-card-col" 
+                     data-title="<%= (g.title || '').toLowerCase() %>" 
+                     data-desc="<%= (g.description || '').toLowerCase() %>" 
+                     data-category="<%= g.category %>">
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white h-100 gallery-item-card position-relative">
+                        <!-- Image Container with Hover Overlay -->
+                        <div class="gallery-img-wrapper position-relative overflow-hidden bg-light" style="height: 200px;">
+                            <img src="<%= g.image_url %>" class="w-100 h-100 object-fit-cover gallery-thumbnail" alt="<%= g.title %>" onerror="this.src='/images/hero-default.jpg'">
+                            
+                            <!-- Checkbox overlay (Top-Left) -->
+                            <div class="position-absolute top-0 start-0 p-2 z-2">
+                                <div class="form-check m-0">
+                                    <input class="form-check-input gallery-card-checkbox shadow" type="checkbox" value="<%= g.id %>">
+                                </div>
                             </div>
-                            <h6 class="fw-bold text-dark m-0 text-truncate" title="<%= g.title %>"><%= g.title %></h6>
-                            <small class="text-muted d-block mt-1 text-truncate"><%= g.description || '-' %></small>
-                        </div>
-                        <div class="card-footer bg-light p-2 d-flex justify-content-between align-items-center">
-                            <button type="button" class="btn btn-outline-warning btn-sm py-0 px-2" data-bs-toggle="modal" data-bs-target="#modalEditGallery<%= g.id %>" title="Edit Data"><i class="bi bi-pencil"></i></button>
-                            <form action="/settings/web/galleries/delete/<%= g.id %>" method="POST" class="d-inline" onsubmit="return confirm('Hapus foto ini dari galeri?')">
-                                <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2" title="Hapus Data"><i class="bi bi-trash"></i></button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Modal Edit Galeri Foto -->
-                <div class="modal fade" id="modalEditGallery<%= g.id %>" tabindex="-1">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content border-0 shadow">
-                            <div class="modal-header bg-warning text-dark">
-                                <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i> Edit Foto Galeri</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <!-- Category Badge (Top-Right) -->
+                            <div class="position-absolute top-0 end-0 p-2 z-2">
+                                <span class="badge bg-dark bg-opacity-75 text-white backdrop-blur shadow-sm small">
+                                    <%= g.category %>
+                                </span>
                             </div>
-                            <form action="/settings/web/galleries/update/<%= g.id %>" method="POST" enctype="multipart/form-data">
-                                <div class="modal-body p-4 text-start">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-semibold">Judul / Nama Foto</label>
-                                        <input type="text" name="title" class="form-control" value="<%= g.title %>" required>
-                                    </div>
-                                    <div class="row g-2 mb-3">
-                                        <div class="col-md-6">
-                                            <label class="form-label fw-semibold">Kategori Dokumentasi</label>
-                                            <select name="category" class="form-select">
-                                                <option value="Kegiatan" <%= g.category === 'Kegiatan' ? 'selected' : '' %>>Kegiatan Ibadah & PHBI</option>
-                                                <option value="Fasilitas" <%= g.category === 'Fasilitas' ? 'selected' : '' %>>Fasilitas Masjid</option>
-                                                <option value="Pembangunan" <%= g.category === 'Pembangunan' ? 'selected' : '' %>>Proyek Pembangunan</option>
-                                                <option value="Kajian" <%= g.category === 'Kajian' ? 'selected' : '' %>>Kajian & Pendidikan</option>
-                                                <option value="Bakti Social" <%= g.category === 'Bakti Social' ? 'selected' : '' %>>Bakti Sosial</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label fw-semibold">Tanggal Kegiatan</label>
-                                            <input type="date" name="event_date" class="form-control" value="<%= g.event_date ? g.event_date.toISOString().substring(0,10) : '' %>">
-                                        </div>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label fw-semibold">Ganti File Foto (Kosongkan jika tidak diubah)</label>
-                                        <div class="mb-2">
-                                            <img src="<%= g.image_url %>" height="70" class="rounded border">
-                                        </div>
-                                        <input type="file" name="image" class="form-control" accept="image/*">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label fw-semibold">Deskripsi / Keterangan</label>
-                                        <textarea name="description" class="form-control" rows="2"><%= g.description || '' %></textarea>
-                                    </div>
+
+                            <!-- Hover Overlay with Quick Action Buttons -->
+                            <div class="gallery-hover-overlay position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center gap-2">
+                                <button type="button" class="btn btn-light btn-sm rounded-circle shadow p-2" 
+                                        data-bs-toggle="modal" data-bs-target="#modalPreviewGallery<%= g.id %>" 
+                                        title="Pratinjau Foto">
+                                    <i class="bi bi-arrows-fullscreen"></i>
+                                </button>
+                                <button type="button" class="btn btn-warning btn-sm rounded-circle shadow p-2 text-dark" 
+                                        data-bs-toggle="modal" data-bs-target="#modalEditGallery<%= g.id %>" 
+                                        title="Edit Data Foto">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </button>
+                                <form action="/settings/web/galleries/delete/<%= g.id %>" method="POST" class="d-inline" onsubmit="return confirm('Hapus foto ini dari galeri?')">
+                                    <button type="submit" class="btn btn-danger btn-sm rounded-circle shadow p-2" title="Hapus Foto">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="card-body p-3 d-flex flex-column">
+                            <h6 class="fw-bold text-dark mb-1 text-truncate" title="<%= g.title %>"><%= g.title %></h6>
+                            
+                            <% if (g.event_date) { %>
+                                <div class="text-muted extra-small mb-2 d-flex align-items-center">
+                                    <i class="bi bi-calendar3 me-1 text-primary"></i> 
+                                    <span><%= formatDate(g.event_date) %></span>
                                 </div>
-                                <div class="modal-footer bg-light">
-                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
-                                    <button type="submit" class="btn btn-warning btn-sm fw-bold px-3">Simpan Perubahan</button>
-                                </div>
-                            </form>
+                            <% } %>
+
+                            <p class="text-secondary small mb-3 flex-grow-1 text-truncate-2" style="font-size: 0.85rem; line-height: 1.4;">
+                                <%= g.description ? g.description : 'Tidak ada keterangan tambahan.' %>
+                            </p>
+
+                            <!-- Bottom Quick Controls -->
+                            <div class="pt-2 border-top d-flex justify-content-between align-items-center text-muted small">
+                                <button type="button" class="btn btn-link text-decoration-none p-0 text-primary small fw-semibold" data-bs-toggle="modal" data-bs-target="#modalPreviewGallery<%= g.id %>">
+                                    <i class="bi bi-eye me-1"></i>Lihat Foto
+                                </button>
+                                <button type="button" class="btn btn-link text-decoration-none p-0 text-warning small fw-semibold" data-bs-toggle="modal" data-bs-target="#modalEditGallery<%= g.id %>">
+                                    <i class="bi bi-pencil me-1"></i>Edit
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             <% }); %>
         <% } else { %>
-            <div class="col-12 text-center py-5 bg-white rounded shadow-sm text-muted">
-                <i class="bi bi-images display-4 d-block mb-2"></i>
-                <p>Belum ada foto yang diunggah ke galeri untuk kategori ini.</p>
+            <div class="col-12 text-center py-5 bg-white rounded-4 shadow-sm text-muted">
+                <i class="bi bi-images display-3 d-block mb-3 text-secondary opacity-50"></i>
+                <h5 class="fw-bold text-dark mb-1">Belum Ada Foto di Kategori Ini</h5>
+                <p class="text-muted small mb-3">Klik tombol di bawah untuk mengunggah dokumentasi foto kegiatan atau fasilitas masjid.</p>
+                <button type="button" class="btn btn-primary btn-sm fw-semibold px-3" data-bs-toggle="modal" data-bs-target="#modalAddGallery">
+                    <i class="bi bi-cloud-arrow-up-fill me-1"></i> Unggah Foto Sekarang
+                </button>
             </div>
         <% } %>
     </div>
+
+    <!-- Empty State for Search Filter (JS driven) -->
+    <div id="noSearchMatchAlert" class="col-12 text-center py-5 bg-white rounded-4 shadow-sm text-muted d-none mt-3">
+        <i class="bi bi-search display-4 d-block mb-2 text-secondary opacity-50"></i>
+        <h5 class="fw-bold text-dark">Tidak Ada Foto yang Cocok</h5>
+        <p class="text-muted small">Coba ubah kata kunci pencarian Anda.</p>
+    </div>
 </div>
 
-<!-- Modal Tambah Galeri Foto -->
-<div class="modal fade" id="modalAddGallery" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fw-bold"><i class="bi bi-upload me-2"></i> Unggah Foto ke Galeri</h5>
+<!-- ========================================== -->
+<!-- MODAL TAMBAH FOTO (UNGGAH TUNGGAL & MASSAL)-->
+<!-- ========================================== -->
+<div class="modal fade" id="modalAddGallery" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-primary text-white py-3 px-4">
+                <h5 class="modal-title fw-bold"><i class="bi bi-cloud-arrow-up-fill me-2"></i> Unggah Foto ke Galeri</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form action="/settings/web/galleries/create" method="POST" enctype="multipart/form-data">
-                <div class="modal-body p-4">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Judul / Nama Foto</label>
-                        <input type="text" name="title" class="form-control" placeholder="Misal: Sholat Idul Fitri 1447H" required>
-                    </div>
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Kategori Dokumentasi</label>
-                            <select name="category" class="form-select">
-                                <option value="Kegiatan">Kegiatan Ibadah & PHBI</option>
-                                <option value="Fasilitas">Fasilitas Masjid</option>
-                                <option value="Pembangunan">Proyek Pembangunan</option>
-                                <option value="Kajian">Kajian & Pendidikan</option>
-                                <option value="Bakti Social">Bakti Sosial</option>
-                            </select>
+
+            <!-- Upload Type Tabs -->
+            <div class="bg-light px-4 pt-3 border-bottom">
+                <ul class="nav nav-tabs border-0" id="uploadTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active fw-semibold" id="single-tab" data-bs-toggle="tab" data-bs-target="#single-upload" type="button" role="tab">
+                            <i class="bi bi-image me-1"></i> Satu Foto (Lengkap)
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-semibold" id="multi-tab" data-bs-toggle="tab" data-bs-target="#multi-upload" type="button" role="tab">
+                            <i class="bi bi-images me-1"></i> Upload Banyak Sekaligus (Batch)
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="tab-content" id="uploadTabContent">
+                <!-- TAB 1: SINGLE UPLOAD -->
+                <div class="tab-pane fade show active p-4" id="single-upload" role="tabpanel">
+                    <form action="/settings/web/galleries/create" method="POST" enctype="multipart/form-data" id="formSingleUpload">
+                        <div class="row g-3">
+                            <!-- Drag & Drop Zone -->
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Pilih atau Tarik File Foto <span class="text-danger">*</span></label>
+                                <div class="dropzone-box text-center p-4 rounded-3 border-dashed position-relative" id="singleDropzone">
+                                    <input type="file" name="image" id="singleFileInput" class="dropzone-input" accept="image/jpeg,image/png,image/webp,image/gif" required>
+                                    
+                                    <!-- Placeholder (sebelum pilih foto) -->
+                                    <div class="dropzone-placeholder" id="singlePlaceholder">
+                                        <i class="bi bi-cloud-arrow-up display-5 text-primary mb-2 d-block"></i>
+                                        <p class="mb-1 fw-bold text-dark">Tarik & lepas foto di sini, atau <span class="text-primary text-decoration-underline">pilih file</span></p>
+                                        <small class="text-muted">Mendukung format JPG, PNG, WEBP, GIF (Maks. 5 MB)</small>
+                                    </div>
+
+                                    <!-- Preview (setelah pilih foto) -->
+                                    <div class="dropzone-preview d-none position-relative" id="singlePreviewContainer">
+                                        <img src="" id="singlePreviewImg" class="img-fluid rounded-3 shadow-sm object-fit-contain" style="max-height: 220px;" alt="Pratinjau Foto">
+                                        <div class="mt-2 text-dark small fw-semibold" id="singleFileInfo"></div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger mt-2" id="btnRemoveSingleFile">
+                                            <i class="bi bi-trash me-1"></i> Ganti Foto
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-7">
+                                <label class="form-label fw-semibold">Judul / Nama Foto <span class="text-danger">*</span></label>
+                                <input type="text" name="title" id="singleTitleInput" class="form-control" placeholder="Misal: Sholat Idul Fitri 1447H" required>
+                                <small class="text-muted">Jika dikosongkan, nama file foto akan dijadikan judul.</small>
+                            </div>
+
+                            <div class="col-md-5">
+                                <label class="form-label fw-semibold">Kategori Dokumentasi</label>
+                                <select name="category" class="form-select">
+                                    <option value="Kegiatan">Kegiatan Ibadah & PHBI</option>
+                                    <option value="Fasilitas">Fasilitas Masjid</option>
+                                    <option value="Pembangunan">Proyek Pembangunan</option>
+                                    <option value="Kajian">Kajian & Pendidikan</option>
+                                    <option value="Bakti Social">Bakti Sosial</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Tanggal Kegiatan</label>
+                                <input type="date" name="event_date" class="form-control" value="<%= new Date().toISOString().substring(0,10) %>">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Deskripsi / Keterangan (Opsional)</label>
+                                <textarea name="description" class="form-control" rows="2" placeholder="Keterangan singkat tentang momen foto..."></textarea>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Tanggal Kegiatan</label>
-                            <input type="date" name="event_date" class="form-control">
+
+                        <div class="modal-footer px-0 pb-0 pt-4 mt-3 border-top">
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-primary btn-sm fw-bold px-4" id="btnSubmitSingle">
+                                <i class="bi bi-upload me-1"></i> Unggah Foto
+                            </button>
                         </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">File Foto</label>
-                        <input type="file" name="image" class="form-control" accept="image/*" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Deskripsi / Keterangan (Opsional)</label>
-                        <textarea name="description" class="form-control" rows="2" placeholder="Keterangan singkat tentang foto..."></textarea>
-                    </div>
+                    </form>
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary btn-sm fw-bold px-3">Unggah Foto</button>
+
+                <!-- TAB 2: BATCH / MULTIPLE UPLOAD -->
+                <div class="tab-pane fade p-4" id="multi-upload" role="tabpanel">
+                    <form action="/settings/web/galleries/create-multiple" method="POST" enctype="multipart/form-data" id="formMultiUpload">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Pilih Banyak Foto Sekaligus (Maks 30 Foto) <span class="text-danger">*</span></label>
+                                <div class="dropzone-box text-center p-4 rounded-3 border-dashed position-relative" id="multiDropzone">
+                                    <input type="file" name="images" id="multiFileInput" class="dropzone-input" accept="image/jpeg,image/png,image/webp,image/gif" multiple required>
+                                    
+                                    <div class="dropzone-placeholder" id="multiPlaceholder">
+                                        <i class="bi bi-images display-5 text-success mb-2 d-block"></i>
+                                        <p class="mb-1 fw-bold text-dark">Tarik & lepas kumpulan foto di sini, atau <span class="text-success text-decoration-underline">pilih file</span></p>
+                                        <small class="text-muted">Bisa memilih banyak foto sekaligus (Maksimal 30 foto, masing-masing maks 5 MB)</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Multi Preview Grid Container -->
+                            <div class="col-12 d-none" id="multiPreviewContainer">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-semibold small text-dark"><span id="multiCountText">0</span> Foto Siap Diunggah:</span>
+                                    <button type="button" class="btn btn-link text-danger text-decoration-none p-0 small" id="btnClearMultiFiles">
+                                        <i class="bi bi-trash me-1"></i> Hapus Semua
+                                    </button>
+                                </div>
+                                <div class="row g-2 p-2 border rounded-3 bg-light overflow-auto" id="multiThumbGrid" style="max-height: 200px;">
+                                    <!-- Thumbnails injected via JS -->
+                                </div>
+                            </div>
+
+                            <div class="col-md-7">
+                                <label class="form-label fw-semibold">Judul Dasar Kegiatan</label>
+                                <input type="text" name="base_title" class="form-control" placeholder="Misal: Dokumentasi Sholat Tarawih 1447H">
+                                <small class="text-muted">Foto akan otomatis dinamai berurutan, misal: "... (1)", "... (2)"</small>
+                            </div>
+
+                            <div class="col-md-5">
+                                <label class="form-label fw-semibold">Kategori Dokumentasi</label>
+                                <select name="category" class="form-select">
+                                    <option value="Kegiatan">Kegiatan Ibadah & PHBI</option>
+                                    <option value="Fasilitas">Fasilitas Masjid</option>
+                                    <option value="Pembangunan">Proyek Pembangunan</option>
+                                    <option value="Kajian">Kajian & Pendidikan</option>
+                                    <option value="Bakti Social">Bakti Sosial</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Tanggal Kegiatan</label>
+                                <input type="date" name="event_date" class="form-control" value="<%= new Date().toISOString().substring(0,10) %>">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Keterangan Singkat (Untuk Semua Foto)</label>
+                                <textarea name="description" class="form-control" rows="2" placeholder="Catatan dokumentasi bersama..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer px-0 pb-0 pt-4 mt-3 border-top">
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-success btn-sm fw-bold px-4" id="btnSubmitMulti">
+                                <i class="bi bi-cloud-arrow-up-fill me-1"></i> Unggah Semua Foto
+                            </button>
+                        </div>
+                    </form>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
+
+<!-- ========================================== -->
+<!-- MODAL EDIT & PREVIEW UNTUK SETIAP FOTO     -->
+<!-- ========================================== -->
+<% if (galleries && galleries.length > 0) { %>
+    <% galleries.forEach(g => { %>
+        <!-- Modal Edit Galeri Foto -->
+        <div class="modal fade" id="modalEditGallery<%= g.id %>" tabindex="-1" data-bs-backdrop="static">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg rounded-4">
+                    <div class="modal-header bg-warning text-dark py-3 px-4">
+                        <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i> Edit Data Foto Galeri</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form action="/settings/web/galleries/update/<%= g.id %>" method="POST" enctype="multipart/form-data">
+                        <div class="modal-body p-4 text-start">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Judul / Nama Foto <span class="text-danger">*</span></label>
+                                <input type="text" name="title" class="form-control" value="<%= g.title %>" required>
+                            </div>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Kategori Dokumentasi</label>
+                                    <select name="category" class="form-select">
+                                        <option value="Kegiatan" <%= g.category === 'Kegiatan' ? 'selected' : '' %>>Kegiatan Ibadah & PHBI</option>
+                                        <option value="Fasilitas" <%= g.category === 'Fasilitas' ? 'selected' : '' %>>Fasilitas Masjid</option>
+                                        <option value="Pembangunan" <%= g.category === 'Pembangunan' ? 'selected' : '' %>>Proyek Pembangunan</option>
+                                        <option value="Kajian" <%= g.category === 'Kajian' ? 'selected' : '' %>>Kajian & Pendidikan</option>
+                                        <option value="Bakti Social" <%= g.category === 'Bakti Social' ? 'selected' : '' %>>Bakti Sosial</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Tanggal Kegiatan</label>
+                                    <input type="date" name="event_date" class="form-control" value="<%= g.event_date ? new Date(g.event_date).toISOString().substring(0,10) : '' %>">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">File Foto</label>
+                                <div class="p-3 border rounded-3 bg-light text-center mb-2">
+                                    <img src="<%= g.image_url %>" id="editPreviewImg<%= g.id %>" class="img-fluid rounded border shadow-sm" style="max-height: 140px; object-fit: contain;">
+                                </div>
+                                <input type="file" name="image" class="form-control edit-file-input" data-target="#editPreviewImg<%= g.id %>" accept="image/jpeg,image/png,image/webp,image/gif">
+                                <small class="text-muted">Biarkan kosong jika tidak ingin mengganti file foto.</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Deskripsi / Keterangan</label>
+                                <textarea name="description" class="form-control" rows="3" placeholder="Keterangan singkat tentang foto..."><%= g.description || '' %></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-light px-4 py-3">
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-warning btn-sm fw-bold px-3">Simpan Perubahan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Lightbox Preview Cepat Foto -->
+        <div class="modal fade" id="modalPreviewGallery<%= g.id %>" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content border-0 bg-dark text-white rounded-4 overflow-hidden shadow-2xl">
+                    <div class="modal-header border-0 bg-black bg-opacity-50 py-3 px-4">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-primary text-white"><%= g.category %></span>
+                            <h5 class="modal-title fw-bold text-white mb-0 fs-6"><%= g.title %></h5>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center p-3 bg-black">
+                        <img src="<%= g.image_url %>" class="img-fluid rounded-3 shadow" style="max-height: 70vh; object-fit: contain;" alt="<%= g.title %>">
+                        <div class="mt-3 text-start bg-secondary bg-opacity-25 p-3 rounded-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-semibold text-warning"><i class="bi bi-card-text me-1"></i> Keterangan:</span>
+                                <% if (g.event_date) { %>
+                                    <small class="text-light opacity-75"><i class="bi bi-calendar3 me-1"></i> Tanggal: <%= formatDate(g.event_date) %></small>
+                                <% } %>
+                            </div>
+                            <p class="mb-0 text-light small"><%= g.description || 'Tidak ada deskripsi tambahan.' %></p>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 bg-black bg-opacity-50 py-2 px-4 justify-content-between">
+                        <a href="<%= g.image_url %>" target="_blank" class="btn btn-sm btn-outline-light">
+                            <i class="bi bi-box-arrow-up-right me-1"></i> Buka Ukuran Asli
+                        </a>
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <% }); %>
+<% } %>
+
+<!-- Style khusus Galeri Foto CMS -->
+<style>
+    .border-dashed {
+        border: 2px dashed #cbd5e1;
+        transition: all 0.2s ease-in-out;
+        background-color: #f8fafc;
+    }
+    .border-dashed:hover, .border-dashed.dragover {
+        border-color: #0d6efd;
+        background-color: #eff6ff;
+    }
+    .dropzone-box {
+        cursor: pointer;
+        min-height: 150px;
+    }
+    .dropzone-input {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        opacity: 0;
+        cursor: pointer;
+        z-index: 5;
+    }
+    .gallery-img-wrapper {
+        position: relative;
+    }
+    .gallery-hover-overlay {
+        background: rgba(15, 23, 42, 0.65);
+        opacity: 0;
+        transition: opacity 0.25s ease-in-out;
+        backdrop-filter: blur(2px);
+        z-index: 3;
+    }
+    .gallery-item-card:hover .gallery-hover-overlay {
+        opacity: 1;
+    }
+    .gallery-thumbnail {
+        transition: transform 0.35s ease;
+    }
+    .gallery-item-card:hover .gallery-thumbnail {
+        transform: scale(1.05);
+    }
+    .extra-small {
+        font-size: 0.75rem;
+    }
+    .text-truncate-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .backdrop-blur {
+        backdrop-filter: blur(4px);
+    }
+</style>
+
+<!-- Script Interaktif Galeri Foto CMS -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // 1. Live Search Filter
+    const searchInput = document.getElementById('gallerySearchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    const cardCols = document.querySelectorAll('.gallery-card-col');
+    const noMatchAlert = document.getElementById('noSearchMatchAlert');
+
+    function applySearch() {
+        const query = (searchInput.value || '').trim().toLowerCase();
+        if (query.length > 0) {
+            clearSearchBtn.classList.remove('d-none');
+        } else {
+            clearSearchBtn.classList.add('d-none');
+        }
+
+        let visibleCount = 0;
+        cardCols.forEach(col => {
+            const title = col.getAttribute('data-title') || '';
+            const desc = col.getAttribute('data-desc') || '';
+            if (title.includes(query) || desc.includes(query)) {
+                col.classList.remove('d-none');
+                visibleCount++;
+            } else {
+                col.classList.add('d-none');
+            }
+        });
+
+        if (cardCols.length > 0 && visibleCount === 0) {
+            noMatchAlert.classList.remove('d-none');
+        } else {
+            noMatchAlert.classList.add('d-none');
+        }
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', applySearch);
+    }
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', function () {
+            searchInput.value = '';
+            applySearch();
+            searchInput.focus();
+        });
+    }
+
+    // 2. Bulk Selection & Bulk Action Bar
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const cardCheckboxes = document.querySelectorAll('.gallery-card-checkbox');
+    const bulkActionBar = document.getElementById('bulkActionBar');
+    const selectedCountBadge = document.getElementById('selectedCountBadge');
+    const bulkDeleteIds = document.getElementById('bulkDeleteIds');
+    const cancelSelectionBtn = document.getElementById('cancelSelectionBtn');
+
+    function updateBulkBar() {
+        const checked = Array.from(cardCheckboxes).filter(cb => cb.checked);
+        const count = checked.length;
+        if (count > 0) {
+            bulkActionBar.classList.remove('d-none');
+            selectedCountBadge.textContent = count + ' foto dipilih';
+            bulkDeleteIds.value = checked.map(cb => cb.value).join(',');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = (count === cardCheckboxes.length);
+            }
+        } else {
+            bulkActionBar.classList.add('d-none');
+            bulkDeleteIds.value = '';
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = false;
+            }
+        }
+    }
+
+    cardCheckboxes.forEach(cb => {
+        cb.addEventListener('change', updateBulkBar);
+    });
+
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function () {
+            // Hanya centang kartu yang sedang tampak (tidak terfilter)
+            cardCols.forEach(col => {
+                if (!col.classList.contains('d-none')) {
+                    const cb = col.querySelector('.gallery-card-checkbox');
+                    if (cb) cb.checked = selectAllCheckbox.checked;
+                }
+            });
+            updateBulkBar();
+        });
+    }
+
+    if (cancelSelectionBtn) {
+        cancelSelectionBtn.addEventListener('click', function () {
+            cardCheckboxes.forEach(cb => cb.checked = false);
+            updateBulkBar();
+        });
+    }
+
+    // 3. Dropzone & Preview Single Upload
+    const singleFileInput = document.getElementById('singleFileInput');
+    const singlePlaceholder = document.getElementById('singlePlaceholder');
+    const singlePreviewContainer = document.getElementById('singlePreviewContainer');
+    const singlePreviewImg = document.getElementById('singlePreviewImg');
+    const singleFileInfo = document.getElementById('singleFileInfo');
+    const btnRemoveSingleFile = document.getElementById('btnRemoveSingleFile');
+    const singleTitleInput = document.getElementById('singleTitleInput');
+
+    if (singleFileInput) {
+        singleFileInput.addEventListener('change', function () {
+            const file = this.files && this.files[0];
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('Ukuran file melebihi batas maksimal 5 MB.');
+                    this.value = '';
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    singlePreviewImg.src = e.target.result;
+                    singleFileInfo.textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(2) + ' MB)';
+                    singlePlaceholder.classList.add('d-none');
+                    singlePreviewContainer.classList.remove('d-none');
+                    
+                    // Otomatis isi judul jika masih kosong
+                    if (!singleTitleInput.value.trim()) {
+                        singleTitleInput.value = file.name.replace(/\.[^/.]+$/, "");
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    if (btnRemoveSingleFile) {
+        btnRemoveSingleFile.addEventListener('click', function () {
+            singleFileInput.value = '';
+            singlePreviewImg.src = '';
+            singleFileInfo.textContent = '';
+            singlePreviewContainer.classList.add('d-none');
+            singlePlaceholder.classList.remove('d-none');
+        });
+    }
+
+    // 4. Dropzone & Preview Multiple (Batch) Upload
+    const multiFileInput = document.getElementById('multiFileInput');
+    const multiPlaceholder = document.getElementById('multiPlaceholder');
+    const multiPreviewContainer = document.getElementById('multiPreviewContainer');
+    const multiThumbGrid = document.getElementById('multiThumbGrid');
+    const multiCountText = document.getElementById('multiCountText');
+    const btnClearMultiFiles = document.getElementById('btnClearMultiFiles');
+
+    if (multiFileInput) {
+        multiFileInput.addEventListener('change', function () {
+            const files = Array.from(this.files || []);
+            if (files.length > 30) {
+                alert('Maksimal dapat mengunggah 30 foto sekaligus.');
+                this.value = '';
+                return;
+            }
+            if (files.length > 0) {
+                multiThumbGrid.innerHTML = '';
+                multiCountText.textContent = files.length;
+                multiPreviewContainer.classList.remove('d-none');
+
+                files.forEach((file, idx) => {
+                    const col = document.createElement('div');
+                    col.className = 'col-3 col-sm-2 text-center position-relative';
+                    
+                    const img = document.createElement('img');
+                    img.className = 'img-thumbnail rounded object-fit-cover w-100 shadow-sm';
+                    img.style.height = '60px';
+                    
+                    const caption = document.createElement('div');
+                    caption.className = 'text-truncate extra-small text-muted mt-1';
+                    caption.textContent = file.name;
+
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+
+                    col.appendChild(img);
+                    col.appendChild(caption);
+                    multiThumbGrid.appendChild(col);
+                });
+            } else {
+                multiPreviewContainer.classList.add('d-none');
+                multiThumbGrid.innerHTML = '';
+            }
+        });
+    }
+
+    if (btnClearMultiFiles) {
+        btnClearMultiFiles.addEventListener('click', function () {
+            multiFileInput.value = '';
+            multiThumbGrid.innerHTML = '';
+            multiPreviewContainer.classList.add('d-none');
+        });
+    }
+
+    // 5. Live Preview saat ganti gambar di Modal Edit
+    document.querySelectorAll('.edit-file-input').forEach(input => {
+        input.addEventListener('change', function () {
+            const targetSelector = this.getAttribute('data-target');
+            const targetImg = document.querySelector(targetSelector);
+            if (this.files && this.files[0] && targetImg) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    targetImg.src = e.target.result;
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    });
+});
+</script>
