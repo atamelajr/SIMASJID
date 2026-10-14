@@ -9,6 +9,11 @@ class PublicController {
     static async getHome(req, res) {
         try {
             const summary = await TransactionModel.getDashboardSummary();
+            // Saldo di front-end hanya menghitung nilai rekening Bank (tanpa kas tunai)
+            const frontSummary = {
+                ...summary,
+                totalSaldo: (summary.totalSaldoBank !== undefined) ? summary.totalSaldoBank : summary.totalSaldo
+            };
             const projects = await ProjectModel.getActiveProjects();
             const dkmMembers = await MasjidModel.getDkmMembers();
             const banners = await WebSettingModel.getActiveBanners();
@@ -30,7 +35,7 @@ class PublicController {
                 title: 'Beranda - SIMASJID Portal Publik',
                 layout: 'layout_public',
                 currentRoute: 'home',
-                summary,
+                summary: frontSummary,
                 projects,
                 dkmMembers,
                 banners,
@@ -273,10 +278,14 @@ class PublicController {
     static async getDisplayTV(req, res) {
         try {
             const summary = await TransactionModel.getDashboardSummary();
+            const frontSummary = {
+                ...summary,
+                totalSaldo: (summary.totalSaldoBank !== undefined) ? summary.totalSaldoBank : summary.totalSaldo
+            };
             res.render('public/display_tv', {
                 title: 'Display Digital TV - SIMASJID',
                 layout: false,
-                summary
+                summary: frontSummary
             });
         } catch (error) {
             console.error('Error PublicController getDisplayTV:', error);

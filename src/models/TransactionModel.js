@@ -126,9 +126,19 @@ class TransactionModel {
 
     static async getDashboardSummary() {
         const [cashRows] = await db.query(
-            `SELECT SUM(balance) as total_saldo FROM cash_accounts`
+            `SELECT COALESCE(SUM(balance), 0) as total_saldo FROM cash_accounts WHERE is_active = 1`
         );
-        const totalSaldo = cashRows[0].total_saldo || 0;
+        const totalSaldo = parseFloat(cashRows[0]?.total_saldo || 0);
+
+        const [bankRows] = await db.query(
+            `SELECT COALESCE(SUM(balance), 0) as total_saldo_bank FROM cash_accounts 
+             WHERE is_active = 1 
+               AND bank_name != 'Kas Tunai' 
+               AND LOWER(bank_name) NOT LIKE '%tunai%'
+               AND LOWER(name) NOT LIKE '%kas tunai%' 
+               AND LOWER(name) NOT LIKE '%operasional tunai%'`
+        );
+        const totalSaldoBank = parseFloat(bankRows[0]?.total_saldo_bank || 0);
 
         // Rincian Akun Kas / Bank
         const [cashAccounts] = await db.query(
@@ -168,6 +178,7 @@ class TransactionModel {
 
         return {
             totalSaldo,
+            totalSaldoBank,
             cashAccounts,
             totalPenerimaanBulanIni: monthlyStats[0].total_penerimaan || 0,
             totalPengeluaranBulanIni: monthlyStats[0].total_pengeluaran || 0,

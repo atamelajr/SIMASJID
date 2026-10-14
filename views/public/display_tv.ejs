@@ -168,7 +168,7 @@
     <footer class="marquee-footer">
         <marquee behavior="scroll" direction="left" scrollamount="6">
             <span class="me-5"><i class="bi bi-broadcast text-warning me-2"></i> Mohon menonaktifkan/mengheningkan nada dering Handphone saat berada di dalam ruang utama sholat.</span>
-            <span class="me-5"><i class="bi bi-wallet2 text-emerald me-2"></i> Total Saldo Kas Terkini: <strong><%= formatRupiah(summary.totalSaldo) %></strong></span>
+            <span class="me-5"><i class="bi bi-wallet2 text-emerald me-2"></i> Total Saldo Kas Terkini: <strong><%= formatRupiah(summary.totalSaldoBank !== undefined ? summary.totalSaldoBank : summary.totalSaldo) %></strong></span>
             <span class="me-5"><i class="bi bi-heart-fill text-danger me-2"></i> Terimakasih atas Infaq dan Shadaqah Bapak/Ibu/Saudara jamaah sekalian. Jazakumullah Khairan Katsiran.</span>
         </marquee>
     </footer>
