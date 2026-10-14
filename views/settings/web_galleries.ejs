@@ -583,14 +583,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 .then(res => res.json())
                 .then(data => {
                     manageLoading.classList.add('d-none');
-                    if (!data.success || !data.photos || data.photos.length === 0) {
+                    const album = data.album || {};
+                    const photos = (data.photos && Array.isArray(data.photos) && data.photos.length > 0) 
+                        ? data.photos 
+                        : (album.photos && Array.isArray(album.photos) ? album.photos : []);
+
+                    if (!data.success || photos.length === 0) {
                         manageEmpty.classList.remove('d-none');
                         manageCount.textContent = '0 Foto dalam album';
                         return;
                     }
 
-                    const album = data.album || {};
-                    const photos = data.photos;
                     manageCount.textContent = `${photos.length} Foto dalam album`;
 
                     photos.forEach((photo, idx) => {

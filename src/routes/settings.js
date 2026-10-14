@@ -62,8 +62,11 @@ router.post('/web/galleries/album/delete/:id', checkAuth, checkRole('Admin', 'Op
 router.post('/web/galleries/album/toggle-home/:id', checkAuth, checkRole('Admin', 'Operator', 'Pengelola Web'), WebSettingController.toggleAlbumHome);
 router.get('/web/galleries/album/:id/photos', checkAuth, checkRole('Admin', 'Operator', 'Pengelola Web'), WebSettingController.getAlbumPhotos);
 router.post('/web/galleries/album/:id/add-photos', checkAuth, checkRole('Admin', 'Operator', 'Pengelola Web'), upload.array('images', 30), WebSettingController.addPhotosToAlbum);
+router.post('/web/galleries/album/:id/photos/add', checkAuth, checkRole('Admin', 'Operator', 'Pengelola Web'), upload.array('images', 30), WebSettingController.addPhotosToAlbum);
 router.post('/web/galleries/album/:id/delete-photo/:photoId', checkAuth, checkRole('Admin', 'Operator', 'Pengelola Web'), WebSettingController.deleteAlbumPhoto);
+router.post('/web/galleries/album/photo/delete/:photoId', checkAuth, checkRole('Admin', 'Operator', 'Pengelola Web'), WebSettingController.deleteAlbumPhoto);
 router.post('/web/galleries/album/:id/set-cover', checkAuth, checkRole('Admin', 'Operator', 'Pengelola Web'), WebSettingController.setCoverPhoto);
+router.post('/web/galleries/album/:id/cover/:photoId', checkAuth, checkRole('Admin', 'Operator', 'Pengelola Web'), WebSettingController.setCoverPhoto);
 
 // Fallbacks
 router.post('/web/galleries/create', checkAuth, checkRole('Admin', 'Operator', 'Pengelola Web'), upload.array('images', 30), WebSettingController.createAlbum);

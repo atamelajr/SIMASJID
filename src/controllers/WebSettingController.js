@@ -494,7 +494,11 @@ class WebSettingController {
             if (!album) {
                 return res.status(404).json({ success: false, message: 'Album tidak ditemukan' });
             }
-            res.json({ success: true, album });
+            res.json({ 
+                success: true, 
+                album, 
+                photos: album.photos || [] 
+            });
         } catch (error) {
             res.status(500).json({ success: false, message: error.message });
         }
@@ -521,7 +525,7 @@ class WebSettingController {
 
     static async deleteAlbumPhoto(req, res) {
         try {
-            const { photoId } = req.params;
+            const photoId = req.params.photoId || req.params.id;
             await WebSettingModel.deleteAlbumPhoto(photoId);
             res.redirect('/settings/web/galleries?success=Foto+berhasil+dihapus+dari+album');
         } catch (error) {
@@ -532,9 +536,13 @@ class WebSettingController {
 
     static async setCoverPhoto(req, res) {
         try {
-            const { id } = req.params;
-            const { photoUrl } = req.body;
-            await WebSettingModel.setCoverPhoto(id, photoUrl);
+            const { id, photoId } = req.params;
+            const photoUrl = req.body.photoUrl;
+            if (photoId) {
+                await WebSettingModel.setCoverPhotoByPhotoId(id, photoId);
+            } else if (photoUrl) {
+                await WebSettingModel.setCoverPhoto(id, photoUrl);
+            }
             res.redirect('/settings/web/galleries?success=Sampul+album+berhasil+diubah');
         } catch (error) {
             console.error('Error WebSettingController setCoverPhoto:', error);

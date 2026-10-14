@@ -1011,6 +1011,14 @@ class WebSettingModel {
         await this.ensureSchema();
         await db.query(`UPDATE web_albums SET cover_image = ? WHERE id = ?`, [photoUrl, albumId]);
     }
+
+    static async setCoverPhotoByPhotoId(albumId, photoId) {
+        await this.ensureSchema();
+        const [rows] = await db.query(`SELECT image_url FROM web_album_photos WHERE id = ? AND album_id = ?`, [photoId, albumId]);
+        if (rows && rows.length > 0) {
+            await db.query(`UPDATE web_albums SET cover_image = ? WHERE id = ?`, [rows[0].image_url, albumId]);
+        }
+    }
 }
 
 module.exports = WebSettingModel;
