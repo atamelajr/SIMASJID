@@ -9,6 +9,8 @@
     ];
     const currentCategory = isEdit ? a.category : 'Kajian & Dakwah';
     const isPublished = isEdit ? !!a.is_published : true;
+    const loggedInUser = (typeof user !== 'undefined' && user && user.full_name) ? user.full_name : 'Redaksi DKM';
+    const authorVal = isEdit ? (a.author_name || loggedInUser) : loggedInUser;
 %>
 <form action="<%= isEdit ? '/settings/web/articles/update/' + a.id : '/settings/web/articles/create' %>"
       method="POST" enctype="multipart/form-data"
@@ -83,7 +85,7 @@
 
                 <div class="mb-3">
                     <label class="form-label fw-semibold small" for="author-<%= uid %>">Nama Penulis</label>
-                    <input type="text" name="author_name" id="author-<%= uid %>" class="form-control" value="<%= isEdit ? a.author_name : '' %>" placeholder="Redaksi DKM">
+                    <input type="text" name="author_name" id="author-<%= uid %>" class="form-control" value="<%= authorVal %>" placeholder="<%= loggedInUser %>">
                 </div>
 
                 <% if (isEdit) { %>

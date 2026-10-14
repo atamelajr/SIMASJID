@@ -314,6 +314,7 @@ class WebSettingController {
                 title: 'Kelola Berita & Artikel',
                 activeSubmenu: 'web-articles',
                 articles,
+                user: req.session.user || null,
                 successMsg: req.query.success || null,
                 errorMsg: req.query.error || null
             });

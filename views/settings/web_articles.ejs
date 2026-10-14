@@ -91,7 +91,7 @@
                         <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i> Edit Artikel / Berita</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <%- include('partials/article_form', { a: a }) %>
+                    <%- include('partials/article_form', { a: a, user: (typeof user !== 'undefined' ? user : null) }) %>
                 </div>
             </div>
         </div>
@@ -106,7 +106,7 @@
                 <h5 class="modal-title fw-bold"><i class="bi bi-journal-plus me-2"></i> Tulis Artikel Baru</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <%- include('partials/article_form', { a: null }) %>
+            <%- include('partials/article_form', { a: null, user: (typeof user !== 'undefined' ? user : null) }) %>
         </div>
     </div>
 </div>
