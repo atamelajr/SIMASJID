@@ -1,0 +1,120 @@
+<%
+    const isEdit = !!a;
+    const uid = isEdit ? 'edit' + a.id : 'new';
+    const categories = [
+        ['Kajian & Dakwah', 'Kajian & Dakwah'],
+        ['Berita Kegiatan', 'Berita Kegiatan'],
+        ['Pengumuman', 'Pengumuman DKM'],
+        ['Sosial & ZIS', 'Sosial & ZIS']
+    ];
+    const currentCategory = isEdit ? a.category : 'Kajian & Dakwah';
+    const isPublished = isEdit ? !!a.is_published : true;
+%>
+<form action="<%= isEdit ? '/settings/web/articles/update/' + a.id : '/settings/web/articles/create' %>"
+      method="POST" enctype="multipart/form-data"
+      class="article-form d-flex flex-column overflow-hidden"
+      data-mode="<%= isEdit ? 'edit' : 'create' %>"
+      data-autosave="<%= isEdit ? '' : 'simasjid_article_draft' %>">
+    <div class="modal-body p-0">
+        <div class="row g-0">
+            <!-- Kolom Utama: Judul & Isi -->
+            <div class="col-lg-8 p-4 border-end">
+                <% if (!isEdit) { %>
+                    <div class="alert alert-info py-2 px-3 small d-none draft-notice d-flex align-items-center gap-2">
+                        <i class="bi bi-clock-history"></i>
+                        <span class="flex-grow-1">Ada draf artikel yang belum selesai <span class="draft-time"></span>.</span>
+                        <button type="button" class="btn btn-sm btn-info text-white py-0 btn-restore-draft">Lanjutkan</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 btn-discard-draft">Buang</button>
+                    </div>
+                <% } %>
+
+                <label class="form-label fw-semibold" for="title-<%= uid %>">Judul Artikel / Berita</label>
+                <input type="text" name="title" id="title-<%= uid %>" class="form-control form-control-lg fw-semibold mb-4 title-input"
+                       value="<%= isEdit ? a.title : '' %>" placeholder="Tulis judul yang menarik..." maxlength="200" required>
+
+                <label class="form-label fw-semibold d-flex justify-content-between align-items-end">
+                    <span>Isi Artikel</span>
+                    <small class="text-muted fw-normal"><i class="bi bi-image me-1"></i>Gambar bisa diseret (drag) atau ditempel (paste) langsung</small>
+                </label>
+                <div class="article-editor-wrap rounded-3">
+                    <div class="article-editor"></div>
+                    <div class="editor-footer d-flex justify-content-between align-items-center px-3 py-2 small text-muted">
+                        <span class="word-count">0 kata</span>
+                        <span class="editor-status"></span>
+                    </div>
+                </div>
+                <div class="invalid-feedback editor-feedback">Isi artikel tidak boleh kosong.</div>
+                <textarea name="content" class="d-none article-content-input"><%= isEdit ? a.content : '' %></textarea>
+            </div>
+
+            <!-- Sidebar: Pengaturan -->
+            <div class="col-lg-4 p-4 article-sidebar">
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-body py-3">
+                        <div class="form-check form-switch m-0">
+                            <input class="form-check-input publish-switch" type="checkbox" name="is_published" id="published-<%= uid %>" <%= isPublished ? 'checked' : '' %>>
+                            <label class="form-check-label fw-semibold" for="published-<%= uid %>">Tampilkan ke Publik</label>
+                        </div>
+                        <small class="text-muted d-block mt-1 publish-hint"></small>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small" for="category-<%= uid %>">Kategori</label>
+                    <select name="category" id="category-<%= uid %>" class="form-select">
+                        <% categories.forEach(([val, label]) => { %>
+                            <option value="<%= val %>" <%= currentCategory === val ? 'selected' : '' %>><%= label %></option>
+                        <% }) %>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Gambar Utama (Thumbnail)</label>
+                    <label class="thumb-drop d-block rounded-3 text-center overflow-hidden" for="thumb-<%= uid %>">
+                        <img src="<%= isEdit && a.thumbnail ? a.thumbnail : '' %>" class="thumb-preview w-100 <%= isEdit && a.thumbnail ? '' : 'd-none' %>" alt="Pratinjau thumbnail">
+                        <span class="thumb-placeholder d-block py-4 text-muted small <%= isEdit && a.thumbnail ? 'd-none' : '' %>">
+                            <i class="bi bi-cloud-arrow-up fs-3 d-block mb-1"></i>
+                            Klik untuk memilih gambar
+                        </span>
+                    </label>
+                    <input type="file" name="thumbnail" id="thumb-<%= uid %>" class="d-none thumb-input" accept="image/jpeg,image/png,image/webp,image/gif">
+                    <small class="text-muted">JPG/PNG/WEBP, maks 5MB. <%= isEdit ? 'Biarkan jika tidak diganti.' : '' %></small>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small" for="author-<%= uid %>">Nama Penulis</label>
+                    <input type="text" name="author_name" id="author-<%= uid %>" class="form-control" value="<%= isEdit ? a.author_name : '' %>" placeholder="Redaksi DKM">
+                </div>
+
+                <% if (isEdit) { %>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small" for="slug-<%= uid %>">Alamat Link (Slug)</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">/berita/</span>
+                            <input type="text" name="slug" id="slug-<%= uid %>" class="form-control font-monospace" value="<%= a.slug %>">
+                        </div>
+                    </div>
+                <% } %>
+
+                <div class="mb-1">
+                    <label class="form-label fw-semibold small d-flex justify-content-between align-items-center" for="summary-<%= uid %>">
+                        <span>Ringkasan Singkat</span>
+                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none btn-auto-summary"><i class="bi bi-magic me-1"></i>Isi otomatis</button>
+                    </label>
+                    <textarea name="summary" id="summary-<%= uid %>" class="form-control summary-input" rows="4" placeholder="1-2 kalimat yang tampil di kartu berita..."><%= isEdit ? (a.summary || '') : '' %></textarea>
+                    <small class="text-muted d-flex justify-content-between">
+                        <span>Kosongkan untuk memakai awal isi artikel.</span>
+                        <span class="summary-count">0/200</span>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer bg-light">
+        <small class="text-muted me-auto autosave-status"></small>
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+        <button type="submit" class="btn <%= isEdit ? 'btn-warning' : 'btn-primary' %> btn-sm fw-bold px-3 btn-submit-article">
+            <%= isEdit ? 'Simpan Perubahan' : 'Terbitkan Artikel' %>
+        </button>
+    </div>
+</form>

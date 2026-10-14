@@ -41,6 +41,15 @@ router.post('/web/announcements/delete/:id', checkAuth, checkRole('Admin', 'Oper
 
 // 5. Berita & Artikel
 router.get('/web/articles', checkAuth, checkRole('Admin', 'Operator', 'Pengelola Web'), WebSettingController.getArticles);
+router.post('/web/articles/upload-image', checkAuth, checkRole('Admin', 'Operator', 'Pengelola Web'), (req, res, next) => {
+    upload.single('image')(req, res, (err) => {
+        if (err) {
+            const message = err.code === 'LIMIT_FILE_SIZE' ? 'Ukuran gambar maksimal 5MB.' : 'Gagal mengunggah gambar.';
+            return res.status(400).json({ success: false, message });
+        }
+        next();
+    });
+}, WebSettingController.uploadArticleImage);
 router.post('/web/articles/create', checkAuth, checkRole('Admin', 'Operator', 'Pengelola Web'), upload.single('thumbnail'), WebSettingController.createArticle);
 router.post('/web/articles/update/:id', checkAuth, checkRole('Admin', 'Operator', 'Pengelola Web'), upload.single('thumbnail'), WebSettingController.updateArticle);
 router.post('/web/articles/delete/:id', checkAuth, checkRole('Admin', 'Operator', 'Pengelola Web'), WebSettingController.deleteArticle);

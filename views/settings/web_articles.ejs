@@ -15,6 +15,12 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     <% } %>
+    <% if (typeof errorMsg !== 'undefined' && errorMsg) { %>
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> <%= errorMsg %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <% } %>
 
     <div class="card border-0 shadow-sm rounded-3 overflow-hidden bg-white">
         <div class="card-body p-0">
@@ -62,77 +68,6 @@
                                         </form>
                                     </td>
                                 </tr>
-
-                                <!-- Modal Edit Artikel -->
-                                <div class="modal fade" id="modalEditArticle<%= a.id %>" tabindex="-1">
-                                    <div class="modal-dialog modal-lg modal-dialog-centered">
-                                        <div class="modal-content border-0 shadow">
-                                            <div class="modal-header bg-warning text-dark">
-                                                <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i> Edit Artikel / Berita</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <form action="/settings/web/articles/update/<%= a.id %>" method="POST" enctype="multipart/form-data">
-                                                <div class="modal-body p-4 text-start">
-                                                    <div class="row g-3 mb-3">
-                                                        <div class="col-md-8">
-                                                            <label class="form-label fw-semibold">Judul Artikel / Berita</label>
-                                                            <input type="text" name="title" class="form-control" value="<%= a.title %>" required>
-                                                        </div>
-                                                        <div class="col-md-4">
-                                                            <label class="form-label fw-semibold">Kategori</label>
-                                                            <select name="category" class="form-select">
-                                                                <option value="Kajian & Dakwah" <%= a.category === 'Kajian & Dakwah' ? 'selected' : '' %>>Kajian & Dakwah</option>
-                                                                <option value="Berita Kegiatan" <%= a.category === 'Berita Kegiatan' ? 'selected' : '' %>>Berita Kegiatan</option>
-                                                                <option value="Pengumuman" <%= a.category === 'Pengumuman' ? 'selected' : '' %>>Pengumuman DKM</option>
-                                                                <option value="Sosial & ZIS" <%= a.category === 'Sosial & ZIS' ? 'selected' : '' %>>Sosial & ZIS</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="row g-3 mb-3">
-                                                        <div class="col-md-6">
-                                                            <label class="form-label fw-semibold">Ganti Gambar (Biarkan kosong jika tidak diubah)</label>
-                                                            <% if (a.thumbnail) { %>
-                                                                <div class="mb-2">
-                                                                    <img src="<%= a.thumbnail %>" height="50" class="rounded border">
-                                                                </div>
-                                                            <% } %>
-                                                            <input type="file" name="thumbnail" class="form-control" accept="image/*">
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <label class="form-label fw-semibold">Nama Penulis</label>
-                                                            <input type="text" name="author_name" class="form-control" value="<%= a.author_name %>">
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="mb-3">
-                                                        <label class="form-label fw-semibold">URL Slug (Unik)</label>
-                                                        <input type="text" name="slug" class="form-control font-monospace" value="<%= a.slug %>">
-                                                    </div>
-
-                                                    <div class="mb-3">
-                                                        <label class="form-label fw-semibold">Ringkasan Singkat (Summary)</label>
-                                                        <textarea name="summary" class="form-control" rows="2"><%= a.summary || '' %></textarea>
-                                                    </div>
-
-                                                    <div class="mb-3">
-                                                        <label class="form-label fw-semibold">Isi Artikel Lengkap</label>
-                                                        <textarea name="content" class="form-control" rows="8" required><%= a.content %></textarea>
-                                                    </div>
-
-                                                    <div class="form-check form-switch">
-                                                        <input class="form-check-input" type="checkbox" name="is_published" id="publishedCheck<%= a.id %>" <%= a.is_published ? 'checked' : '' %>>
-                                                        <label class="form-check-label fw-semibold" for="publishedCheck<%= a.id %>">Status Terbit</label>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer bg-light">
-                                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
-                                                    <button type="submit" class="btn btn-warning btn-sm fw-bold px-3">Simpan Perubahan</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
                             <% }); %>
                         <% } else { %>
                             <tr>
@@ -146,63 +81,342 @@
     </div>
 </div>
 
+<!-- Modal Edit Artikel -->
+<% if (articles && articles.length > 0) { %>
+    <% articles.forEach(a => { %>
+        <div class="modal fade article-modal" id="modalEditArticle<%= a.id %>" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-warning text-dark">
+                        <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i> Edit Artikel / Berita</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <%- include('partials/article_form', { a: a }) %>
+                </div>
+            </div>
+        </div>
+    <% }); %>
+<% } %>
+
 <!-- Modal Tambah Artikel -->
-<div class="modal fade" id="modalAddArticle" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+<div class="modal fade article-modal" id="modalAddArticle" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content border-0 shadow">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title fw-bold"><i class="bi bi-journal-plus me-2"></i> Tulis Artikel Baru</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form action="/settings/web/articles/create" method="POST" enctype="multipart/form-data">
-                <div class="modal-body p-4">
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-8">
-                            <label class="form-label fw-semibold">Judul Artikel / Berita</label>
-                            <input type="text" name="title" class="form-control" placeholder="Judul berita utama..." required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Kategori</label>
-                            <select name="category" class="form-select">
-                                <option value="Kajian & Dakwah">Kajian & Dakwah</option>
-                                <option value="Berita Kegiatan">Berita Kegiatan</option>
-                                <option value="Pengumuman">Pengumuman DKM</option>
-                                <option value="Sosial & ZIS">Sosial & ZIS</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Gambar Utama (Thumbnail)</label>
-                            <input type="file" name="thumbnail" class="form-control" accept="image/*">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Nama Penulis</label>
-                            <input type="text" name="author_name" class="form-control" placeholder="Redaksi DKM">
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Ringkasan Singkat (Summary)</label>
-                        <textarea name="summary" class="form-control" rows="2" placeholder="Ringkasan 1-2 kalimat untuk ditampilkan di kartu berita..."></textarea>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Isi Artikel Lengkap</label>
-                        <textarea name="content" class="form-control" rows="8" placeholder="Tuliskan isi artikel lengkap di sini (mendukung HTML)..." required></textarea>
-                    </div>
-
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" name="is_published" id="publishedCheck" checked>
-                        <label class="form-check-label fw-semibold" for="publishedCheck">Terbitkan Langsung ke Publik</label>
-                    </div>
-                </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary btn-sm fw-bold px-3">Terbitkan Artikel</button>
-                </div>
-            </form>
+            <%- include('partials/article_form', { a: null }) %>
         </div>
     </div>
 </div>
+
+<!-- Editor Artikel Visual (Quill) -->
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+<style>
+    .article-modal .article-form { min-height: 0; }
+    .article-modal .article-sidebar { background: #f8fafc; }
+    .article-editor-wrap { border: 1px solid #dee2e6; background: #fff; }
+    .article-editor-wrap.is-invalid { border-color: #dc3545; box-shadow: 0 0 0 .2rem rgba(220, 53, 69, .15); }
+    .article-editor-wrap.is-invalid + .editor-feedback { display: block; }
+    .article-editor-wrap .ql-toolbar.ql-snow {
+        border: 0; border-bottom: 1px solid #dee2e6; background: #f8f9fa;
+        position: sticky; top: -1.5rem; z-index: 5; border-radius: .5rem .5rem 0 0;
+    }
+    .article-editor-wrap .ql-container.ql-snow { border: 0; font-family: inherit; font-size: 1rem; }
+    .article-editor-wrap .ql-editor { min-height: 380px; line-height: 1.8; padding: 1.25rem 1.5rem; }
+    .article-editor-wrap .ql-editor.ql-blank::before { font-style: normal; color: #adb5bd; left: 1.5rem; right: 1.5rem; }
+    .article-editor-wrap .ql-editor img { max-width: 100%; height: auto; border-radius: .5rem; }
+    .article-editor-wrap .ql-editor blockquote { border-left: 4px solid #0d9488; background: #f8fafc; padding: .5rem 1rem; }
+    .article-editor-wrap .ql-snow .ql-tooltip { z-index: 10; }
+    .article-editor-wrap .editor-footer { border-top: 1px solid #f1f3f5; background: #fcfcfd; border-radius: 0 0 .5rem .5rem; }
+    .thumb-drop { border: 2px dashed #ced4da; background: #fff; cursor: pointer; transition: border-color .15s; }
+    .thumb-drop:hover { border-color: #0d6efd; }
+    .thumb-preview { max-height: 180px; object-fit: cover; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+<script>
+(function () {
+    const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+    const SUMMARY_LIMIT = 200;
+    const TOOLBAR = [
+        [{ header: [2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ color: [] }, { background: [] }],
+        [{ list: 'ordered' }, { list: 'bullet' }, { align: [] }],
+        ['blockquote', 'link', 'image'],
+        ['clean']
+    ];
+    const TOOLTIPS = {
+        'ql-header': 'Ukuran judul / paragraf', 'ql-bold': 'Tebal (Ctrl+B)', 'ql-italic': 'Miring (Ctrl+I)',
+        'ql-underline': 'Garis bawah (Ctrl+U)', 'ql-strike': 'Coret', 'ql-color': 'Warna teks',
+        'ql-background': 'Warna sorotan', 'ql-align': 'Perataan teks', 'ql-blockquote': 'Kutipan (ayat / hadits)',
+        'ql-link': 'Sisipkan tautan', 'ql-image': 'Sisipkan gambar', 'ql-clean': 'Hapus format'
+    };
+
+    function escapeHtml(s) {
+        return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    // Konten lama berupa teks biasa diubah menjadi paragraf HTML
+    function toHtml(raw) {
+        raw = (raw || '').trim();
+        if (!raw) return '';
+        if (/<[a-z][\s\S]*>/i.test(raw)) return raw;
+        return raw.split(/\n{2,}/).map(p => '<p>' + escapeHtml(p).replace(/\n/g, '<br>') + '</p>').join('');
+    }
+
+    function isEmpty(quill) {
+        return quill.getText().trim().length === 0 && !quill.root.querySelector('img');
+    }
+
+    function getHtml(quill) {
+        if (isEmpty(quill)) return '';
+        const html = typeof quill.getSemanticHTML === 'function' ? quill.getSemanticHTML() : quill.root.innerHTML;
+        return html.replace(/&nbsp;/g, ' ');
+    }
+
+    function uploadImage(file) {
+        const fd = new FormData();
+        fd.append('image', file);
+        return fetch('/settings/web/articles/upload-image', { method: 'POST', body: fd, credentials: 'same-origin' })
+            .then(res => res.json().catch(() => ({})).then(data => {
+                if (!res.ok || !data.success) throw new Error(data.message || 'Gagal mengunggah gambar.');
+                return data.url;
+            }));
+    }
+
+    function initForm(form) {
+        if (form.dataset.ready) return;
+        form.dataset.ready = '1';
+
+        const holder = form.querySelector('.article-editor');
+        const wrap = form.querySelector('.article-editor-wrap');
+        const input = form.querySelector('.article-content-input');
+        const statusEl = form.querySelector('.editor-status');
+        const wordCountEl = form.querySelector('.word-count');
+        const titleInput = form.querySelector('.title-input');
+        const summaryInput = form.querySelector('.summary-input');
+        const summaryCount = form.querySelector('.summary-count');
+        const publishSwitch = form.querySelector('.publish-switch');
+        const publishHint = form.querySelector('.publish-hint');
+        const submitBtn = form.querySelector('.btn-submit-article');
+        const autosaveEl = form.querySelector('.autosave-status');
+        const isCreate = form.dataset.mode === 'create';
+        const draftKey = form.dataset.autosave;
+        let quill;
+
+        const setStatus = (text) => { statusEl.innerHTML = text; };
+
+        function insertImages(range, files) {
+            const images = Array.from(files || []).filter(f => /^image\//.test(f.type));
+            if (!images.length) return;
+            let index = range ? range.index : quill.getLength() - 1;
+            images.reduce((chain, file) => chain.then(() => {
+                if (file.size > MAX_IMAGE_SIZE) {
+                    alert('Gambar "' + file.name + '" lebih dari 5MB. Silakan perkecil ukurannya.');
+                    return;
+                }
+                setStatus('<span class="spinner-border spinner-border-sm me-1"></span> Mengunggah gambar...');
+                return uploadImage(file).then(url => {
+                    quill.insertEmbed(index, 'image', url, 'user');
+                    index += 1;
+                    quill.setSelection(index, 0, 'silent');
+                });
+            }), Promise.resolve())
+                .catch(err => alert(err.message))
+                .finally(() => setStatus(''));
+        }
+
+        function pickImage() {
+            const picker = document.createElement('input');
+            picker.type = 'file';
+            picker.accept = 'image/jpeg,image/png,image/webp,image/gif';
+            picker.multiple = true;
+            picker.onchange = () => insertImages(quill.getSelection(true), picker.files);
+            picker.click();
+        }
+
+        quill = new Quill(holder, {
+            theme: 'snow',
+            placeholder: 'Mulai menulis di sini... Pilih teks lalu gunakan tombol di atas untuk menebalkan, membuat judul, daftar, kutipan, atau menyisipkan gambar.',
+            modules: {
+                toolbar: { container: TOOLBAR, handlers: { image: pickImage } },
+                uploader: { handler: (range, files) => insertImages(range, files) } // drag & drop / paste gambar
+            }
+        });
+
+        // Tooltip bahasa Indonesia pada tombol toolbar
+        form.querySelectorAll('.ql-toolbar button, .ql-toolbar .ql-picker').forEach(el => {
+            const cls = Array.from(el.classList).find(c => TOOLTIPS[c]);
+            if (cls) el.title = TOOLTIPS[cls];
+            if (el.classList.contains('ql-list')) el.title = el.value === 'ordered' ? 'Daftar bernomor' : 'Daftar poin';
+        });
+
+        // Muat konten awal
+        const initial = toHtml(input.value);
+        if (initial) quill.clipboard.dangerouslyPasteHTML(initial, 'silent');
+        quill.history.clear();
+
+        function updateWordCount() {
+            const words = quill.getText().trim().split(/\s+/).filter(Boolean).length;
+            const minutes = Math.max(1, Math.ceil(words / 200));
+            wordCountEl.textContent = words + ' kata · ±' + minutes + ' menit baca';
+        }
+
+        function updateSummaryCount() {
+            const len = summaryInput.value.length;
+            summaryCount.textContent = len + '/' + SUMMARY_LIMIT;
+            summaryCount.classList.toggle('text-danger', len > SUMMARY_LIMIT);
+        }
+
+        function updatePublishState() {
+            publishHint.textContent = publishSwitch.checked
+                ? 'Artikel akan tampil di website publik.'
+                : 'Disimpan sebagai draft, tidak tampil di website.';
+            if (isCreate) submitBtn.textContent = publishSwitch.checked ? 'Terbitkan Artikel' : 'Simpan sebagai Draft';
+        }
+
+        // Autosave draf (hanya untuk artikel baru)
+        let saveTimer;
+        function saveDraft() {
+            if (!draftKey) return;
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(() => {
+                const data = { title: titleInput.value, summary: summaryInput.value, content: getHtml(quill), savedAt: Date.now() };
+                if (!data.title && !data.summary && !data.content) { localStorage.removeItem(draftKey); return; }
+                try {
+                    localStorage.setItem(draftKey, JSON.stringify(data));
+                    autosaveEl.innerHTML = '<i class="bi bi-cloud-check me-1"></i>Draf tersimpan otomatis ' +
+                        new Date(data.savedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                } catch (e) { /* storage penuh, abaikan */ }
+            }, 800);
+        }
+
+        if (draftKey) {
+            const notice = form.querySelector('.draft-notice');
+            let saved = null;
+            try { saved = JSON.parse(localStorage.getItem(draftKey) || 'null'); } catch (e) { saved = null; }
+            if (saved && (saved.title || saved.content || saved.summary)) {
+                notice.querySelector('.draft-time').textContent = '(' + new Date(saved.savedAt).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) + ')';
+                notice.classList.remove('d-none');
+                notice.querySelector('.btn-restore-draft').addEventListener('click', () => {
+                    titleInput.value = saved.title || '';
+                    summaryInput.value = saved.summary || '';
+                    quill.setContents([], 'silent');
+                    if (saved.content) quill.clipboard.dangerouslyPasteHTML(saved.content, 'silent');
+                    updateWordCount(); updateSummaryCount();
+                    notice.classList.add('d-none');
+                    quill.focus();
+                });
+                notice.querySelector('.btn-discard-draft').addEventListener('click', () => {
+                    if (!confirm('Buang draf ini? Draf tidak bisa dikembalikan.')) return;
+                    localStorage.removeItem(draftKey);
+                    notice.classList.add('d-none');
+                });
+            }
+        }
+
+        quill.on('text-change', () => {
+            form.dataset.dirty = '1';
+            wrap.classList.remove('is-invalid');
+            updateWordCount();
+            saveDraft();
+        });
+        titleInput.addEventListener('input', () => { form.dataset.dirty = '1'; saveDraft(); });
+        summaryInput.addEventListener('input', () => { form.dataset.dirty = '1'; updateSummaryCount(); saveDraft(); });
+        publishSwitch.addEventListener('change', updatePublishState);
+
+        // Ringkasan otomatis dari awal isi artikel
+        form.querySelector('.btn-auto-summary').addEventListener('click', () => {
+            const text = quill.getText().replace(/\s+/g, ' ').trim();
+            if (!text) { alert('Tulis isi artikel terlebih dahulu.'); return; }
+            let summary = text.length > SUMMARY_LIMIT ? text.substring(0, SUMMARY_LIMIT) : text;
+            if (text.length > SUMMARY_LIMIT) summary = summary.substring(0, summary.lastIndexOf(' ')) + '...';
+            summaryInput.value = summary;
+            summaryInput.dispatchEvent(new Event('input'));
+        });
+
+        // Pratinjau thumbnail
+        const thumbInput = form.querySelector('.thumb-input');
+        const thumbPreview = form.querySelector('.thumb-preview');
+        const thumbPlaceholder = form.querySelector('.thumb-placeholder');
+        thumbInput.addEventListener('change', () => {
+            const file = thumbInput.files[0];
+            if (!file) return;
+            if (file.size > MAX_IMAGE_SIZE) {
+                alert('Ukuran gambar maksimal 5MB.');
+                thumbInput.value = '';
+                return;
+            }
+            thumbPreview.src = URL.createObjectURL(file);
+            thumbPreview.classList.remove('d-none');
+            thumbPlaceholder.classList.add('d-none');
+            form.dataset.dirty = '1';
+        });
+
+        form.addEventListener('submit', (e) => {
+            if (isEmpty(quill)) {
+                e.preventDefault();
+                wrap.classList.add('is-invalid');
+                quill.focus();
+                return;
+            }
+            input.value = getHtml(quill);
+            form.dataset.submitting = '1';
+            if (draftKey) { clearTimeout(saveTimer); localStorage.removeItem(draftKey); }
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
+        });
+
+        // Kembalikan form ke data awal (dipakai saat perubahan dibuang)
+        const originalThumb = thumbPreview.getAttribute('src');
+        form._reset = () => {
+            form.reset();
+            quill.setContents([], 'silent');
+            const html = toHtml(input.value);
+            if (html) quill.clipboard.dangerouslyPasteHTML(html, 'silent');
+            quill.history.clear();
+            thumbPreview.src = originalThumb || '';
+            thumbPreview.classList.toggle('d-none', !originalThumb);
+            thumbPlaceholder.classList.toggle('d-none', !!originalThumb);
+            wrap.classList.remove('is-invalid');
+            delete form.dataset.dirty;
+            updateWordCount(); updateSummaryCount(); updatePublishState();
+        };
+
+        updateWordCount();
+        updateSummaryCount();
+        updatePublishState();
+        form._quill = quill;
+    }
+
+    // Inisialisasi editor saat modal dibuka
+    document.addEventListener('show.bs.modal', (e) => {
+        const form = e.target.querySelector && e.target.querySelector('.article-form');
+        if (form) initForm(form);
+    });
+    document.addEventListener('shown.bs.modal', (e) => {
+        const title = e.target.querySelector && e.target.querySelector('.article-form .title-input');
+        if (title && !title.value) title.focus();
+    });
+
+    // Cegah perubahan hilang saat menutup editor artikel yang sedang diedit
+    document.addEventListener('hide.bs.modal', (e) => {
+        const form = e.target.querySelector && e.target.querySelector('.article-form');
+        if (!form || form.dataset.submitting || !form.dataset.dirty) return;
+        const msg = form.dataset.autosave
+            ? 'Tutup editor? Draf Anda tersimpan otomatis dan bisa dilanjutkan nanti.'
+            : 'Perubahan belum disimpan. Tutup editor dan buang perubahan?';
+        if (!confirm(msg)) { e.preventDefault(); return; }
+        if (!form.dataset.autosave) form.dataset.resetOnHidden = '1';
+    });
+    document.addEventListener('hidden.bs.modal', (e) => {
+        const form = e.target.querySelector && e.target.querySelector('.article-form');
+        if (form && form.dataset.resetOnHidden && form._reset) {
+            delete form.dataset.resetOnHidden;
+            form._reset();
+        }
+    });
+})();
+</script>

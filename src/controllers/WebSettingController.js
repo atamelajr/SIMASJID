@@ -365,6 +365,22 @@ class WebSettingController {
         }
     }
 
+    static async uploadArticleImage(req, res) {
+        try {
+            if (!req.file) {
+                return res.status(400).json({ success: false, message: 'File tidak valid. Gunakan gambar JPG, PNG, WEBP, atau GIF (maks 5MB).' });
+            }
+            if (!/^image\//.test(req.file.mimetype)) {
+                require('fs').unlink(req.file.path, () => {});
+                return res.status(400).json({ success: false, message: 'Hanya file gambar yang diperbolehkan.' });
+            }
+            res.json({ success: true, url: '/uploads/' + req.file.filename });
+        } catch (error) {
+            console.error('Error WebSettingController uploadArticleImage:', error);
+            res.status(500).json({ success: false, message: 'Gagal mengunggah gambar.' });
+        }
+    }
+
     static async deleteArticle(req, res) {
         try {
             const { id } = req.params;
