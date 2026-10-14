@@ -3,6 +3,10 @@ const ProjectModel = require('../models/ProjectModel');
 
 class DashboardController {
     static async index(req, res) {
+        if (req.session.user && req.session.user.role_name === 'Pengelola Web') {
+            return res.redirect('/settings/web/menus');
+        }
+
         try {
             const summary = await TransactionModel.getDashboardSummary();
             const projects = await ProjectModel.getActiveProjects();

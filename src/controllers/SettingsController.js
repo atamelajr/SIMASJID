@@ -4,10 +4,12 @@ class SettingsController {
     static async index(req, res) {
         try {
             const users = await UserModel.getAllUsers();
+            const roles = await UserModel.getAllRoles();
 
             res.render('settings/index', {
                 title: 'Pengaturan Sistem & Pengguna',
-                users
+                users,
+                roles
             });
         } catch (err) {
             console.error('Settings Error:', err);

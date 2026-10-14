@@ -6,7 +6,8 @@ USE simasjid_db;
 INSERT INTO roles (id, name, description) VALUES
 (1, 'Admin', 'Akses penuh ke seluruh sistem dan database'),
 (2, 'Operator', 'Akses input penerimaan, pengeluaran, buku kas, dan inventaris'),
-(3, 'Pengurus', 'Akses Read-Only untuk melihat dashboard dan mencetak laporan')
+(3, 'Pengurus', 'Akses Read-Only untuk melihat dashboard dan mencetak laporan'),
+(4, 'Pengelola Web', 'Akses khusus pengelolaan konten dan pengaturan website (CMS)')
 ON DUPLICATE KEY UPDATE name=VALUES(name);
 
 -- Default Admin User (Password default: admin123)

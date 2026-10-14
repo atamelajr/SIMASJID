@@ -3,7 +3,7 @@ const router = express.Router();
 const InventarisController = require('../controllers/InventarisController');
 const { checkAuth, checkRole } = require('../middlewares/auth');
 
-router.get('/', checkAuth, InventarisController.index);
+router.get('/', checkAuth, checkRole('Admin', 'Operator', 'Pengurus'), InventarisController.index);
 router.post('/usage', checkAuth, checkRole('Admin', 'Operator'), InventarisController.recordUsage);
 
 router.post('/asset/create', checkAuth, checkRole('Admin', 'Operator'), InventarisController.createAsset);

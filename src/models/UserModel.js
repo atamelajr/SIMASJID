@@ -31,7 +31,31 @@ class UserModel {
         return { valid: true };
     }
 
+    static async ensureWebRole() {
+        try {
+            const [roles] = await db.query(
+                `SELECT * FROM roles WHERE name = 'Pengelola Web' OR id = 4`
+            );
+            if (roles.length === 0) {
+                await db.query(
+                    `INSERT INTO roles (id, name, description) VALUES (4, 'Pengelola Web', 'Akses khusus pengelolaan konten dan pengaturan website (CMS)')
+                     ON DUPLICATE KEY UPDATE name = 'Pengelola Web', description = VALUES(description)`
+                );
+                console.log('Self-healing migration: Added Pengelola Web role.');
+            }
+        } catch (err) {
+            console.error('ensureWebRole error:', err.message);
+        }
+    }
+
+    static async getAllRoles() {
+        await this.ensureWebRole();
+        const [rows] = await db.query(`SELECT * FROM roles ORDER BY id ASC`);
+        return rows;
+    }
+
     static async getAllUsers() {
+        await this.ensureWebRole();
         const [rows] = await db.query(
             `SELECT u.id, u.username, u.full_name, u.role_id, u.phone, u.is_active, u.created_at, r.name as role_name 
              FROM users u 

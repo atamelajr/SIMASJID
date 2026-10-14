@@ -4,7 +4,7 @@ const ProyekController = require('../controllers/ProyekController');
 const { checkAuth, checkRole } = require('../middlewares/auth');
 const upload = require('../middlewares/upload');
 
-router.get('/', checkAuth, ProyekController.index);
+router.get('/', checkAuth, checkRole('Admin', 'Operator', 'Pengurus'), ProyekController.index);
 router.post('/create', checkAuth, checkRole('Admin', 'Operator'), ProyekController.createProject);
 router.post('/update/:id', checkAuth, checkRole('Admin', 'Operator'), ProyekController.updateProject);
 router.post('/delete/:id', checkAuth, checkRole('Admin'), ProyekController.deleteProject);

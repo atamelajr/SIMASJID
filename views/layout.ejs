@@ -117,16 +117,19 @@
                 <button type="button" class="btn-close btn-close-white d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#sidebarMenu" aria-label="Close"></button>
             </div>
             <ul class="nav nav-pills flex-column mb-auto">
+                <% if (user && user.role_name !== 'Pengelola Web') { %>
                 <li class="nav-item">
                     <a href="/dashboard" class="nav-link <%= typeof title !== 'undefined' && title.includes('Dashboard') ? 'active' : '' %>">
                         <i class="bi bi-speedometer2"></i> Dashboard
                     </a>
                 </li>
+                <% } %>
                 <li>
                     <a href="/profil" class="nav-link <%= typeof title !== 'undefined' && title.includes('Profil') ? 'active' : '' %>">
                         <i class="bi bi-info-circle"></i> Profil Masjid
                     </a>
                 </li>
+                <% if (user && user.role_name !== 'Pengelola Web') { %>
                 <li>
                     <a href="/keuangan" class="nav-link <%= typeof title !== 'undefined' && (title.includes('Transaksi') || title.includes('Keuangan')) && typeof activeSubmenu === 'undefined' ? 'active' : '' %>">
                         <i class="bi bi-journal-text"></i> Transaksi
@@ -185,6 +188,7 @@
                         </ul>
                     </div>
                 </li>
+                <% } %>
 
                 <!-- Master Data & Parameter Menu Section -->
                 <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
@@ -237,7 +241,7 @@
                 <% } %>
 
                 <!-- Modul Pengaturan Web (CMS) Sub-Menu Section -->
-                <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
+                <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator' || user.role_name === 'Pengelola Web')) { %>
                     <% const isWebActive = typeof activeSubmenu !== 'undefined' && ['web-general', 'web-menus', 'web-banners', 'web-announcements', 'web-articles', 'web-galleries', 'web-prayer'].includes(activeSubmenu); %>
                     <li class="nav-item">
                         <a href="#webSubmenu" data-bs-toggle="collapse" class="nav-link d-flex align-items-center justify-content-between <%= isWebActive ? '' : 'collapsed' %>" aria-expanded="<%= isWebActive ? 'true' : 'false' %>">
@@ -293,6 +297,13 @@
                         </a>
                     </li>
                 <% } %>
+
+                <li class="nav-item mt-3">
+                    <a href="/" target="_blank" class="nav-link text-info bg-dark bg-opacity-25 border border-info border-opacity-25 rounded d-flex align-items-center justify-content-between">
+                        <span><i class="bi bi-globe me-2"></i>Buka Website Publik</span>
+                        <i class="bi bi-box-arrow-up-right small"></i>
+                    </a>
+                </li>
             </ul>
             <hr class="text-secondary">
             <div class="px-3 pb-2 text-muted small text-truncate" title="<%= typeof masjidProfile !== 'undefined' && masjidProfile.name ? masjidProfile.name : 'SIMASJID' %>">
@@ -317,7 +328,7 @@
                                 <button class="btn btn-light dropdown-toggle d-flex align-items-center gap-2 border" type="button" data-bs-toggle="dropdown">
                                     <i class="bi bi-person-circle fs-5 text-primary"></i>
                                     <span class="fw-semibold user-name-text"><%= user.full_name %></span>
-                                    <span class="badge bg-primary-subtle text-primary rounded-pill badge-user-role"><%= user.role_name %></span>
+                                    <span class="badge <%= user.role_name === 'Pengelola Web' ? 'text-white' : 'bg-primary-subtle text-primary' %> rounded-pill badge-user-role" <%- user.role_name === 'Pengelola Web' ? 'style="background-color: #0d9488 !important;"' : '' %>><%= user.role_name %></span>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end shadow border-0">
                                     <li class="px-3 py-2 d-lg-none border-bottom mb-1">
@@ -342,29 +353,55 @@
     <!-- Mobile Bottom Navigation Bar (Android Style) -->
     <nav class="mobile-bottom-nav d-lg-none fixed-bottom bg-white no-print">
         <div class="d-flex justify-content-around align-items-center h-100 text-center px-1">
-            <!-- 1. Dashboard -->
-            <a href="/dashboard" class="mobile-nav-link text-decoration-none d-flex flex-column align-items-center justify-content-center flex-fill <%= typeof title !== 'undefined' && title.includes('Dashboard') ? 'active' : '' %>">
-                <i class="bi bi-speedometer2"></i>
-                <span class="extra-small mt-1">Beranda</span>
-            </a>
+            <% if (user && user.role_name === 'Pengelola Web') { %>
+                <!-- 1. Menu Navigasi Web -->
+                <a href="/settings/web/menus" class="mobile-nav-link text-decoration-none d-flex flex-column align-items-center justify-content-center flex-fill <%= typeof activeSubmenu !== 'undefined' && activeSubmenu === 'web-menus' ? 'active' : '' %>">
+                    <i class="bi bi-menu-button-wide"></i>
+                    <span class="extra-small mt-1">Menu</span>
+                </a>
 
-            <!-- 2. Transaksi -->
-            <a href="/keuangan" class="mobile-nav-link text-decoration-none d-flex flex-column align-items-center justify-content-center flex-fill <%= typeof title !== 'undefined' && (title.includes('Transaksi') || title.includes('Keuangan')) ? 'active' : '' %>">
-                <i class="bi bi-journal-text"></i>
-                <span class="extra-small mt-1">Transaksi</span>
-            </a>
+                <!-- 2. Berita & Artikel -->
+                <a href="/settings/web/articles" class="mobile-nav-link text-decoration-none d-flex flex-column align-items-center justify-content-center flex-fill <%= typeof activeSubmenu !== 'undefined' && activeSubmenu === 'web-articles' ? 'active' : '' %>">
+                    <i class="bi bi-newspaper"></i>
+                    <span class="extra-small mt-1">Artikel</span>
+                </a>
 
-            <!-- 3. Inventaris -->
-            <a href="/inventaris" class="mobile-nav-link text-decoration-none d-flex flex-column align-items-center justify-content-center flex-fill <%= typeof title !== 'undefined' && title.includes('Inventaris') ? 'active' : '' %>">
-                <i class="bi bi-box-seam"></i>
-                <span class="extra-small mt-1">Inventaris</span>
-            </a>
+                <!-- 3. Banner / Hero -->
+                <a href="/settings/web/banners" class="mobile-nav-link text-decoration-none d-flex flex-column align-items-center justify-content-center flex-fill <%= typeof activeSubmenu !== 'undefined' && activeSubmenu === 'web-banners' ? 'active' : '' %>">
+                    <i class="bi bi-images"></i>
+                    <span class="extra-small mt-1">Banner</span>
+                </a>
 
-            <!-- 4. Laporan -->
-            <a href="/laporan/posisi-keuangan" class="mobile-nav-link text-decoration-none d-flex flex-column align-items-center justify-content-center flex-fill <%= typeof activeSubmenu !== 'undefined' && ['posisi-keuangan', 'aktivitas', 'kas', 'mutasi-kas', 'inventaris', 'persediaan'].includes(activeSubmenu) ? 'active' : '' %>">
-                <i class="bi bi-file-earmark-bar-graph"></i>
-                <span class="extra-small mt-1">Laporan</span>
-            </a>
+                <!-- 4. Lihat Website -->
+                <a href="/" target="_blank" class="mobile-nav-link text-decoration-none d-flex flex-column align-items-center justify-content-center flex-fill">
+                    <i class="bi bi-globe"></i>
+                    <span class="extra-small mt-1">Web</span>
+                </a>
+            <% } else { %>
+                <!-- 1. Dashboard -->
+                <a href="/dashboard" class="mobile-nav-link text-decoration-none d-flex flex-column align-items-center justify-content-center flex-fill <%= typeof title !== 'undefined' && title.includes('Dashboard') ? 'active' : '' %>">
+                    <i class="bi bi-speedometer2"></i>
+                    <span class="extra-small mt-1">Beranda</span>
+                </a>
+
+                <!-- 2. Transaksi -->
+                <a href="/keuangan" class="mobile-nav-link text-decoration-none d-flex flex-column align-items-center justify-content-center flex-fill <%= typeof title !== 'undefined' && (title.includes('Transaksi') || title.includes('Keuangan')) ? 'active' : '' %>">
+                    <i class="bi bi-journal-text"></i>
+                    <span class="extra-small mt-1">Transaksi</span>
+                </a>
+
+                <!-- 3. Inventaris -->
+                <a href="/inventaris" class="mobile-nav-link text-decoration-none d-flex flex-column align-items-center justify-content-center flex-fill <%= typeof title !== 'undefined' && title.includes('Inventaris') ? 'active' : '' %>">
+                    <i class="bi bi-box-seam"></i>
+                    <span class="extra-small mt-1">Inventaris</span>
+                </a>
+
+                <!-- 4. Laporan -->
+                <a href="/laporan/posisi-keuangan" class="mobile-nav-link text-decoration-none d-flex flex-column align-items-center justify-content-center flex-fill <%= typeof activeSubmenu !== 'undefined' && ['posisi-keuangan', 'aktivitas', 'kas', 'mutasi-kas', 'inventaris', 'persediaan'].includes(activeSubmenu) ? 'active' : '' %>">
+                    <i class="bi bi-file-earmark-bar-graph"></i>
+                    <span class="extra-small mt-1">Laporan</span>
+                </a>
+            <% } %>
 
             <!-- 5. Menu Drawer -->
             <button type="button" class="btn border-0 mobile-nav-link d-flex flex-column align-items-center justify-content-center flex-fill bg-transparent p-0" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu">

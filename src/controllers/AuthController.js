@@ -39,7 +39,8 @@ class AuthController {
                 role_name: user.role_name
             };
 
-            const returnTo = req.session.returnTo || '/dashboard';
+            const defaultRedirect = user.role_name === 'Pengelola Web' ? '/settings/web/menus' : '/dashboard';
+            const returnTo = req.session.returnTo || defaultRedirect;
             delete req.session.returnTo;
             res.redirect(returnTo);
         } catch (err) {

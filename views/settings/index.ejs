@@ -1,7 +1,7 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
     <div>
         <h4 class="fw-bold text-dark mb-1">Pengaturan Pengguna & Hak Akses</h4>
-        <p class="text-muted small mb-0">Manajemen Role User (Admin, Operator/Bendahara, Pengurus/Ketua).</p>
+        <p class="text-muted small mb-0">Manajemen Role User (Admin, Operator/Bendahara, Pengurus/Ketua, Pengelola Web).</p>
     </div>
     <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddUser">
         <i class="bi bi-person-plus me-1"></i> Tambah Pengguna Baru
@@ -35,6 +35,8 @@
                                     <span class="badge bg-danger"><%= u.role_name %></span>
                                 <% } else if (u.role_name === 'Operator') { %>
                                     <span class="badge bg-warning text-dark"><%= u.role_name %></span>
+                                <% } else if (u.role_name === 'Pengelola Web' || u.role_name === 'Admin Web') { %>
+                                    <span class="badge bg-teal text-white" style="background-color: #0d9488 !important;"><%= u.role_name %></span>
                                 <% } else { %>
                                     <span class="badge bg-info"><%= u.role_name %></span>
                                 <% } %>
@@ -98,9 +100,16 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Role / Hak Akses</label>
                         <select name="role_id" class="form-select" required>
-                            <option value="1">Admin (Akses Penuh)</option>
-                            <option value="2">Operator / Bendahara (Input Mutasi Kas & Barang)</option>
-                            <option value="3">Pengurus / Ketua (Read-Only & Laporan)</option>
+                            <% if (typeof roles !== 'undefined' && roles.length > 0) { %>
+                                <% roles.forEach(r => { %>
+                                    <option value="<%= r.id %>"><%= r.name %> (<%= r.description %>)</option>
+                                <% }) %>
+                            <% } else { %>
+                                <option value="1">Admin (Akses Penuh)</option>
+                                <option value="2">Operator / Bendahara (Input Mutasi Kas & Barang)</option>
+                                <option value="3">Pengurus / Ketua (Read-Only & Laporan)</option>
+                                <option value="4">Pengelola Web (Akses Khusus Konten & Pengaturan Web)</option>
+                            <% } %>
                         </select>
                     </div>
                     <div class="mb-3">
@@ -142,9 +151,16 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Role / Hak Akses</label>
                         <select name="role_id" id="editRoleId" class="form-select" required>
-                            <option value="1">Admin (Akses Penuh)</option>
-                            <option value="2">Operator / Bendahara (Input Mutasi Kas & Barang)</option>
-                            <option value="3">Pengurus / Ketua (Read-Only & Laporan)</option>
+                            <% if (typeof roles !== 'undefined' && roles.length > 0) { %>
+                                <% roles.forEach(r => { %>
+                                    <option value="<%= r.id %>"><%= r.name %> (<%= r.description %>)</option>
+                                <% }) %>
+                            <% } else { %>
+                                <option value="1">Admin (Akses Penuh)</option>
+                                <option value="2">Operator / Bendahara (Input Mutasi Kas & Barang)</option>
+                                <option value="3">Pengurus / Ketua (Read-Only & Laporan)</option>
+                                <option value="4">Pengelola Web (Akses Khusus Konten & Pengaturan Web)</option>
+                            <% } %>
                         </select>
                     </div>
                     <div class="mb-3">
