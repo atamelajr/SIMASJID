@@ -200,9 +200,10 @@
             </button>
 
             <div class="collapse navbar-collapse" id="navbarPublicContent">
-                <ul class="navbar-nav mx-auto mb-2 mb-lg-0 gap-1">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 gap-1">
                     <% if (typeof webMenus !== 'undefined' && webMenus && webMenus.length > 0) { %>
                         <% webMenus.forEach(m => { %>
+                            <% if (m.title && (m.title.toLowerCase().includes('back office') || m.url === '/dashboard')) { return; } %>
                             <li class="nav-item">
                                 <a class="nav-link nav-public-link <%= (typeof currentRoute !== 'undefined' && currentRoute === m.url) ? 'active' : '' %>" href="<%= m.url %>" target="<%= m.target || '_self' %>">
                                     <%= m.title %>
@@ -218,18 +219,6 @@
                         <li class="nav-item"><a class="nav-link nav-public-link" href="/galeri">Galeri Foto</a></li>
                     <% } %>
                 </ul>
-
-                <div class="d-flex align-items-center gap-2">
-                    <% if (user) { %>
-                        <a href="/dashboard" class="btn btn-sm px-3 fw-semibold text-white" style="background-color: var(--primary-emerald);">
-                            <i class="bi bi-speedometer2 me-1"></i> Back Office
-                        </a>
-                    <% } else { %>
-                        <a href="/auth/login" class="btn btn-login-dkm btn-sm">
-                            <i class="bi bi-person-lock me-1"></i> Login Pengurus
-                        </a>
-                    <% } %>
-                </div>
             </div>
         </div>
     </nav>
@@ -300,7 +289,7 @@
                     &copy; <%= new Date().getFullYear() %> <strong><%= masjidProfile.name || 'SIMASJID' %></strong>. <%= masjidProfile.footer_copyright || 'Hak Cipta Dilindungi.' %>
                 </div>
                 <div class="text-secondary small">
-                    Powered by SIMASJID CMS System
+                    Powered by <a href="/auth/login" class="text-secondary text-decoration-none" title="Akses Login Pengurus">SIMASJID</a> CMS System
                 </div>
             </div>
         </div>
