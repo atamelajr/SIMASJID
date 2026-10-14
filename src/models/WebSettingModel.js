@@ -16,9 +16,118 @@ class WebSettingModel {
         }
     }
 
-    // Self-healing schema checker (Otomatis menambah kolom baru jika belum ada di database)
+    // Self-healing schema checker (Otomatis membuat tabel & menambah kolom baru jika belum ada di database)
     static async ensureSchema() {
-        // 1. Pastikan kolom event_date ada pada tabel web_galleries
+        // 1. Buat Tabel-tabel CMS Web jika belum ada
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS web_menus (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                title VARCHAR(100) NOT NULL,
+                url VARCHAR(255) NOT NULL,
+                target VARCHAR(20) DEFAULT '_self',
+                parent_id INT NULL,
+                display_order INT DEFAULT 0,
+                is_active TINYINT(1) DEFAULT 1,
+                is_external TINYINT(1) DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;
+        `);
+
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS friday_officers (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                friday_date DATE NOT NULL,
+                khatib VARCHAR(150) NOT NULL,
+                imam VARCHAR(150) NOT NULL,
+                muadzin VARCHAR(150) NOT NULL,
+                notes VARCHAR(255) NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;
+        `);
+
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS web_banners (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                title VARCHAR(150) NOT NULL,
+                subtitle TEXT NULL,
+                image_url VARCHAR(255) NOT NULL,
+                button_text VARCHAR(50) NULL,
+                button_link VARCHAR(255) NULL,
+                badge_text VARCHAR(50) NULL,
+                show_badge TINYINT(1) DEFAULT 1,
+                show_title TINYINT(1) DEFAULT 1,
+                show_subtitle TINYINT(1) DEFAULT 1,
+                fit_mode VARCHAR(30) DEFAULT 'cover',
+                focus_position VARCHAR(30) DEFAULT 'center',
+                overlay_darkness VARCHAR(30) DEFAULT 'standard',
+                overlay_direction VARCHAR(30) DEFAULT 'left',
+                show_button TINYINT(1) DEFAULT 1,
+                display_order INT DEFAULT 0,
+                is_active TINYINT(1) DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;
+        `);
+
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS web_announcements (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                title VARCHAR(150) NOT NULL,
+                content TEXT NOT NULL,
+                type ENUM('Penting', 'Kegiatan', 'Umum', 'RunningText') DEFAULT 'Umum',
+                start_date DATE NULL,
+                end_date DATE NULL,
+                is_active TINYINT(1) DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;
+        `);
+
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS web_articles (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                title VARCHAR(200) NOT NULL,
+                slug VARCHAR(200) NOT NULL UNIQUE,
+                category VARCHAR(50) DEFAULT 'Kajian & Dakwah',
+                content LONGTEXT NOT NULL,
+                summary TEXT NULL,
+                thumbnail VARCHAR(255) NULL,
+                author_name VARCHAR(100) DEFAULT 'Redaksi DKM',
+                views INT DEFAULT 0,
+                is_published TINYINT(1) DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;
+        `);
+
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS web_galleries (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                title VARCHAR(150) NOT NULL,
+                category VARCHAR(50) DEFAULT 'Kegiatan',
+                image_url VARCHAR(255) NOT NULL,
+                description TEXT NULL,
+                event_date DATE NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;
+        `);
+
+        // Seed default web_menus jika kosong
+        try {
+            const [menuRows] = await db.query(`SELECT COUNT(*) as count FROM web_menus`);
+            if (menuRows[0].count === 0) {
+                await db.query(`
+                    INSERT INTO web_menus (title, url, target, display_order, is_active) VALUES
+                    ('Beranda', '/', '_self', 1, 1),
+                    ('Jadwal Sholat', '/jadwal-sholat', '_self', 2, 1),
+                    ('Transparansi Kas', '/transparansi', '_self', 3, 1),
+                    ('Proyek Donasi', '/proyek-donasi', '_self', 4, 1),
+                    ('Berita & Artikel', '/berita', '_self', 5, 1),
+                    ('Galeri Foto', '/galeri', '_self', 6, 1),
+                    ('Mode TV', '/display-tv', '_blank', 7, 1)
+                `);
+            }
+        } catch (e) {}
+
+        // Pastikan kolom event_date ada pada tabel web_galleries
         await this.ensureColumn('web_galleries', 'event_date', 'DATE NULL');
 
         const alterProfileQueries = [
@@ -158,6 +267,11 @@ class WebSettingModel {
             const [rows] = await db.query(`SELECT * FROM web_menus ORDER BY display_order ASC, id ASC`);
             return rows;
         } catch (err) {
+            if (err.code === 'ER_NO_SUCH_TABLE') {
+                await this.ensureSchema();
+                const [rows] = await db.query(`SELECT * FROM web_menus ORDER BY display_order ASC, id ASC`);
+                return rows;
+            }
             return [];
         }
     }
@@ -167,48 +281,82 @@ class WebSettingModel {
             const [rows] = await db.query(`SELECT * FROM web_menus WHERE is_active = 1 ORDER BY display_order ASC, id ASC`);
             return rows;
         } catch (err) {
+            if (err.code === 'ER_NO_SUCH_TABLE') {
+                await this.ensureSchema();
+                const [rows] = await db.query(`SELECT * FROM web_menus WHERE is_active = 1 ORDER BY display_order ASC, id ASC`);
+                return rows;
+            }
             return [];
         }
     }
 
     static async createMenu({ title, url, target, parent_id, display_order, is_active, is_external }) {
-        const [result] = await db.query(`
-            INSERT INTO web_menus (title, url, target, parent_id, display_order, is_active, is_external)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        `, [
-            title,
-            url,
-            target || '_self',
-            parent_id ? parseInt(parent_id) : null,
-            parseInt(display_order || 0),
-            is_active ?? 1,
-            is_external ? 1 : 0
-        ]);
-        return result.insertId;
+        await this.ensureSchema();
+        const execute = async () => {
+            const [result] = await db.query(`
+                INSERT INTO web_menus (title, url, target, parent_id, display_order, is_active, is_external)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            `, [
+                title,
+                url,
+                target || '_self',
+                parent_id ? parseInt(parent_id) : null,
+                parseInt(display_order || 0),
+                is_active ?? 1,
+                is_external ? 1 : 0
+            ]);
+            return result.insertId;
+        };
+
+        try {
+            return await execute();
+        } catch (err) {
+            if (err.code === 'ER_NO_SUCH_TABLE') {
+                await this.ensureSchema();
+                return await execute();
+            }
+            throw err;
+        }
     }
 
     static async updateMenu(id, { title, url, target, parent_id, display_order, is_active, is_external }) {
-        await db.query(`
-            UPDATE web_menus SET 
-                title=?, url=?, target=?, parent_id=?, display_order=?, is_active=?, is_external=?
-            WHERE id=?
-        `, [
-            title,
-            url,
-            target || '_self',
-            parent_id ? parseInt(parent_id) : null,
-            parseInt(display_order || 0),
-            is_active ?? 1,
-            is_external ? 1 : 0,
-            id
-        ]);
+        await this.ensureSchema();
+        const execute = async () => {
+            await db.query(`
+                UPDATE web_menus SET 
+                    title=?, url=?, target=?, parent_id=?, display_order=?, is_active=?, is_external=?
+                WHERE id=?
+            `, [
+                title,
+                url,
+                target || '_self',
+                parent_id ? parseInt(parent_id) : null,
+                parseInt(display_order || 0),
+                is_active ?? 1,
+                is_external ? 1 : 0,
+                id
+            ]);
+        };
+
+        try {
+            await execute();
+        } catch (err) {
+            if (err.code === 'ER_NO_SUCH_TABLE') {
+                await this.ensureSchema();
+                await execute();
+            } else {
+                throw err;
+            }
+        }
     }
 
     static async toggleMenuStatus(id) {
+        await this.ensureSchema();
         await db.query(`UPDATE web_menus SET is_active = IF(is_active=1, 0, 1) WHERE id = ?`, [id]);
     }
 
     static async deleteMenu(id) {
+        await this.ensureSchema();
         await db.query(`DELETE FROM web_menus WHERE id = ?`, [id]);
     }
 
