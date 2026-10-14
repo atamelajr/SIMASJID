@@ -18,6 +18,7 @@ class PublicController {
             const dkmMembers = await MasjidModel.getDkmMembers();
             const banners = await WebSettingModel.getActiveBanners();
             const articles = await WebSettingModel.getPublishedArticles(3);
+            const albums = await WebSettingModel.getHomeAlbums(4);
             const galleries = await WebSettingModel.getAllGalleries({ limit: 4 });
             const announcements = await WebSettingModel.getActiveAnnouncements();
 
@@ -51,6 +52,7 @@ class PublicController {
                 dkmMembers,
                 banners,
                 articles,
+                albums,
                 galleries,
                 announcements,
                 recentDonations
@@ -259,18 +261,46 @@ class PublicController {
         }
     }
 
-    // 7. Galeri Foto
+    // 7. Galeri Foto (Berbasis Album)
     static async getGaleri(req, res) {
         try {
-            const galleries = await WebSettingModel.getAllGalleries({ limit: 40 });
+            const albums = await WebSettingModel.getAllAlbums({ onlyPublished: true, limit: 60 });
+            const categoryCounts = await WebSettingModel.getAlbumCategoryCounts();
+            const galleries = await WebSettingModel.getAllGalleries({ limit: 40 }); // fallback
+
             res.render('public/galeri', {
                 title: 'Galeri Dokumentasi Foto - SIMASJID',
                 layout: 'layout_public',
                 currentRoute: 'galeri',
+                albums,
+                categoryCounts,
                 galleries
             });
         } catch (error) {
             console.error('Error PublicController getGaleri:', error);
+            res.status(500).render('errors/500', { title: '500 Server Error', layout: false });
+        }
+    }
+
+    // 7b. Detail Album Galeri
+    static async getGaleriDetail(req, res) {
+        try {
+            const { slug } = req.params;
+            const album = await WebSettingModel.getAlbumBySlug(slug);
+            if (!album) {
+                return res.status(404).render('errors/404', { title: 'Album Tidak Ditemukan', layout: false });
+            }
+
+            const otherAlbums = await WebSettingModel.getHomeAlbums(5);
+            res.render('public/galeri_detail', {
+                title: `${album.title} - Galeri Dokumentasi SIMASJID`,
+                layout: 'layout_public',
+                currentRoute: 'galeri',
+                album,
+                otherAlbums: otherAlbums.filter(a => a.id !== album.id).slice(0, 4)
+            });
+        } catch (error) {
+            console.error('Error PublicController getGaleriDetail:', error);
             res.status(500).render('errors/500', { title: '500 Server Error', layout: false });
         }
     }

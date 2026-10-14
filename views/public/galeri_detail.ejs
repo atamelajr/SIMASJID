@@ -1,0 +1,257 @@
+<!-- galeri_detail.ejs -->
+<div class="bg-dark text-white py-4 mb-4" style="background: linear-gradient(135deg, #0f766e 0%, #042f2e 100%);">
+    <div class="container">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="/" class="text-white-50 text-decoration-none"><i class="bi bi-house-door me-1"></i> Beranda</a></li>
+                <li class="breadcrumb-item"><a href="/galeri" class="text-white-50 text-decoration-none">Galeri</a></li>
+                <li class="breadcrumb-item active text-white fw-semibold" aria-current="page"><%= album.title %></li>
+            </ol>
+        </nav>
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge bg-warning text-dark px-3 py-1 rounded-pill fw-bold">
+                        <%= album.category || 'Dokumentasi' %>
+                    </span>
+                    <span class="badge bg-white bg-opacity-25 text-white px-2.5 py-1 rounded-pill">
+                        <i class="bi bi-calendar3 me-1"></i> <%= formatDate(album.event_date || album.created_at) %>
+                    </span>
+                    <span class="badge bg-white bg-opacity-25 text-white px-2.5 py-1 rounded-pill">
+                        <i class="bi bi-images me-1"></i> <%= (album.photos ? album.photos.length : 0) %> Foto
+                    </span>
+                </div>
+                <h1 class="fw-extrabold display-6 mb-2 text-white"><%= album.title %></h1>
+                <% if (album.description) { %>
+                    <p class="lead opacity-80 mb-0 small" style="max-width: 750px; font-size: 0.95rem;">
+                        <%= album.description %>
+                    </p>
+                <% } %>
+            </div>
+            <div>
+                <a href="/galeri" class="btn btn-outline-light rounded-pill px-4 fw-semibold btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Kembali ke Galeri
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <!-- Photos Grid -->
+    <% const photos = (album.photos && album.photos.length > 0) ? album.photos : []; %>
+    <% if (photos.length > 0) { %>
+        <div class="row g-3 g-md-4" id="photoAlbumGrid">
+            <% photos.forEach((photo, idx) => { %>
+                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white h-100 photo-item-card">
+                        <a href="javascript:void(0)" 
+                           class="d-block position-relative photo-zoom-trigger overflow-hidden" 
+                           onclick="openLightbox(<%= idx %>)" 
+                           style="height: 220px;">
+                            <img src="<%= photo.image_url %>" 
+                                 class="w-100 h-100 object-fit-cover photo-thumb-img" 
+                                 alt="<%= photo.caption || album.title %>" 
+                                 onerror="this.src='/images/hero-default.jpg'">
+                            
+                            <!-- Overlay Hover Icon -->
+                            <div class="photo-overlay position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center">
+                                <span class="btn btn-light btn-sm rounded-circle shadow p-2 text-teal">
+                                    <i class="bi bi-arrows-fullscreen fs-6"></i>
+                                </span>
+                            </div>
+
+                            <!-- Photo Index Badge -->
+                            <div class="position-absolute bottom-0 end-0 p-2 z-1">
+                                <span class="badge bg-dark bg-opacity-75 text-white backdrop-blur px-2 py-1 rounded small">
+                                    #<%= idx + 1 %>
+                                </span>
+                            </div>
+                        </a>
+
+                        <% if (photo.caption) { %>
+                            <div class="card-body p-2.5 px-3">
+                                <p class="small text-muted mb-0 text-truncate" title="<%= photo.caption %>">
+                                    <%= photo.caption %>
+                                </p>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    <% } else { %>
+        <div class="text-center py-5 bg-white rounded-4 shadow-sm text-muted">
+            <i class="bi bi-images display-3 d-block mb-3 text-secondary opacity-50"></i>
+            <h5 class="fw-bold text-dark mb-1">Belum Ada Foto di Album Ini</h5>
+            <p class="text-muted small">Foto-foto untuk album ini belum diunggah.</p>
+            <a href="/galeri" class="btn btn-emerald text-white rounded-pill px-4 btn-sm" style="background-color: #0d9488;">
+                Kembali ke Galeri
+            </a>
+        </div>
+    <% } %>
+
+    <!-- Other Albums Recommendation -->
+    <% if (typeof otherAlbums !== 'undefined' && otherAlbums && otherAlbums.length > 0) { %>
+        <div class="mt-5 pt-4 border-top">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="fw-bold m-0 text-slate-800"><i class="bi bi-collection me-2 text-teal" style="color: #0d9488;"></i> Album Lainnya</h4>
+                <a href="/galeri" class="small fw-semibold text-decoration-none" style="color: #0d9488;">Lihat Semua <i class="bi bi-chevron-right"></i></a>
+            </div>
+            <div class="row g-3">
+                <% otherAlbums.forEach(oa => { %>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="card border-0 shadow-sm rounded-3 overflow-hidden bg-white h-100">
+                            <a href="/galeri/<%= oa.slug %>" class="d-block overflow-hidden" style="height: 140px;">
+                                <img src="<%= oa.cover_image || '/images/hero-default.jpg' %>" class="w-100 h-100 object-fit-cover" alt="<%= oa.title %>" onerror="this.src='/images/hero-default.jpg'">
+                            </a>
+                            <div class="card-body p-2.5 px-3">
+                                <span class="badge bg-light text-dark border extra-small mb-1"><%= oa.category %></span>
+                                <h6 class="fw-bold text-dark text-truncate mb-1 small">
+                                    <a href="/galeri/<%= oa.slug %>" class="text-dark text-decoration-none"><%= oa.title %></a>
+                                </h6>
+                                <small class="text-muted extra-small"><i class="bi bi-images me-1"></i> <%= oa.photo_count || 1 %> Foto</small>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        </div>
+    <% } %>
+</div>
+
+<!-- Modal Lightbox Album Carousel Viewer -->
+<div class="modal fade" id="lightboxModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content border-0 bg-dark text-white rounded-4 overflow-hidden shadow-2xl">
+            <div class="modal-header border-0 bg-black bg-opacity-75 py-2 px-3 d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-warning text-dark"><%= album.category %></span>
+                    <span class="text-white-50 small" id="lightboxCounter">1 / 1</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="#" id="lightboxDownloadBtn" target="_blank" class="btn btn-sm btn-outline-light py-1 px-2.5 small" title="Buka Gambar Ukuran Penuh">
+                        <i class="bi bi-box-arrow-up-right me-1"></i> Ukuran Asli
+                    </a>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+
+            <div class="modal-body p-0 position-relative bg-black d-flex justify-content-center align-items-center" style="min-height: 480px; max-height: 78vh;">
+                <!-- Main Image -->
+                <img src="" id="lightboxImg" class="img-fluid object-fit-contain shadow" style="max-height: 76vh; width: auto; max-width: 100%; transition: opacity 0.2s ease;" alt="Preview Foto">
+
+                <!-- Navigation Arrow Left -->
+                <button type="button" class="btn btn-dark bg-opacity-50 text-white rounded-circle position-absolute top-50 start-0 translate-middle-y ms-3 p-3 shadow-lg lightbox-nav" id="lightboxPrevBtn" onclick="prevPhoto()">
+                    <i class="bi bi-chevron-left fs-4"></i>
+                </button>
+
+                <!-- Navigation Arrow Right -->
+                <button type="button" class="btn btn-dark bg-opacity-50 text-white rounded-circle position-absolute top-50 end-0 translate-middle-y me-3 p-3 shadow-lg lightbox-nav" id="lightboxNextBtn" onclick="nextPhoto()">
+                    <i class="bi bi-chevron-right fs-4"></i>
+                </button>
+            </div>
+
+            <div class="modal-footer border-0 bg-black bg-opacity-75 py-2 px-3 text-start justify-content-start">
+                <p class="mb-0 text-white small" id="lightboxCaption">
+                    <%= album.title %>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .photo-thumb-img {
+        transition: transform 0.4s ease;
+    }
+    .photo-item-card:hover .photo-thumb-img {
+        transform: scale(1.06);
+    }
+    .photo-overlay {
+        background: rgba(0, 0, 0, 0.35);
+        opacity: 0;
+        transition: opacity 0.25s ease;
+    }
+    .photo-item-card:hover .photo-overlay {
+        opacity: 1;
+    }
+    .lightbox-nav {
+        border: 1px solid rgba(255,255,255,0.2);
+        cursor: pointer;
+        transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+    .lightbox-nav:hover {
+        background-color: rgba(13, 148, 136, 0.9) !important;
+        transform: translateY(-50%) scale(1.08);
+    }
+    .backdrop-blur {
+        backdrop-filter: blur(4px);
+    }
+</style>
+
+<script>
+    const albumPhotos = <%- JSON.stringify(album.photos || []) %>;
+    let currentPhotoIdx = 0;
+    let lightboxModalInstance = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const modalEl = document.getElementById('lightboxModal');
+        if (modalEl) {
+            lightboxModalInstance = new bootstrap.Modal(modalEl);
+        }
+
+        // Keyboard arrow navigation
+        document.addEventListener('keydown', (e) => {
+            const modalOpen = document.getElementById('lightboxModal').classList.contains('show');
+            if (!modalOpen) return;
+            if (e.key === 'ArrowLeft') {
+                prevPhoto();
+            } else if (e.key === 'ArrowRight') {
+                nextPhoto();
+            }
+        });
+    });
+
+    function openLightbox(index) {
+        if (!albumPhotos || albumPhotos.length === 0) return;
+        currentPhotoIdx = index;
+        updateLightboxView();
+        if (lightboxModalInstance) {
+            lightboxModalInstance.show();
+        }
+    }
+
+    function updateLightboxView() {
+        if (!albumPhotos || albumPhotos.length === 0) return;
+        const photo = albumPhotos[currentPhotoIdx];
+        const imgEl = document.getElementById('lightboxImg');
+        const counterEl = document.getElementById('lightboxCounter');
+        const captionEl = document.getElementById('lightboxCaption');
+        const downloadBtn = document.getElementById('lightboxDownloadBtn');
+
+        imgEl.style.opacity = '0.5';
+        setTimeout(() => {
+            imgEl.src = photo.image_url;
+            imgEl.style.opacity = '1';
+        }, 100);
+
+        counterEl.textContent = `${currentPhotoIdx + 1} / ${albumPhotos.length}`;
+        captionEl.textContent = photo.caption || `<%= album.title %> - Foto ${currentPhotoIdx + 1}`;
+        downloadBtn.href = photo.image_url;
+    }
+
+    function prevPhoto() {
+        if (!albumPhotos || albumPhotos.length === 0) return;
+        currentPhotoIdx = (currentPhotoIdx - 1 + albumPhotos.length) % albumPhotos.length;
+        updateLightboxView();
+    }
+
+    function nextPhoto() {
+        if (!albumPhotos || albumPhotos.length === 0) return;
+        currentPhotoIdx = (currentPhotoIdx + 1) % albumPhotos.length;
+        updateLightboxView();
+    }
+</script>

@@ -9,6 +9,7 @@ router.get('/proyek-donasi', PublicController.getProyekDonasi);
 router.get('/berita', PublicController.getBerita);
 router.get('/berita/:slug', PublicController.getBeritaDetail);
 router.get('/galeri', PublicController.getGaleri);
+router.get('/galeri/:slug', PublicController.getGaleriDetail);
 router.get('/pengumuman', PublicController.getPengumuman);
 router.get('/display-tv', PublicController.getDisplayTV);
 

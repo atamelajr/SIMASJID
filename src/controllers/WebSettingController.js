@@ -393,16 +393,16 @@ class WebSettingController {
         }
     }
 
-    // 6. Galeri Foto (/settings/web/galleries)
+    // 6. Galeri Foto & Album (/settings/web/galleries)
     static async getGalleries(req, res) {
         try {
             const selectedCategory = req.query.category || 'Semua';
-            const galleries = await WebSettingModel.getAllGalleries({ category: selectedCategory, limit: 100 });
-            const categoryCounts = await WebSettingModel.getGalleryCategoryCounts();
+            const albums = await WebSettingModel.getAllAlbums({ category: selectedCategory, limit: 100 });
+            const categoryCounts = await WebSettingModel.getAlbumCategoryCounts();
             res.render('settings/web_galleries', {
-                title: 'Kelola Galeri Foto',
+                title: 'Kelola Galeri Foto & Album',
                 activeSubmenu: 'web-galleries',
-                galleries,
+                albums,
                 selectedCategory,
                 categoryCounts,
                 successMsg: req.query.success || null,
@@ -414,75 +414,162 @@ class WebSettingController {
         }
     }
 
-    static async createGallery(req, res) {
+    static async createAlbum(req, res) {
         try {
-            const { title, category, description, event_date } = req.body;
-            if (!req.file) {
-                return res.redirect('/settings/web/galleries?error=Pilih+file+foto+terlebih+dahulu');
-            }
-            const image_url = '/uploads/' + req.file.filename;
-            const finalTitle = title && title.trim() 
-                ? title.trim() 
-                : (req.file.originalname.replace(/\.[^/.]+$/, "") || 'Foto Galeri');
-
-            await WebSettingModel.createGallery({ 
-                title: finalTitle, 
-                category, 
-                image_url, 
-                description, 
-                event_date: event_date || null 
-            });
-            res.redirect('/settings/web/galleries?success=Foto+berhasil+diunggah+ke+galeri');
-        } catch (error) {
-            console.error('Error WebSettingController createGallery:', error);
-            res.redirect('/settings/web/galleries?error=Gagal+mengunggah+foto');
-        }
-    }
-
-    static async createMultipleGalleries(req, res) {
-        try {
-            const { base_title, category, description, event_date } = req.body;
-            if (!req.files || req.files.length === 0) {
-                return res.redirect('/settings/web/galleries?error=Pilih+minimal+satu+file+foto');
+            const { title, category, description, event_date, show_on_home, is_published } = req.body;
+            if (!title || !title.trim()) {
+                return res.redirect('/settings/web/galleries?error=Judul+album+wajib+diisi');
             }
 
-            const items = req.files.map((file, idx) => {
-                const defaultName = file.originalname.replace(/\.[^/.]+$/, "");
-                const title = base_title && base_title.trim()
-                    ? (req.files.length > 1 ? `${base_title.trim()} (${idx + 1})` : base_title.trim())
-                    : defaultName;
-
-                return {
-                    title,
-                    category: category || 'Kegiatan',
+            let photos = [];
+            if (req.files && req.files.length > 0) {
+                photos = req.files.map((file, idx) => ({
                     image_url: '/uploads/' + file.filename,
-                    description: description || '',
-                    event_date: event_date || null
-                };
+                    caption: `${title.trim()} (${idx + 1})`
+                }));
+            }
+
+            await WebSettingModel.createAlbum({
+                title: title.trim(),
+                category: category || 'Kegiatan',
+                description: description || '',
+                event_date: event_date || null,
+                show_on_home: show_on_home ? 1 : 0,
+                is_published: is_published !== '0' ? 1 : 0,
+                photos
             });
 
-            await WebSettingModel.createMultipleGalleries(items);
-            res.redirect(`/settings/web/galleries?success=${req.files.length}+foto+berhasil+diunggah+ke+galeri`);
+            res.redirect('/settings/web/galleries?success=Album+berhasil+dibuat+beserta+fotonya');
         } catch (error) {
-            console.error('Error WebSettingController createMultipleGalleries:', error);
-            res.redirect('/settings/web/galleries?error=Gagal+mengunggah+foto+massal');
+            console.error('Error WebSettingController createAlbum:', error);
+            res.redirect('/settings/web/galleries?error=Gagal+membuat+album');
         }
     }
 
-    static async updateGallery(req, res) {
+    static async updateAlbum(req, res) {
         try {
             const { id } = req.params;
-            const { title, category, description, event_date } = req.body;
-            let image_url = null;
-            if (req.file) {
-                image_url = '/uploads/' + req.file.filename;
-            }
-
-            await WebSettingModel.updateGallery(id, { title, category, image_url, description, event_date: event_date || null });
-            res.redirect('/settings/web/galleries?success=Foto+galeri+berhasil+diperbarui');
+            const { title, category, description, event_date, show_on_home, is_published } = req.body;
+            await WebSettingModel.updateAlbum(id, {
+                title: title.trim(),
+                category: category || 'Kegiatan',
+                description: description || '',
+                event_date: event_date || null,
+                show_on_home: show_on_home ? 1 : 0,
+                is_published: is_published ? 1 : 0
+            });
+            res.redirect('/settings/web/galleries?success=Data+album+berhasil+diperbarui');
         } catch (error) {
-            console.error('Error WebSettingController updateGallery:', error);
-            res.redirect('/settings/web/galleries?error=Gagal+memperbarui+foto');
+            console.error('Error WebSettingController updateAlbum:', error);
+            res.redirect('/settings/web/galleries?error=Gagal+memperbarui+album');
+        }
+    }
+
+    static async toggleAlbumHome(req, res) {
+        try {
+            const { id } = req.params;
+            await WebSettingModel.toggleAlbumHome(id);
+            res.redirect('/settings/web/galleries?success=Pengaturan+tampil+di+Beranda+berhasil+diubah');
+        } catch (error) {
+            console.error('Error WebSettingController toggleAlbumHome:', error);
+            res.redirect('/settings/web/galleries?error=Gagal+mengubah+status+tampil+di+Beranda');
+        }
+    }
+
+    static async deleteAlbum(req, res) {
+        try {
+            const { id } = req.params;
+            await WebSettingModel.deleteAlbum(id);
+            res.redirect('/settings/web/galleries?success=Album+beserta+seluruh+foto+berhasil+dihapus');
+        } catch (error) {
+            console.error('Error WebSettingController deleteAlbum:', error);
+            res.redirect('/settings/web/galleries?error=Gagal+menghapus+album');
+        }
+    }
+
+    static async getAlbumPhotos(req, res) {
+        try {
+            const { id } = req.params;
+            const album = await WebSettingModel.getAlbumById(id);
+            if (!album) {
+                return res.status(404).json({ success: false, message: 'Album tidak ditemukan' });
+            }
+            res.json({ success: true, album });
+        } catch (error) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    }
+
+    static async addPhotosToAlbum(req, res) {
+        try {
+            const { id } = req.params;
+            if (!req.files || req.files.length === 0) {
+                return res.redirect('/settings/web/galleries?error=Pilih+minimal+satu+foto');
+            }
+            const photos = req.files.map(file => ({
+                image_url: '/uploads/' + file.filename,
+                caption: file.originalname.replace(/\.[^/.]+$/, "")
+            }));
+
+            await WebSettingModel.addPhotosToAlbum(id, photos);
+            res.redirect(`/settings/web/galleries?success=${photos.length}+foto+berhasil+ditambahkan+ke+album`);
+        } catch (error) {
+            console.error('Error WebSettingController addPhotosToAlbum:', error);
+            res.redirect('/settings/web/galleries?error=Gagal+menambahkan+foto+ke+album');
+        }
+    }
+
+    static async deleteAlbumPhoto(req, res) {
+        try {
+            const { photoId } = req.params;
+            await WebSettingModel.deleteAlbumPhoto(photoId);
+            res.redirect('/settings/web/galleries?success=Foto+berhasil+dihapus+dari+album');
+        } catch (error) {
+            console.error('Error WebSettingController deleteAlbumPhoto:', error);
+            res.redirect('/settings/web/galleries?error=Gagal+menghapus+foto');
+        }
+    }
+
+    static async setCoverPhoto(req, res) {
+        try {
+            const { id } = req.params;
+            const { photoUrl } = req.body;
+            await WebSettingModel.setCoverPhoto(id, photoUrl);
+            res.redirect('/settings/web/galleries?success=Sampul+album+berhasil+diubah');
+        } catch (error) {
+            console.error('Error WebSettingController setCoverPhoto:', error);
+            res.redirect('/settings/web/galleries?error=Gagal+mengubah+sampul');
+        }
+    }
+
+    // Fallback methods
+    static async createGallery(req, res) {
+        return this.createAlbum(req, res);
+    }
+    static async createMultipleGalleries(req, res) {
+        return this.createAlbum(req, res);
+    }
+    static async updateGallery(req, res) {
+        return this.updateAlbum(req, res);
+    }
+    static async deleteGallery(req, res) {
+        return this.deleteAlbum(req, res);
+    }
+    static async bulkDeleteGalleries(req, res) {
+        try {
+            const { ids } = req.body;
+            let idList = [];
+            if (Array.isArray(ids)) {
+                idList = ids.map(x => parseInt(x)).filter(Boolean);
+            } else if (typeof ids === 'string') {
+                idList = ids.split(',').map(x => parseInt(x.trim())).filter(Boolean);
+            }
+            for (const id of idList) {
+                await WebSettingModel.deleteAlbum(id);
+            }
+            res.redirect(`/settings/web/galleries?success=${idList.length}+album+berhasil+dihapus`);
+        } catch (error) {
+            res.redirect('/settings/web/galleries?error=Gagal+menghapus+album');
         }
     }
 

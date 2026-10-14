@@ -110,6 +110,85 @@ class WebSettingModel {
             ) ENGINE=InnoDB;
         `);
 
+        // Tabel web_albums (Album Galeri Dokumentasi)
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS web_albums (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                title VARCHAR(200) NOT NULL,
+                slug VARCHAR(200) NOT NULL UNIQUE,
+                category VARCHAR(50) DEFAULT 'Kegiatan',
+                cover_image VARCHAR(255) NULL,
+                description TEXT NULL,
+                event_date DATE NULL,
+                show_on_home TINYINT(1) DEFAULT 1,
+                is_published TINYINT(1) DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;
+        `);
+
+        // Tabel web_album_photos (Foto-foto di dalam Album)
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS web_album_photos (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                album_id INT NOT NULL,
+                image_url VARCHAR(255) NOT NULL,
+                caption VARCHAR(255) NULL,
+                display_order INT DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_album (album_id)
+            ) ENGINE=InnoDB;
+        `);
+
+        // Auto-migrasi foto dari web_galleries ke web_albums jika web_albums masih kosong
+        try {
+            const [albumRows] = await db.query(`SELECT COUNT(*) as count FROM web_albums`);
+            if (albumRows[0].count === 0) {
+                const [existingGalleries] = await db.query(`SELECT * FROM web_galleries ORDER BY id ASC`);
+                if (existingGalleries && existingGalleries.length > 0) {
+                    const groups = {};
+                    existingGalleries.forEach(g => {
+                        const cleanTitle = (g.title || 'Dokumentasi Kegiatan').replace(/\s*\(\d+\)$/, '').trim();
+                        if (!groups[cleanTitle]) {
+                            groups[cleanTitle] = {
+                                title: cleanTitle,
+                                category: g.category || 'Kegiatan',
+                                description: g.description || '',
+                                event_date: g.event_date || null,
+                                cover_image: g.image_url,
+                                photos: []
+                            };
+                        }
+                        groups[cleanTitle].photos.push({
+                            image_url: g.image_url,
+                            caption: g.title
+                        });
+                    });
+
+                    for (const key of Object.keys(groups)) {
+                        const grp = groups[key];
+                        const baseSlug = grp.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') || 'album';
+                        const slug = baseSlug + '-' + Math.floor(1000 + Math.random() * 9000);
+                        const [res] = await db.query(`
+                            INSERT INTO web_albums (title, slug, category, cover_image, description, event_date, show_on_home, is_published)
+                            VALUES (?, ?, ?, ?, ?, ?, 1, 1)
+                        `, [grp.title, slug, grp.category, grp.cover_image, grp.description, grp.event_date]);
+                        const albumId = res.insertId;
+
+                        for (let i = 0; i < grp.photos.length; i++) {
+                            await db.query(`
+                                INSERT INTO web_album_photos (album_id, image_url, caption, display_order)
+                                VALUES (?, ?, ?, ?)
+                            `, [albumId, grp.photos[i].image_url, grp.photos[i].caption, i + 1]);
+                        }
+                    }
+                    console.log(`✅ Berhasil auto-migrasi ${existingGalleries.length} foto ke web_albums!`);
+                }
+            }
+        } catch (migErr) {
+            console.warn('Auto-migration web_albums notice:', migErr.message);
+        }
+
         // Seed default web_menus jika kosong
         try {
             const [menuRows] = await db.query(`SELECT COUNT(*) as count FROM web_menus`);
@@ -706,6 +785,231 @@ class WebSettingModel {
                 fs.unlink(filePath, () => {});
             }
         });
+    }
+
+    // === 6B. KELOLA ALBUM DOKUMENTASI (MULTI-FOTO PER ALBUM) ===
+    static async getAllAlbums({ category, limit = 50, onlyPublished = false } = {}) {
+        await this.ensureSchema();
+        let sql = `
+            SELECT a.*, 
+                   COUNT(p.id) AS photo_count,
+                   GROUP_CONCAT(p.image_url ORDER BY p.display_order ASC, p.id ASC SEPARATOR '||') AS preview_photos
+            FROM web_albums a
+            LEFT JOIN web_album_photos p ON a.id = p.album_id
+            WHERE 1=1
+        `;
+        const params = [];
+
+        if (onlyPublished) {
+            sql += ` AND a.is_published = 1`;
+        }
+
+        if (category && category !== 'Semua') {
+            sql += ` AND a.category = ?`;
+            params.push(category);
+        }
+
+        sql += ` GROUP BY a.id ORDER BY a.event_date DESC, a.created_at DESC LIMIT ?`;
+        params.push(parseInt(limit));
+
+        const [rows] = await db.query(sql, params);
+        return rows.map(r => ({
+            ...r,
+            preview_photos: r.preview_photos ? r.preview_photos.split('||') : []
+        }));
+    }
+
+    static async getHomeAlbums(limit = 4) {
+        await this.ensureSchema();
+        const sql = `
+            SELECT a.*, 
+                   COUNT(p.id) AS photo_count,
+                   GROUP_CONCAT(p.image_url ORDER BY p.display_order ASC, p.id ASC SEPARATOR '||') AS preview_photos
+            FROM web_albums a
+            LEFT JOIN web_album_photos p ON a.id = p.album_id
+            WHERE a.is_published = 1 AND a.show_on_home = 1
+            GROUP BY a.id
+            ORDER BY a.event_date DESC, a.created_at DESC
+            LIMIT ?
+        `;
+        const [rows] = await db.query(sql, [parseInt(limit)]);
+        return rows.map(r => ({
+            ...r,
+            preview_photos: r.preview_photos ? r.preview_photos.split('||') : []
+        }));
+    }
+
+    static async getAlbumById(id) {
+        await this.ensureSchema();
+        const [rows] = await db.query(`SELECT * FROM web_albums WHERE id = ?`, [id]);
+        if (!rows || rows.length === 0) return null;
+        const album = rows[0];
+        const [photos] = await db.query(`SELECT * FROM web_album_photos WHERE album_id = ? ORDER BY display_order ASC, id ASC`, [id]);
+        album.photos = photos || [];
+        return album;
+    }
+
+    static async getAlbumBySlug(slug) {
+        await this.ensureSchema();
+        const [rows] = await db.query(`SELECT * FROM web_albums WHERE slug = ?`, [slug]);
+        if (!rows || rows.length === 0) return null;
+        const album = rows[0];
+        const [photos] = await db.query(`SELECT * FROM web_album_photos WHERE album_id = ? ORDER BY display_order ASC, id ASC`, [album.id]);
+        album.photos = photos || [];
+        return album;
+    }
+
+    static async getAlbumCategoryCounts() {
+        await this.ensureSchema();
+        const [rows] = await db.query(`
+            SELECT category, COUNT(*) as count 
+            FROM web_albums 
+            GROUP BY category
+        `);
+        const [totalRow] = await db.query(`SELECT COUNT(*) as total FROM web_albums`);
+        const map = { 'Semua': totalRow[0]?.total || 0 };
+        rows.forEach(r => { map[r.category] = r.count; });
+        return map;
+    }
+
+    static async createAlbum({ title, category, description, event_date, show_on_home, is_published, photos }) {
+        await this.ensureSchema();
+        const finalSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + '-' + Math.floor(1000 + Math.random() * 9000);
+        const cover_image = (photos && photos.length > 0) ? photos[0].image_url : null;
+
+        const [res] = await db.query(`
+            INSERT INTO web_albums (title, slug, category, cover_image, description, event_date, show_on_home, is_published)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+            title,
+            finalSlug,
+            category || 'Kegiatan',
+            cover_image,
+            description || '',
+            event_date || null,
+            show_on_home ? 1 : 0,
+            is_published ? 1 : 0
+        ]);
+        const albumId = res.insertId;
+
+        if (photos && photos.length > 0) {
+            const values = photos.map((p, idx) => [
+                albumId,
+                p.image_url,
+                p.caption || null,
+                idx + 1
+            ]);
+            await db.query(`
+                INSERT INTO web_album_photos (album_id, image_url, caption, display_order)
+                VALUES ?
+            `, [values]);
+        }
+        return albumId;
+    }
+
+    static async updateAlbum(id, { title, category, description, event_date, show_on_home, is_published, cover_image }) {
+        await this.ensureSchema();
+        const [curr] = await db.query(`SELECT * FROM web_albums WHERE id = ?`, [id]);
+        if (!curr || curr.length === 0) return;
+
+        const finalCover = cover_image || curr[0].cover_image;
+        await db.query(`
+            UPDATE web_albums SET
+                title = ?,
+                category = ?,
+                description = ?,
+                event_date = ?,
+                show_on_home = ?,
+                is_published = ?,
+                cover_image = ?
+            WHERE id = ?
+        `, [
+            title,
+            category || 'Kegiatan',
+            description || '',
+            event_date || null,
+            show_on_home ? 1 : 0,
+            is_published ? 1 : 0,
+            finalCover,
+            id
+        ]);
+    }
+
+    static async toggleAlbumHome(id) {
+        await this.ensureSchema();
+        await db.query(`UPDATE web_albums SET show_on_home = IF(show_on_home = 1, 0, 1) WHERE id = ?`, [id]);
+    }
+
+    static async deleteAlbum(id) {
+        await this.ensureSchema();
+        const [photos] = await db.query(`SELECT image_url FROM web_album_photos WHERE album_id = ?`, [id]);
+        await db.query(`DELETE FROM web_album_photos WHERE album_id = ?`, [id]);
+        await db.query(`DELETE FROM web_albums WHERE id = ?`, [id]);
+
+        const fs = require('fs');
+        const path = require('path');
+        photos.forEach(p => {
+            if (p.image_url && p.image_url.startsWith('/uploads/')) {
+                const filePath = path.join(__dirname, '../../public', p.image_url);
+                fs.unlink(filePath, () => {});
+            }
+        });
+    }
+
+    static async addPhotosToAlbum(albumId, photos) {
+        if (!photos || photos.length === 0) return;
+        await this.ensureSchema();
+
+        const [currCount] = await db.query(`SELECT COUNT(*) as count FROM web_album_photos WHERE album_id = ?`, [albumId]);
+        let startOrder = (currCount[0]?.count || 0) + 1;
+
+        const values = photos.map((p, idx) => [
+            albumId,
+            p.image_url,
+            p.caption || null,
+            startOrder + idx
+        ]);
+
+        await db.query(`
+            INSERT INTO web_album_photos (album_id, image_url, caption, display_order)
+            VALUES ?
+        `, [values]);
+
+        // Jika album belum punya cover_image, jadikan foto pertama sebagai cover
+        const [album] = await db.query(`SELECT cover_image FROM web_albums WHERE id = ?`, [albumId]);
+        if (!album[0]?.cover_image && photos.length > 0) {
+            await db.query(`UPDATE web_albums SET cover_image = ? WHERE id = ?`, [photos[0].image_url, albumId]);
+        }
+    }
+
+    static async deleteAlbumPhoto(photoId) {
+        await this.ensureSchema();
+        const [rows] = await db.query(`SELECT album_id, image_url FROM web_album_photos WHERE id = ?`, [photoId]);
+        if (!rows || rows.length === 0) return;
+        const { album_id, image_url } = rows[0];
+
+        await db.query(`DELETE FROM web_album_photos WHERE id = ?`, [photoId]);
+
+        // Hapus file fisik
+        if (image_url && image_url.startsWith('/uploads/')) {
+            const fs = require('fs');
+            const path = require('path');
+            const filePath = path.join(__dirname, '../../public', image_url);
+            fs.unlink(filePath, () => {});
+        }
+
+        // Cek jika cover album sama dengan foto yang dihapus, ganti dengan foto lain
+        const [album] = await db.query(`SELECT cover_image FROM web_albums WHERE id = ?`, [album_id]);
+        if (album[0]?.cover_image === image_url) {
+            const [nextPhoto] = await db.query(`SELECT image_url FROM web_album_photos WHERE album_id = ? LIMIT 1`, [album_id]);
+            const newCover = nextPhoto[0]?.image_url || null;
+            await db.query(`UPDATE web_albums SET cover_image = ? WHERE id = ?`, [newCover, album_id]);
+        }
+    }
+
+    static async setCoverPhoto(albumId, photoUrl) {
+        await this.ensureSchema();
+        await db.query(`UPDATE web_albums SET cover_image = ? WHERE id = ?`, [photoUrl, albumId]);
     }
 }
 
