@@ -31,11 +31,22 @@ class PublicController {
                  LIMIT 6`
             );
 
+            // Summary stats across ALL incoming donations
+            const [donationSummaryRows] = await db.query(
+                `SELECT 
+                    COALESCE(SUM(amount), 0) AS total_donations, 
+                    COUNT(*) AS total_count 
+                 FROM transactions 
+                 WHERE type = 'Penerimaan'`
+            );
+            const donationSummary = donationSummaryRows[0] || { total_donations: 0, total_count: 0 };
+
             res.render('public/index', {
                 title: 'Beranda - SIMASJID Portal Publik',
                 layout: 'layout_public',
                 currentRoute: 'home',
                 summary: frontSummary,
+                donationSummary,
                 projects,
                 dkmMembers,
                 banners,
