@@ -193,8 +193,15 @@ async function migrateWebSettings() {
             ) ENGINE=InnoDB;
         `);
         try {
-            await connection.query(`ALTER TABLE web_galleries ADD COLUMN IF NOT EXISTS event_date DATE NULL`);
-        } catch (err) {}
+            const [cols] = await connection.query(`SHOW COLUMNS FROM web_galleries LIKE 'event_date'`);
+            if (cols.length === 0) {
+                await connection.query(`ALTER TABLE web_galleries ADD COLUMN event_date DATE NULL`);
+            }
+        } catch (err) {
+            try {
+                await connection.query(`ALTER TABLE web_galleries ADD COLUMN event_date DATE NULL`);
+            } catch (e) {}
+        }
         console.log('✅ Tabel web_galleries berhasil dibuat & diperbarui!');
 
         // Seed data sampel jika kosong

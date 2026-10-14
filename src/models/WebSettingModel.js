@@ -1,8 +1,26 @@
 const db = require('../../config/database');
 
 class WebSettingModel {
-    // Self-healing schema checker (Otomatis menambah kolom baru jika belum ada di database MariaDB)
+    // Helper pengecekan & penambahan kolom yang kompatibel dengan semua versi MySQL & MariaDB
+    static async ensureColumn(tableName, columnName, columnDefinition) {
+        try {
+            const [cols] = await db.query(`SHOW COLUMNS FROM \`${tableName}\` LIKE ?`, [columnName]);
+            if (cols.length === 0) {
+                await db.query(`ALTER TABLE \`${tableName}\` ADD COLUMN \`${columnName}\` ${columnDefinition}`);
+                console.log(`✅ Kolom '${columnName}' berhasil ditambahkan ke '${tableName}'`);
+            }
+        } catch (err) {
+            try {
+                await db.query(`ALTER TABLE \`${tableName}\` ADD COLUMN \`${columnName}\` ${columnDefinition}`);
+            } catch (e) {}
+        }
+    }
+
+    // Self-healing schema checker (Otomatis menambah kolom baru jika belum ada di database)
     static async ensureSchema() {
+        // 1. Pastikan kolom event_date ada pada tabel web_galleries
+        await this.ensureColumn('web_galleries', 'event_date', 'DATE NULL');
+
         const alterProfileQueries = [
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS logo VARCHAR(255) NULL`,
             `ALTER TABLE masjid_profile ADD COLUMN IF NOT EXISTS favicon VARCHAR(255) NULL`,
@@ -361,6 +379,8 @@ class WebSettingModel {
 
     // === 6. KELOLA GALERI FOTO ===
     static async getAllGalleries({ category, limit = 100 } = {}) {
+        await this.ensureColumn('web_galleries', 'event_date', 'DATE NULL');
+
         let sql = `SELECT * FROM web_galleries WHERE 1=1`;
         const params = [];
 
@@ -372,8 +392,17 @@ class WebSettingModel {
         sql += ` ORDER BY created_at DESC LIMIT ?`;
         params.push(parseInt(limit));
 
-        const [rows] = await db.query(sql, params);
-        return rows;
+        try {
+            const [rows] = await db.query(sql, params);
+            return rows;
+        } catch (err) {
+            if (err.code === 'ER_BAD_FIELD_ERROR' || (err.message && err.message.includes('Unknown column'))) {
+                await this.ensureColumn('web_galleries', 'event_date', 'DATE NULL');
+                const [rows] = await db.query(sql, params);
+                return rows;
+            }
+            throw err;
+        }
     }
 
     static async getGalleryCategoryCounts() {
@@ -389,28 +418,81 @@ class WebSettingModel {
     }
 
     static async createGallery({ title, category, image_url, description, event_date }) {
-        await db.query(`
-            INSERT INTO web_galleries (title, category, image_url, description, event_date)
-            VALUES (?, ?, ?, ?, ?)
-        `, [title, category || 'Kegiatan', image_url, description || '', event_date || null]);
+        await this.ensureColumn('web_galleries', 'event_date', 'DATE NULL');
+
+        try {
+            await db.query(`
+                INSERT INTO web_galleries (title, category, image_url, description, event_date)
+                VALUES (?, ?, ?, ?, ?)
+            `, [title, category || 'Kegiatan', image_url, description || '', event_date || null]);
+        } catch (err) {
+            if (err.code === 'ER_BAD_FIELD_ERROR' || (err.message && err.message.includes('Unknown column'))) {
+                await this.ensureColumn('web_galleries', 'event_date', 'DATE NULL');
+                try {
+                    await db.query(`
+                        INSERT INTO web_galleries (title, category, image_url, description, event_date)
+                        VALUES (?, ?, ?, ?, ?)
+                    `, [title, category || 'Kegiatan', image_url, description || '', event_date || null]);
+                } catch (retryErr) {
+                    // Fallback jika database menolak kolom event_date: simpan tanpa event_date
+                    await db.query(`
+                        INSERT INTO web_galleries (title, category, image_url, description)
+                        VALUES (?, ?, ?, ?)
+                    `, [title, category || 'Kegiatan', image_url, description || '']);
+                }
+            } else {
+                throw err;
+            }
+        }
     }
 
     static async createMultipleGalleries(items) {
         if (!items || items.length === 0) return;
-        const values = items.map(g => [
+        await this.ensureColumn('web_galleries', 'event_date', 'DATE NULL');
+
+        const valuesWithDate = items.map(g => [
             g.title,
             g.category || 'Kegiatan',
             g.image_url,
             g.description || '',
             g.event_date || null
         ]);
-        await db.query(`
-            INSERT INTO web_galleries (title, category, image_url, description, event_date)
-            VALUES ?
-        `, [values]);
+
+        try {
+            await db.query(`
+                INSERT INTO web_galleries (title, category, image_url, description, event_date)
+                VALUES ?
+            `, [valuesWithDate]);
+        } catch (err) {
+            if (err.code === 'ER_BAD_FIELD_ERROR' || (err.message && err.message.includes('Unknown column'))) {
+                await this.ensureColumn('web_galleries', 'event_date', 'DATE NULL');
+                try {
+                    await db.query(`
+                        INSERT INTO web_galleries (title, category, image_url, description, event_date)
+                        VALUES ?
+                    `, [valuesWithDate]);
+                } catch (retryErr) {
+                    // Fallback jika database menolak kolom event_date: simpan tanpa event_date
+                    const valuesWithoutDate = items.map(g => [
+                        g.title,
+                        g.category || 'Kegiatan',
+                        g.image_url,
+                        g.description || ''
+                    ]);
+                    await db.query(`
+                        INSERT INTO web_galleries (title, category, image_url, description)
+                        VALUES ?
+                    `, [valuesWithoutDate]);
+                }
+            } else {
+                throw err;
+            }
+        }
     }
 
     static async updateGallery(id, { title, category, image_url, description, event_date }) {
+        await this.ensureColumn('web_galleries', 'event_date', 'DATE NULL');
+
         const [rows] = await db.query(`SELECT image_url FROM web_galleries WHERE id = ?`, [id]);
         const oldImage = rows[0]?.image_url;
         const newImage = image_url || oldImage;
@@ -423,11 +505,32 @@ class WebSettingModel {
             fs.unlink(oldPath, () => {});
         }
 
-        await db.query(`
-            UPDATE web_galleries SET
-                title=?, category=?, image_url=?, description=?, event_date=?
-            WHERE id=?
-        `, [title, category || 'Kegiatan', newImage, description || '', event_date || null, id]);
+        try {
+            await db.query(`
+                UPDATE web_galleries SET
+                    title=?, category=?, image_url=?, description=?, event_date=?
+                WHERE id=?
+            `, [title, category || 'Kegiatan', newImage, description || '', event_date || null, id]);
+        } catch (err) {
+            if (err.code === 'ER_BAD_FIELD_ERROR' || (err.message && err.message.includes('Unknown column'))) {
+                await this.ensureColumn('web_galleries', 'event_date', 'DATE NULL');
+                try {
+                    await db.query(`
+                        UPDATE web_galleries SET
+                            title=?, category=?, image_url=?, description=?, event_date=?
+                        WHERE id=?
+                    `, [title, category || 'Kegiatan', newImage, description || '', event_date || null, id]);
+                } catch (retryErr) {
+                    await db.query(`
+                        UPDATE web_galleries SET
+                            title=?, category=?, image_url=?, description=?
+                        WHERE id=?
+                    `, [title, category || 'Kegiatan', newImage, description || '', id]);
+                }
+            } else {
+                throw err;
+            }
+        }
     }
 
     static async deleteGallery(id) {

@@ -152,4 +152,7 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
     console.log(`🚀 Aplikasi SIMASJID berjalan di http://localhost:${PORT}`);
+    // Auto-check & auto-migrate database schema (ISO/IEC 27001 continuous integrity)
+    const WebSettingModel = require('./src/models/WebSettingModel');
+    WebSettingModel.ensureSchema().catch(e => console.warn('Schema check warning:', e.message));
 });
