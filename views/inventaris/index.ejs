@@ -179,19 +179,38 @@
                         </span>
                     </div>
                     
-                    <% if (assetPagination.totalPages > 1 && assetPagination.limit !== 'all') { %>
-                        <nav>
-                            <ul class="pagination pagination-sm mb-0">
-                                <li class="page-item <%= assetPagination.page <= 1 ? 'disabled' : '' %>">
-                                    <a class="page-link" href="/inventaris?tab=aset&asset_page=<%= assetPagination.page - 1 %>&asset_limit=<%= assetPagination.limit %>&asset_search=<%= encodeURIComponent(assetFilters.search || '') %>&asset_category=<%= encodeURIComponent(assetFilters.category || '') %>&asset_condition=<%= encodeURIComponent(assetFilters.condition || '') %>&asset_location=<%= encodeURIComponent(assetFilters.location || '') %>">Previous</a>
+                    <% if (assetPagination.totalPages > 1 && assetPagination.limit !== 'all') { 
+                        const aCurPage = parseInt(assetPagination.page) || 1;
+                        const aTotalP = parseInt(assetPagination.totalPages) || 1;
+                        let aPages = [];
+                        if (aTotalP <= 7) {
+                            for (let i = 1; i <= aTotalP; i++) aPages.push(i);
+                        } else {
+                            if (aCurPage <= 4) {
+                                aPages = [1, 2, 3, 4, 5, '...', aTotalP];
+                            } else if (aCurPage >= aTotalP - 3) {
+                                aPages = [1, '...', aTotalP - 4, aTotalP - 3, aTotalP - 2, aTotalP - 1, aTotalP];
+                            } else {
+                                aPages = [1, '...', aCurPage - 1, aCurPage, aCurPage + 1, '...', aTotalP];
+                            }
+                        }
+                    %>
+                        <nav aria-label="Navigasi Halaman Aset">
+                            <ul class="pagination pagination-sm mb-0 flex-wrap justify-content-center">
+                                <li class="page-item <%= aCurPage <= 1 ? 'disabled' : '' %>">
+                                    <a class="page-link" href="/inventaris?tab=aset&asset_page=<%= aCurPage - 1 %>&asset_limit=<%= assetPagination.limit %>&asset_search=<%= encodeURIComponent(assetFilters.search || '') %>&asset_category=<%= encodeURIComponent(assetFilters.category || '') %>&asset_condition=<%= encodeURIComponent(assetFilters.condition || '') %>&asset_location=<%= encodeURIComponent(assetFilters.location || '') %>">Previous</a>
                                 </li>
-                                <% for (let p = 1; p <= assetPagination.totalPages; p++) { %>
-                                    <li class="page-item <%= assetPagination.page === p ? 'active' : '' %>">
-                                        <a class="page-link" href="/inventaris?tab=aset&asset_page=<%= p %>&asset_limit=<%= assetPagination.limit %>&asset_search=<%= encodeURIComponent(assetFilters.search || '') %>&asset_category=<%= encodeURIComponent(assetFilters.category || '') %>&asset_condition=<%= encodeURIComponent(assetFilters.condition || '') %>&asset_location=<%= encodeURIComponent(assetFilters.location || '') %>"><%= p %></a>
-                                    </li>
-                                <% } %>
-                                <li class="page-item <%= assetPagination.page >= assetPagination.totalPages ? 'disabled' : '' %>">
-                                    <a class="page-link" href="/inventaris?tab=aset&asset_page=<%= assetPagination.page + 1 %>&asset_limit=<%= assetPagination.limit %>&asset_search=<%= encodeURIComponent(assetFilters.search || '') %>&asset_category=<%= encodeURIComponent(assetFilters.category || '') %>&asset_condition=<%= encodeURIComponent(assetFilters.condition || '') %>&asset_location=<%= encodeURIComponent(assetFilters.location || '') %>">Next</a>
+                                <% aPages.forEach(p => { %>
+                                    <% if (p === '...') { %>
+                                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                                    <% } else { %>
+                                        <li class="page-item <%= aCurPage === p ? 'active' : '' %>">
+                                            <a class="page-link" href="/inventaris?tab=aset&asset_page=<%= p %>&asset_limit=<%= assetPagination.limit %>&asset_search=<%= encodeURIComponent(assetFilters.search || '') %>&asset_category=<%= encodeURIComponent(assetFilters.category || '') %>&asset_condition=<%= encodeURIComponent(assetFilters.condition || '') %>&asset_location=<%= encodeURIComponent(assetFilters.location || '') %>"><%= p %></a>
+                                        </li>
+                                    <% } %>
+                                <% }) %>
+                                <li class="page-item <%= aCurPage >= aTotalP ? 'disabled' : '' %>">
+                                    <a class="page-link" href="/inventaris?tab=aset&asset_page=<%= aCurPage + 1 %>&asset_limit=<%= assetPagination.limit %>&asset_search=<%= encodeURIComponent(assetFilters.search || '') %>&asset_category=<%= encodeURIComponent(assetFilters.category || '') %>&asset_condition=<%= encodeURIComponent(assetFilters.condition || '') %>&asset_location=<%= encodeURIComponent(assetFilters.location || '') %>">Next</a>
                                 </li>
                             </ul>
                         </nav>
@@ -290,19 +309,38 @@
                         </span>
                     </div>
                     
-                    <% if (inventoryPagination.totalPages > 1 && inventoryPagination.limit !== 'all') { %>
-                        <nav>
-                            <ul class="pagination pagination-sm mb-0">
-                                <li class="page-item <%= inventoryPagination.page <= 1 ? 'disabled' : '' %>">
-                                    <a class="page-link" href="/inventaris?tab=persediaan&inv_page=<%= inventoryPagination.page - 1 %>&inv_limit=<%= inventoryPagination.limit %>&inv_search=<%= encodeURIComponent(inventoryFilters.search || '') %>&inv_category=<%= encodeURIComponent(inventoryFilters.category || '') %>">Previous</a>
+                    <% if (inventoryPagination.totalPages > 1 && inventoryPagination.limit !== 'all') { 
+                        const iCurPage = parseInt(inventoryPagination.page) || 1;
+                        const iTotalP = parseInt(inventoryPagination.totalPages) || 1;
+                        let iPages = [];
+                        if (iTotalP <= 7) {
+                            for (let i = 1; i <= iTotalP; i++) iPages.push(i);
+                        } else {
+                            if (iCurPage <= 4) {
+                                iPages = [1, 2, 3, 4, 5, '...', iTotalP];
+                            } else if (iCurPage >= iTotalP - 3) {
+                                iPages = [1, '...', iTotalP - 4, iTotalP - 3, iTotalP - 2, iTotalP - 1, iTotalP];
+                            } else {
+                                iPages = [1, '...', iCurPage - 1, iCurPage, iCurPage + 1, '...', iTotalP];
+                            }
+                        }
+                    %>
+                        <nav aria-label="Navigasi Halaman Persediaan">
+                            <ul class="pagination pagination-sm mb-0 flex-wrap justify-content-center">
+                                <li class="page-item <%= iCurPage <= 1 ? 'disabled' : '' %>">
+                                    <a class="page-link" href="/inventaris?tab=persediaan&inv_page=<%= iCurPage - 1 %>&inv_limit=<%= inventoryPagination.limit %>&inv_search=<%= encodeURIComponent(inventoryFilters.search || '') %>&inv_category=<%= encodeURIComponent(inventoryFilters.category || '') %>">Previous</a>
                                 </li>
-                                <% for (let p = 1; p <= inventoryPagination.totalPages; p++) { %>
-                                    <li class="page-item <%= inventoryPagination.page === p ? 'active' : '' %>">
-                                        <a class="page-link" href="/inventaris?tab=persediaan&inv_page=<%= p %>&inv_limit=<%= inventoryPagination.limit %>&inv_search=<%= encodeURIComponent(inventoryFilters.search || '') %>&inv_category=<%= encodeURIComponent(inventoryFilters.category || '') %>"><%= p %></a>
-                                    </li>
-                                <% } %>
-                                <li class="page-item <%= inventoryPagination.page >= inventoryPagination.totalPages ? 'disabled' : '' %>">
-                                    <a class="page-link" href="/inventaris?tab=persediaan&inv_page=<%= inventoryPagination.page + 1 %>&inv_limit=<%= inventoryPagination.limit %>&inv_search=<%= encodeURIComponent(inventoryFilters.search || '') %>&inv_category=<%= encodeURIComponent(inventoryFilters.category || '') %>">Next</a>
+                                <% iPages.forEach(p => { %>
+                                    <% if (p === '...') { %>
+                                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                                    <% } else { %>
+                                        <li class="page-item <%= iCurPage === p ? 'active' : '' %>">
+                                            <a class="page-link" href="/inventaris?tab=persediaan&inv_page=<%= p %>&inv_limit=<%= inventoryPagination.limit %>&inv_search=<%= encodeURIComponent(inventoryFilters.search || '') %>&inv_category=<%= encodeURIComponent(inventoryFilters.category || '') %>"><%= p %></a>
+                                        </li>
+                                    <% } %>
+                                <% }) %>
+                                <li class="page-item <%= iCurPage >= iTotalP ? 'disabled' : '' %>">
+                                    <a class="page-link" href="/inventaris?tab=persediaan&inv_page=<%= iCurPage + 1 %>&inv_limit=<%= inventoryPagination.limit %>&inv_search=<%= encodeURIComponent(inventoryFilters.search || '') %>&inv_category=<%= encodeURIComponent(inventoryFilters.category || '') %>">Next</a>
                                 </li>
                             </ul>
                         </nav>
@@ -400,19 +438,38 @@
                         </span>
                     </div>
                     
-                    <% if (logPagination.totalPages > 1 && logPagination.limit !== 'all') { %>
-                        <nav>
-                            <ul class="pagination pagination-sm mb-0">
-                                <li class="page-item <%= logPagination.page <= 1 ? 'disabled' : '' %>">
-                                    <a class="page-link" href="/inventaris?tab=logs&log_page=<%= logPagination.page - 1 %>&log_limit=<%= logPagination.limit %>&log_search=<%= encodeURIComponent(logFilters.search || '') %>&log_start_date=<%= encodeURIComponent(logFilters.start_date || '') %>&log_end_date=<%= encodeURIComponent(logFilters.end_date || '') %>&log_type=<%= encodeURIComponent(logFilters.type || '') %>">Previous</a>
+                    <% if (logPagination.totalPages > 1 && logPagination.limit !== 'all') { 
+                        const lCurPage = parseInt(logPagination.page) || 1;
+                        const lTotalP = parseInt(logPagination.totalPages) || 1;
+                        let lPages = [];
+                        if (lTotalP <= 7) {
+                            for (let i = 1; i <= lTotalP; i++) lPages.push(i);
+                        } else {
+                            if (lCurPage <= 4) {
+                                lPages = [1, 2, 3, 4, 5, '...', lTotalP];
+                            } else if (lCurPage >= lTotalP - 3) {
+                                lPages = [1, '...', lTotalP - 4, lTotalP - 3, lTotalP - 2, lTotalP - 1, lTotalP];
+                            } else {
+                                lPages = [1, '...', lCurPage - 1, lCurPage, lCurPage + 1, '...', lTotalP];
+                            }
+                        }
+                    %>
+                        <nav aria-label="Navigasi Halaman Log Inventaris">
+                            <ul class="pagination pagination-sm mb-0 flex-wrap justify-content-center">
+                                <li class="page-item <%= lCurPage <= 1 ? 'disabled' : '' %>">
+                                    <a class="page-link" href="/inventaris?tab=logs&log_page=<%= lCurPage - 1 %>&log_limit=<%= logPagination.limit %>&log_search=<%= encodeURIComponent(logFilters.search || '') %>&log_start_date=<%= encodeURIComponent(logFilters.start_date || '') %>&log_end_date=<%= encodeURIComponent(logFilters.end_date || '') %>&log_type=<%= encodeURIComponent(logFilters.type || '') %>">Previous</a>
                                 </li>
-                                <% for (let p = 1; p <= logPagination.totalPages; p++) { %>
-                                    <li class="page-item <%= logPagination.page === p ? 'active' : '' %>">
-                                        <a class="page-link" href="/inventaris?tab=logs&log_page=<%= p %>&log_limit=<%= logPagination.limit %>&log_search=<%= encodeURIComponent(logFilters.search || '') %>&log_start_date=<%= encodeURIComponent(logFilters.start_date || '') %>&log_end_date=<%= encodeURIComponent(logFilters.end_date || '') %>&log_type=<%= encodeURIComponent(logFilters.type || '') %>"><%= p %></a>
-                                    </li>
-                                <% } %>
-                                <li class="page-item <%= logPagination.page >= logPagination.totalPages ? 'disabled' : '' %>">
-                                    <a class="page-link" href="/inventaris?tab=logs&log_page=<%= logPagination.page + 1 %>&log_limit=<%= logPagination.limit %>&log_search=<%= encodeURIComponent(logFilters.search || '') %>&log_start_date=<%= encodeURIComponent(logFilters.start_date || '') %>&log_end_date=<%= encodeURIComponent(logFilters.end_date || '') %>&log_type=<%= encodeURIComponent(logFilters.type || '') %>">Next</a>
+                                <% lPages.forEach(p => { %>
+                                    <% if (p === '...') { %>
+                                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                                    <% } else { %>
+                                        <li class="page-item <%= lCurPage === p ? 'active' : '' %>">
+                                            <a class="page-link" href="/inventaris?tab=logs&log_page=<%= p %>&log_limit=<%= logPagination.limit %>&log_search=<%= encodeURIComponent(logFilters.search || '') %>&log_start_date=<%= encodeURIComponent(logFilters.start_date || '') %>&log_end_date=<%= encodeURIComponent(logFilters.end_date || '') %>&log_type=<%= encodeURIComponent(logFilters.type || '') %>"><%= p %></a>
+                                        </li>
+                                    <% } %>
+                                <% }) %>
+                                <li class="page-item <%= lCurPage >= lTotalP ? 'disabled' : '' %>">
+                                    <a class="page-link" href="/inventaris?tab=logs&log_page=<%= lCurPage + 1 %>&log_limit=<%= logPagination.limit %>&log_search=<%= encodeURIComponent(logFilters.search || '') %>&log_start_date=<%= encodeURIComponent(logFilters.start_date || '') %>&log_end_date=<%= encodeURIComponent(logFilters.end_date || '') %>&log_type=<%= encodeURIComponent(logFilters.type || '') %>">Next</a>
                                 </li>
                             </ul>
                         </nav>

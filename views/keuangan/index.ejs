@@ -268,27 +268,46 @@
                 </div>
 
                 <!-- Page Navigation Links -->
-                <% if (pagination.limit !== 'all' && pagination.totalPages > 1) { %>
+                <% if (pagination.limit !== 'all' && pagination.totalPages > 1) { 
+                    const curPage = parseInt(pagination.page) || 1;
+                    const totalP = parseInt(pagination.totalPages) || 1;
+                    let pages = [];
+                    if (totalP <= 7) {
+                        for (let i = 1; i <= totalP; i++) pages.push(i);
+                    } else {
+                        if (curPage <= 4) {
+                            pages = [1, 2, 3, 4, 5, '...', totalP];
+                        } else if (curPage >= totalP - 3) {
+                            pages = [1, '...', totalP - 4, totalP - 3, totalP - 2, totalP - 1, totalP];
+                        } else {
+                            pages = [1, '...', curPage - 1, curPage, curPage + 1, '...', totalP];
+                        }
+                    }
+                %>
                     <nav aria-label="Navigasi Halaman">
-                        <ul class="pagination pagination-sm mb-0">
+                        <ul class="pagination pagination-sm mb-0 flex-wrap justify-content-center">
                             <!-- Previous Page -->
-                            <li class="page-item <%= pagination.page <= 1 ? 'disabled' : '' %>">
-                                <% queryParams.set('page', pagination.page - 1); %>
+                            <li class="page-item <%= curPage <= 1 ? 'disabled' : '' %>">
+                                <% queryParams.set('page', curPage - 1); %>
                                 <a class="page-link" href="/keuangan?<%= queryParams.toString() %>">Sebelumnya</a>
                             </li>
 
                             <!-- Page Numbers -->
-                            <% for (let p = 1; p <= pagination.totalPages; p++) { 
-                                queryParams.set('page', p);
-                            %>
-                                <li class="page-item <%= p === pagination.page ? 'active' : '' %>">
-                                    <a class="page-link" href="/keuangan?<%= queryParams.toString() %>"><%= p %></a>
-                                </li>
-                            <% } %>
+                            <% pages.forEach(p => { %>
+                                <% if (p === '...') { %>
+                                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                                <% } else { 
+                                    queryParams.set('page', p);
+                                %>
+                                    <li class="page-item <%= p === curPage ? 'active' : '' %>">
+                                        <a class="page-link" href="/keuangan?<%= queryParams.toString() %>"><%= p %></a>
+                                    </li>
+                                <% } %>
+                            <% }) %>
 
                             <!-- Next Page -->
-                            <li class="page-item <%= pagination.page >= pagination.totalPages ? 'disabled' : '' %>">
-                                <% queryParams.set('page', pagination.page + 1); %>
+                            <li class="page-item <%= curPage >= totalP ? 'disabled' : '' %>">
+                                <% queryParams.set('page', curPage + 1); %>
                                 <a class="page-link" href="/keuangan?<%= queryParams.toString() %>">Selanjutnya</a>
                             </li>
                         </ul>
