@@ -189,7 +189,7 @@ class LaporanModel {
      */
     static async getLaporanMutasiKas(filters = {}) {
         let sql = `
-            SELECT t.*, c.name as category_name, c.account_code, ca.name as account_name, tca.name as target_account_name, u.full_name as created_by_name
+            SELECT t.*, c.name as category_name, c.account_code, ca.name as account_name, tca.name as target_account_name, u.username as created_by_username, u.full_name as created_by_name
             FROM transactions t
             JOIN categories c ON t.category_id = c.id
             JOIN cash_accounts ca ON t.account_id = ca.id

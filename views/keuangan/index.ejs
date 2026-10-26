@@ -197,7 +197,7 @@
                                         <span class="fw-bold text-danger">- <%= formatRupiah(trx.amount) %></span>
                                     <% } %>
                                 </td>
-                                <td class="small text-muted"><%= trx.created_by_name %></td>
+                                <td class="small text-muted"><%= trx.created_by_username || trx.created_by_name %></td>
                                 <td class="text-end text-nowrap">
                                     <% if (trx.payment_mode === 'Hutang' && trx.debt_status === 'Belum Lunas') { %>
                                         <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>

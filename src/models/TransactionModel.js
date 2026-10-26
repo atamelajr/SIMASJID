@@ -251,7 +251,7 @@ class TransactionModel {
 
         // Fetch paginated data with grouped asset/inventory subqueries to prevent duplicate transaction rows
         let sql = `
-            SELECT t.*, c.name as category_name, c.sub_type, ca.name as account_name, tca.name as target_account_name, tca.code as target_account_code, pca.name as paid_account_name, u.full_name as created_by_name,
+            SELECT t.*, c.name as category_name, c.sub_type, ca.name as account_name, tca.name as target_account_name, tca.code as target_account_code, pca.name as paid_account_name, u.username as created_by_username, u.full_name as created_by_name,
                    dm.category as donor_category_name,
                    fa_summary.asset_id, fa_summary.asset_name, fa_summary.asset_qty, fa_summary.asset_condition, fa_summary.asset_location,
                    il_summary.inventory_log_id, il_summary.inventory_qty, il_summary.inventory_item_id, il_summary.inventory_name, il_summary.inventory_unit
