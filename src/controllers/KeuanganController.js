@@ -1,12 +1,11 @@
 const TransactionModel = require('../models/TransactionModel');
 const MasterModel = require('../models/MasterModel');
 const MasjidModel = require('../models/MasjidModel');
-const ExcelExportService = require('../services/ExcelExportService');
 
 class KeuanganController {
     static async index(req, res) {
         try {
-            const { account_id, category_id, type, payment_mode, start_date, end_date, page, limit } = req.query;
+            const { account_id, category_id, type, payment_mode, start_date, end_date, sort_date, page, limit } = req.query;
             
             const currentPage = parseInt(page) || 1;
             const currentLimit = limit || '10';
@@ -17,7 +16,8 @@ class KeuanganController {
                 type: type || '',
                 payment_mode: payment_mode || '',
                 start_date: start_date || '',
-                end_date: end_date || ''
+                end_date: end_date || '',
+                sort_date: (sort_date || 'desc').toLowerCase()
             };
 
             const result = await TransactionModel.getPaginatedTransactions(filters, currentPage, currentLimit);
@@ -35,6 +35,7 @@ class KeuanganController {
             if (filters.category_id) exportParams.set('category_id', filters.category_id);
             if (filters.payment_mode) exportParams.set('payment_mode', filters.payment_mode);
             if (filters.account_id) exportParams.set('account_id', filters.account_id);
+            if (filters.sort_date) exportParams.set('sort_date', filters.sort_date);
             const exportQuery = exportParams.toString() ? `?${exportParams.toString()}` : '';
 
             res.render('keuangan/index', {
@@ -46,6 +47,7 @@ class KeuanganController {
                     limit: result.limit,
                     totalPages: result.totalPages
                 },
+                filterSummary: result.filterSummary,
                 accounts,
                 categories,
                 masterItems,
@@ -168,7 +170,8 @@ class KeuanganController {
 
     static async exportExcel(req, res) {
         try {
-            const { account_id, category_id, type, payment_mode, start_date, end_date } = req.query;
+            const ExcelExportService = require('../services/ExcelExportService');
+            const { account_id, category_id, type, payment_mode, start_date, end_date, sort_date } = req.query;
 
             const filters = {
                 account_id: account_id || '',
@@ -176,7 +179,8 @@ class KeuanganController {
                 type: type || '',
                 payment_mode: payment_mode || '',
                 start_date: start_date || '',
-                end_date: end_date || ''
+                end_date: end_date || '',
+                sort_date: (sort_date || 'desc').toLowerCase()
             };
 
             const transactions = await TransactionModel.getAllTransactions(filters);
@@ -232,7 +236,7 @@ class KeuanganController {
             await workbook.xlsx.write(res);
             res.end();
         } catch (err) {
-            console.error('Export Excel Error:', err);
+            console.error('Export Excel Error:', err.message || err);
             res.redirect('/keuangan');
         }
     }

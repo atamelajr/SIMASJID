@@ -77,19 +77,20 @@
             </div>
             <div class="col-md-2">
                 <label class="form-label extra-small fw-bold text-muted mb-1"><i class="bi bi-arrow-left-right me-1"></i>Tipe Transaksi</label>
-                <select name="type" class="form-select form-select-sm">
+                <select name="type" id="filterType" class="form-select form-select-sm" onchange="updateCategoryFilterOptions()">
                     <option value="">-- Semua Tipe --</option>
-                    <option value="Penerimaan" <%= filters.type === 'Penerimaan' ? 'selected' : '' %>>Penerimaan</option>
-                    <option value="Pengeluaran" <%= filters.type === 'Pengeluaran' ? 'selected' : '' %>>Pengeluaran</option>
+                    <option value="Penerimaan & Pengeluaran" <%= filters.type === 'Penerimaan & Pengeluaran' ? 'selected' : '' %>>Penerimaan & Pengeluaran</option>
+                    <option value="Penerimaan" <%= filters.type === 'Penerimaan' ? 'selected' : '' %>>Penerimaan Saja</option>
+                    <option value="Pengeluaran" <%= filters.type === 'Pengeluaran' ? 'selected' : '' %>>Pengeluaran Saja</option>
                     <option value="Mutasi" <%= filters.type === 'Mutasi' ? 'selected' : '' %>>Mutasi Kas & Bank</option>
                 </select>
             </div>
             <div class="col-md-2">
                 <label class="form-label extra-small fw-bold text-muted mb-1"><i class="bi bi-tags me-1"></i>Kategori Transaksi</label>
-                <select name="category_id" class="form-select form-select-sm">
+                <select name="category_id" id="filterCategory" class="form-select form-select-sm">
                     <option value="">-- Semua Kategori --</option>
                     <% categories.forEach(cat => { %>
-                        <option value="<%= cat.id %>" <%= filters.category_id == cat.id ? 'selected' : '' %>><%= cat.account_code %> - <%= cat.name %></option>
+                        <option value="<%= cat.id %>" data-type="<%= cat.type %>" <%= filters.category_id == cat.id ? 'selected' : '' %>><%= cat.account_code %> - <%= cat.name %></option>
                     <% }) %>
                 </select>
             </div>
@@ -113,6 +114,13 @@
                     <% }) %>
                 </select>
             </div>
+            <div class="col-md-2">
+                <label class="form-label extra-small fw-bold text-muted mb-1"><i class="bi bi-arrow-down-up me-1"></i>Urutan Tanggal</label>
+                <select name="sort_date" class="form-select form-select-sm">
+                    <option value="desc" <%= (filters.sort_date || 'desc') === 'desc' ? 'selected' : '' %>>Terbaru &rarr; Terlama</option>
+                    <option value="asc" <%= filters.sort_date === 'asc' ? 'selected' : '' %>>Terlama &rarr; Terbaru</option>
+                </select>
+            </div>
             <div class="col-md-2 d-flex gap-1">
                 <button type="submit" class="btn btn-sm btn-primary flex-fill"><i class="bi bi-filter me-1"></i>Filter</button>
                 <a href="/keuangan/export-excel<%= typeof exportQuery !== 'undefined' ? exportQuery : '' %>" class="btn btn-sm btn-success border px-2" title="Export Excel sesuai filter saat ini">
@@ -122,11 +130,118 @@
             </div>
         </form>
 
+        <!-- Total untuk Hasil Filter (Jumlah Transaksi & Jumlah Nilai) -->
+        <% if (typeof filterSummary !== 'undefined' && filterSummary) { 
+            const isFiltered = Boolean(filters.start_date || filters.end_date || filters.type || filters.category_id || filters.payment_mode || filters.account_id);
+        %>
+            <div class="p-3 mb-3 rounded-3 border <%= isFiltered ? 'bg-primary-subtle border-primary-subtle' : 'bg-light border-light-subtle' %> shadow-xs">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge <%= isFiltered ? 'bg-primary text-white' : 'bg-secondary text-white' %> px-2 py-1">
+                            <i class="bi <%= isFiltered ? 'bi-funnel-fill' : 'bi-collection' %> me-1"></i>
+                            <%= isFiltered ? 'Total Hasil Filter' : 'Total Seluruh Transaksi' %>
+                        </span>
+                        <span class="fw-bold text-dark small">
+                            <strong><%= filterSummary.totalCount.toLocaleString('id-ID') %></strong> Transaksi Terdata
+                        </span>
+                    </div>
+                    <% if (isFiltered) { %>
+                        <a href="/keuangan" class="extra-small text-decoration-none text-muted">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i>Reset ke Semua Transaksi
+                        </a>
+                    <% } %>
+                </div>
+
+                <div class="row g-2 text-center text-sm-start">
+                    <% if (filters.type === 'Penerimaan') { %>
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <div class="p-2 bg-white rounded border border-success-subtle shadow-xs">
+                                <div class="extra-small text-muted fw-semibold"><i class="bi bi-arrow-down-circle-fill text-success me-1"></i>Total Nilai Penerimaan Kas</div>
+                                <h5 class="fw-bold text-success mb-0 mt-1">+ <%= formatRupiah(filterSummary.totalPenerimaan) %></h5>
+                            </div>
+                        </div>
+                        <% if (filterSummary.totalNonKas > 0) { %>
+                            <div class="col-12 col-md-6 col-lg-4">
+                                <div class="p-2 bg-white rounded border border-primary-subtle shadow-xs">
+                                    <div class="extra-small text-muted fw-semibold"><i class="bi bi-box-seam-fill text-primary me-1"></i>Total Donasi Barang (Non-Kas)</div>
+                                    <h5 class="fw-bold text-primary mb-0 mt-1"><%= formatRupiah(filterSummary.totalNonKas) %></h5>
+                                </div>
+                            </div>
+                        <% } %>
+                    <% } else if (filters.type === 'Pengeluaran') { %>
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <div class="p-2 bg-white rounded border border-danger-subtle shadow-xs">
+                                <div class="extra-small text-muted fw-semibold"><i class="bi bi-arrow-up-circle-fill text-danger me-1"></i>Total Nilai Pengeluaran Kas</div>
+                                <h5 class="fw-bold text-danger mb-0 mt-1">- <%= formatRupiah(filterSummary.totalPengeluaran) %></h5>
+                            </div>
+                        </div>
+                    <% } else if (filters.type === 'Mutasi') { %>
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <div class="p-2 bg-white rounded border border-info-subtle shadow-xs">
+                                <div class="extra-small text-muted fw-semibold"><i class="bi bi-arrow-left-right text-info me-1"></i>Total Nilai Mutasi Kas & Bank</div>
+                                <h5 class="fw-bold text-info mb-0 mt-1"><%= formatRupiah(filterSummary.totalMutasi) %></h5>
+                            </div>
+                        </div>
+                    <% } else { %>
+                        <div class="col-6 col-md-3">
+                            <div class="p-2 bg-white rounded border border-success-subtle shadow-xs">
+                                <div class="extra-small text-muted fw-semibold"><i class="bi bi-arrow-down-circle-fill text-success me-1"></i>Total Penerimaan</div>
+                                <h6 class="fw-bold text-success mb-0 mt-1">+ <%= formatRupiah(filterSummary.totalPenerimaan) %></h6>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-2 bg-white rounded border border-danger-subtle shadow-xs">
+                                <div class="extra-small text-muted fw-semibold"><i class="bi bi-arrow-up-circle-fill text-danger me-1"></i>Total Pengeluaran</div>
+                                <h6 class="fw-bold text-danger mb-0 mt-1">- <%= formatRupiah(filterSummary.totalPengeluaran) %></h6>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-2 bg-white rounded border <%= filterSummary.netto >= 0 ? 'border-primary-subtle' : 'border-danger-subtle' %> shadow-xs">
+                                <div class="extra-small text-muted fw-semibold"><i class="bi bi-wallet2 me-1"></i>Netto (Selisih Kas)</div>
+                                <h6 class="fw-bold <%= filterSummary.netto >= 0 ? 'text-primary' : 'text-danger' %> mb-0 mt-1">
+                                    <%= filterSummary.netto >= 0 ? '+' : '' %><%= formatRupiah(filterSummary.netto) %>
+                                </h6>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-2 bg-white rounded border border-secondary-subtle shadow-xs">
+                                <div class="extra-small text-muted fw-semibold"><i class="bi bi-calculator me-1"></i>Total Perputaran Nilai</div>
+                                <h6 class="fw-bold text-dark mb-0 mt-1"><%= formatRupiah(filterSummary.totalAmount) %></h6>
+                            </div>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        <% } %>
+
+        <%
+            const currentSort = filters.sort_date || 'desc';
+            const nextSort = currentSort === 'desc' ? 'asc' : 'desc';
+            const querySortParams = new URLSearchParams();
+            if (filters.start_date) querySortParams.set('start_date', filters.start_date);
+            if (filters.end_date) querySortParams.set('end_date', filters.end_date);
+            if (filters.type) querySortParams.set('type', filters.type);
+            if (filters.category_id) querySortParams.set('category_id', filters.category_id);
+            if (filters.payment_mode) querySortParams.set('payment_mode', filters.payment_mode);
+            if (filters.account_id) querySortParams.set('account_id', filters.account_id);
+            querySortParams.set('limit', pagination.limit);
+            querySortParams.set('sort_date', nextSort);
+            querySortParams.set('page', 1);
+        %>
+
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>Kode & Tgl Transaksi</th>
+                        <th style="min-width: 175px;">
+                            <a href="/keuangan?<%= querySortParams.toString() %>" class="text-dark text-decoration-none d-flex align-items-center justify-content-between" title="Klik untuk mengurutkan: <%= nextSort === 'asc' ? 'Terlama ke Terbaru' : 'Terbaru ke Terlama' %>">
+                                <span>Kode & Tgl Transaksi</span>
+                                <span class="badge bg-light text-primary border ms-1 py-1 px-1">
+                                    <i class="bi <%= currentSort === 'asc' ? 'bi-sort-up-alt' : 'bi-sort-down' %>"></i>
+                                    <span class="extra-small fw-normal ms-1"><%= currentSort === 'asc' ? 'Lama' : 'Baru' %></span>
+                                </span>
+                            </a>
+                        </th>
                         <th>Bentuk & Kas / Hutang</th>
                         <th>Kategori & Detail</th>
                         <th>Donatur / Keterangan</th>
@@ -249,6 +364,7 @@
             if (filters.category_id) queryParams.set('category_id', filters.category_id);
             if (filters.payment_mode) queryParams.set('payment_mode', filters.payment_mode);
             if (filters.account_id) queryParams.set('account_id', filters.account_id);
+            if (filters.sort_date) queryParams.set('sort_date', filters.sort_date);
             queryParams.set('limit', pagination.limit);
         %>
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-3 pt-3 border-top gap-2">
@@ -262,6 +378,7 @@
                         <% if (filters.category_id) { %><input type="hidden" name="category_id" value="<%= filters.category_id %>"><% } %>
                         <% if (filters.payment_mode) { %><input type="hidden" name="payment_mode" value="<%= filters.payment_mode %>"><% } %>
                         <% if (filters.account_id) { %><input type="hidden" name="account_id" value="<%= filters.account_id %>"><% } %>
+                        <% if (filters.sort_date) { %><input type="hidden" name="sort_date" value="<%= filters.sort_date %>"><% } %>
                         
                         <select name="limit" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
                             <option value="10" <%= pagination.limit === '10' ? 'selected' : '' %>>10</option>
@@ -1446,4 +1563,46 @@
         const modal = bootstrap.Modal.getInstance(modalEl);
         if (modal) modal.hide();
     }
+
+    // Filter Dropdown Kategori Transaksi berdasarkan Tipe Transaksi yang dipilih
+    function updateCategoryFilterOptions() {
+        const typeSelect = document.getElementById('filterType');
+        const catSelect = document.getElementById('filterCategory');
+        if (!typeSelect || !catSelect) return;
+
+        const selectedType = typeSelect.value;
+        const currentVal = catSelect.value;
+        let selectedStillVisible = false;
+
+        Array.from(catSelect.options).forEach((opt, idx) => {
+            if (idx === 0) return; // "-- Semua Kategori --"
+            const optType = opt.getAttribute('data-type');
+            let show = false;
+
+            if (!selectedType || selectedType === 'Penerimaan & Pengeluaran') {
+                show = true;
+            } else if (selectedType === 'Mutasi') {
+                show = false;
+            } else {
+                show = (optType === selectedType);
+            }
+
+            if (show) {
+                opt.style.display = '';
+                opt.disabled = false;
+                if (opt.value === currentVal) selectedStillVisible = true;
+            } else {
+                opt.style.display = 'none';
+                opt.disabled = true;
+            }
+        });
+
+        if (currentVal && !selectedStillVisible) {
+            catSelect.value = '';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        updateCategoryFilterOptions();
+    });
 </script>

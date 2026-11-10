@@ -1,4 +1,15 @@
-const ExcelJS = require('exceljs');
+let _ExcelJS = null;
+
+function getExcelJS() {
+    if (!_ExcelJS) {
+        try {
+            _ExcelJS = require('exceljs');
+        } catch (e) {
+            throw new Error("Modul 'exceljs' belum terinstall di server. Silakan jalankan 'npm install' pada server produksi Anda.");
+        }
+    }
+    return _ExcelJS;
+}
 
 class ExcelExportService {
     /**
@@ -7,6 +18,7 @@ class ExcelExportService {
      * @returns {Promise<ExcelJS.Workbook>}
      */
     static async generateTransactionsExcel({ transactions, filters, filterLabels, masjidProfile, user }) {
+        const ExcelJS = getExcelJS();
         const workbook = new ExcelJS.Workbook();
         workbook.creator = user?.username ? `${user.username} (SIMASJID)` : 'SIMASJID DKM';
         workbook.lastModifiedBy = user?.username || 'SIMASJID';

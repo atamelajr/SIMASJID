@@ -215,8 +215,12 @@ class TransactionModel {
             params.push(filters.category_id);
         }
         if (filters.type) {
-            whereSql += ` AND t.type = ?`;
-            params.push(filters.type);
+            if (filters.type === 'Penerimaan & Pengeluaran') {
+                whereSql += ` AND t.type IN ('Penerimaan', 'Pengeluaran')`;
+            } else {
+                whereSql += ` AND t.type = ?`;
+                params.push(filters.type);
+            }
         }
         if (filters.payment_mode) {
             if (filters.payment_mode === 'Donasi Barang') {
@@ -237,17 +241,33 @@ class TransactionModel {
             params.push(filters.end_date);
         }
 
-        // Count Total Records matching filters
-        const countSql = `
-            SELECT COUNT(DISTINCT t.id) as total
+        // Count Total Records & Aggregated Amounts matching filters
+        const statsSql = `
+            SELECT 
+                COUNT(DISTINCT t.id) as total_count,
+                COALESCE(SUM(CASE WHEN t.type = 'Penerimaan' AND t.is_in_kind = 0 THEN t.amount ELSE 0 END), 0) as total_penerimaan,
+                COALESCE(SUM(CASE WHEN t.type = 'Pengeluaran' AND t.is_in_kind = 0 THEN t.amount ELSE 0 END), 0) as total_pengeluaran,
+                COALESCE(SUM(CASE WHEN t.is_in_kind = 1 THEN t.amount ELSE 0 END), 0) as total_non_kas,
+                COALESCE(SUM(CASE WHEN t.type = 'Mutasi' THEN t.amount ELSE 0 END), 0) as total_mutasi,
+                COALESCE(SUM(t.amount), 0) as total_amount
             FROM transactions t
             JOIN categories c ON t.category_id = c.id
             JOIN cash_accounts ca ON t.account_id = ca.id
             JOIN users u ON t.created_by = u.id
             ${whereSql}
         `;
-        const [countRows] = await db.query(countSql, params);
-        const totalCount = countRows[0]?.total || 0;
+        const [statsRows] = await db.query(statsSql, params);
+        const stats = statsRows[0] || {
+            total_count: 0,
+            total_penerimaan: 0,
+            total_pengeluaran: 0,
+            total_non_kas: 0,
+            total_mutasi: 0,
+            total_amount: 0
+        };
+        const totalCount = parseInt(stats.total_count) || 0;
+
+        const sortDate = (filters.sort_date || 'desc').toLowerCase() === 'asc' ? 'ASC' : 'DESC';
 
         // Fetch paginated data with grouped asset/inventory subqueries to prevent duplicate transaction rows
         let sql = `
@@ -286,7 +306,7 @@ class TransactionModel {
                 GROUP BY il.transaction_id
             ) il_summary ON il_summary.transaction_id = t.id
             ${whereSql}
-            ORDER BY t.transaction_date DESC, t.id DESC
+            ORDER BY t.transaction_date ${sortDate}, t.id ${sortDate}
         `;
 
         let pageNum = parseInt(page) || 1;
@@ -307,6 +327,15 @@ class TransactionModel {
         return {
             transactions,
             totalCount,
+            filterSummary: {
+                totalCount,
+                totalPenerimaan: parseFloat(stats.total_penerimaan || 0),
+                totalPengeluaran: parseFloat(stats.total_pengeluaran || 0),
+                totalNonKas: parseFloat(stats.total_non_kas || 0),
+                totalMutasi: parseFloat(stats.total_mutasi || 0),
+                totalAmount: parseFloat(stats.total_amount || 0),
+                netto: parseFloat(stats.total_penerimaan || 0) - parseFloat(stats.total_pengeluaran || 0)
+            },
             page: pageNum,
             limit: limit.toString(),
             totalPages
