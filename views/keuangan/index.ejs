@@ -3,16 +3,22 @@
         <h4 class="fw-bold text-dark mb-1">Transaksi Keuangan</h4>
         <p class="text-muted small mb-0">Riwayat seluruh transaksi penerimaan (Tunai, Non-Tunai, Donasi Barang) dan pengeluaran kas masjid.</p>
     </div>
-    <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
-        <div class="d-flex gap-2">
+    <div class="d-flex flex-wrap gap-2">
+        <a href="/keuangan/export-excel<%= typeof exportQuery !== 'undefined' ? exportQuery : '' %>" class="btn btn-success shadow-sm" title="Export data transaksi ke format Excel (.xlsx)">
+            <i class="bi bi-file-earmark-excel me-1"></i> Export Excel
+            <% if (filters.start_date || filters.end_date || filters.type || filters.category_id || filters.payment_mode || filters.account_id) { %>
+                <span class="badge bg-white text-success ms-1 small">Filter Aktif</span>
+            <% } %>
+        </a>
+        <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator')) { %>
             <button class="btn btn-outline-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddMutation">
                 <i class="bi bi-arrow-left-right me-1"></i> Mutasi Kas & Bank
             </button>
             <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddTransaction">
                 <i class="bi bi-plus-lg me-1"></i> Tambah Transaksi / Donasi
             </button>
-        </div>
-    <% } %>
+        <% } %>
+    </div>
 </div>
 
 <!-- Account Summary Cards (Single Horizontal Row) -->
@@ -108,8 +114,11 @@
                 </select>
             </div>
             <div class="col-md-2 d-flex gap-1">
-                <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-filter me-1"></i>Filter</button>
-                <a href="/keuangan" class="btn btn-sm btn-light border w-100" title="Reset Filter"><i class="bi bi-arrow-counterclockwise me-1"></i>Reset</a>
+                <button type="submit" class="btn btn-sm btn-primary flex-fill"><i class="bi bi-filter me-1"></i>Filter</button>
+                <a href="/keuangan/export-excel<%= typeof exportQuery !== 'undefined' ? exportQuery : '' %>" class="btn btn-sm btn-success border px-2" title="Export Excel sesuai filter saat ini">
+                    <i class="bi bi-file-earmark-excel"></i>
+                </a>
+                <a href="/keuangan" class="btn btn-sm btn-light border px-2" title="Reset Filter"><i class="bi bi-arrow-counterclockwise"></i></a>
             </div>
         </form>
 

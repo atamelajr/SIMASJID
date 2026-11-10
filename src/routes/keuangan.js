@@ -5,6 +5,7 @@ const { checkAuth, checkRole } = require('../middlewares/auth');
 const upload = require('../middlewares/upload');
 
 router.get('/', checkAuth, checkRole('Admin', 'Operator', 'Pengurus'), KeuanganController.index);
+router.get('/export-excel', checkAuth, checkRole('Admin', 'Operator', 'Pengurus'), KeuanganController.exportExcel);
 router.post('/create', checkAuth, checkRole('Admin', 'Operator'), upload.single('proof_file'), KeuanganController.create);
 router.post('/update/:id', checkAuth, checkRole('Admin', 'Operator'), upload.single('proof_file'), KeuanganController.update);
 router.post('/pay-debt/:id', checkAuth, checkRole('Admin', 'Operator'), KeuanganController.payDebt);

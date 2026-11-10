@@ -1,5 +1,7 @@
 const TransactionModel = require('../models/TransactionModel');
 const MasterModel = require('../models/MasterModel');
+const MasjidModel = require('../models/MasjidModel');
+const ExcelExportService = require('../services/ExcelExportService');
 
 class KeuanganController {
     static async index(req, res) {
@@ -26,6 +28,15 @@ class KeuanganController {
             const locations = await MasterModel.getAllLocations();
             const donors = await MasterModel.getDonorsMustahik('Donatur');
 
+            const exportParams = new URLSearchParams();
+            if (filters.start_date) exportParams.set('start_date', filters.start_date);
+            if (filters.end_date) exportParams.set('end_date', filters.end_date);
+            if (filters.type) exportParams.set('type', filters.type);
+            if (filters.category_id) exportParams.set('category_id', filters.category_id);
+            if (filters.payment_mode) exportParams.set('payment_mode', filters.payment_mode);
+            if (filters.account_id) exportParams.set('account_id', filters.account_id);
+            const exportQuery = exportParams.toString() ? `?${exportParams.toString()}` : '';
+
             res.render('keuangan/index', {
                 title: 'Transaksi Keuangan',
                 transactions: result.transactions,
@@ -43,7 +54,8 @@ class KeuanganController {
                 donors,
                 filters,
                 selectedAccount: filters.account_id,
-                selectedType: filters.type
+                selectedType: filters.type,
+                exportQuery
             });
         } catch (err) {
             console.error('Keuangan Error:', err);
@@ -150,6 +162,77 @@ class KeuanganController {
             res.redirect('/keuangan');
         } catch (err) {
             console.error('Delete Transaction Error:', err);
+            res.redirect('/keuangan');
+        }
+    }
+
+    static async exportExcel(req, res) {
+        try {
+            const { account_id, category_id, type, payment_mode, start_date, end_date } = req.query;
+
+            const filters = {
+                account_id: account_id || '',
+                category_id: category_id || '',
+                type: type || '',
+                payment_mode: payment_mode || '',
+                start_date: start_date || '',
+                end_date: end_date || ''
+            };
+
+            const transactions = await TransactionModel.getAllTransactions(filters);
+            const accounts = await TransactionModel.getAccounts();
+            const categories = await TransactionModel.getCategories();
+            const masjidProfile = await MasjidModel.getProfile();
+
+            // Label lookup for friendly header descriptions
+            let accountName = 'Semua Rekening Kas & Bank';
+            if (filters.account_id) {
+                const acc = accounts.find(a => String(a.id) === String(filters.account_id));
+                if (acc) accountName = `${acc.code} - ${acc.name}`;
+            }
+
+            let categoryName = 'Semua Kategori (COA)';
+            if (filters.category_id) {
+                const cat = categories.find(c => String(c.id) === String(filters.category_id));
+                if (cat) categoryName = `${cat.account_code} - ${cat.name}`;
+            }
+
+            let periodLabel = 'Semua Periode Transaksi';
+            if (filters.start_date && filters.end_date) {
+                periodLabel = `${filters.start_date} s/d ${filters.end_date}`;
+            } else if (filters.start_date) {
+                periodLabel = `Mulai dari ${filters.start_date}`;
+            } else if (filters.end_date) {
+                periodLabel = `Sampai dengan ${filters.end_date}`;
+            }
+
+            const filterLabels = {
+                periodLabel,
+                typeName: filters.type || 'Semua Tipe',
+                categoryName,
+                paymentModeName: filters.payment_mode || 'Semua Bentuk',
+                accountName,
+                exportDate: new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })
+            };
+
+            const workbook = await ExcelExportService.generateTransactionsExcel({
+                transactions,
+                filters,
+                filterLabels,
+                masjidProfile,
+                user: req.session.user
+            });
+
+            const timestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
+            const filename = `Transaksi_Keuangan_SIMASJID_${timestamp}.xlsx`;
+
+            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+            await workbook.xlsx.write(res);
+            res.end();
+        } catch (err) {
+            console.error('Export Excel Error:', err);
             res.redirect('/keuangan');
         }
     }
