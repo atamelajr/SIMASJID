@@ -183,30 +183,24 @@
                             </div>
                         </div>
                     <% } else { %>
-                        <div class="col-6 col-md-3">
+                        <div class="col-12 col-md-4">
                             <div class="p-2 bg-white rounded border border-success-subtle shadow-xs">
                                 <div class="extra-small text-muted fw-semibold"><i class="bi bi-arrow-down-circle-fill text-success me-1"></i>Total Penerimaan</div>
                                 <h6 class="fw-bold text-success mb-0 mt-1">+ <%= formatRupiah(filterSummary.totalPenerimaan) %></h6>
                             </div>
                         </div>
-                        <div class="col-6 col-md-3">
+                        <div class="col-12 col-md-4">
                             <div class="p-2 bg-white rounded border border-danger-subtle shadow-xs">
                                 <div class="extra-small text-muted fw-semibold"><i class="bi bi-arrow-up-circle-fill text-danger me-1"></i>Total Pengeluaran</div>
                                 <h6 class="fw-bold text-danger mb-0 mt-1">- <%= formatRupiah(filterSummary.totalPengeluaran) %></h6>
                             </div>
                         </div>
-                        <div class="col-6 col-md-3">
+                        <div class="col-12 col-md-4">
                             <div class="p-2 bg-white rounded border <%= filterSummary.netto >= 0 ? 'border-primary-subtle' : 'border-danger-subtle' %> shadow-xs">
                                 <div class="extra-small text-muted fw-semibold"><i class="bi bi-wallet2 me-1"></i>Netto (Selisih Kas)</div>
                                 <h6 class="fw-bold <%= filterSummary.netto >= 0 ? 'text-primary' : 'text-danger' %> mb-0 mt-1">
                                     <%= filterSummary.netto >= 0 ? '+' : '' %><%= formatRupiah(filterSummary.netto) %>
                                 </h6>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="p-2 bg-white rounded border border-secondary-subtle shadow-xs">
-                                <div class="extra-small text-muted fw-semibold"><i class="bi bi-calculator me-1"></i>Total Perputaran Nilai</div>
-                                <h6 class="fw-bold text-dark mb-0 mt-1"><%= formatRupiah(filterSummary.totalAmount) %></h6>
                             </div>
                         </div>
                     <% } %>
