@@ -11,10 +11,12 @@ const profilRoutes = require('./profil');
 const laporanRoutes = require('./laporan');
 const settingsRoutes = require('./settings');
 const masterRoutes = require('./master');
+const activityLogRoutes = require('./activity_logs');
 
 // Back Office Routes
 router.use('/auth', authRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/activity-logs', activityLogRoutes);
 router.use('/keuangan', keuanganRoutes);
 router.use('/inventaris', inventarisRoutes);
 router.use('/proyek', proyekRoutes);

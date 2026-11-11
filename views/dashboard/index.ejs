@@ -279,9 +279,15 @@
     <div class="col-lg-6">
         <div class="card card-custom h-100 p-3 shadow-sm border-0">
             <div class="card-body">
-                <h5 class="fw-bold text-dark mb-3">
-                    <i class="bi bi-clock-history text-secondary me-2"></i>Log Aktivitas Pengguna Terbaru
-                </h5>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold text-dark mb-0">
+                        <i class="bi bi-clock-history text-secondary me-2"></i>Log Aktivitas Pengguna Terbaru
+                    </h5>
+                    <a href="/activity-logs" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1">
+                        <span>Lihat Semua</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
                 <% if (summary.recentLogs && summary.recentLogs.length > 0) { %>
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
@@ -291,15 +297,32 @@
                                     <th>Pengguna</th>
                                     <th>Aksi</th>
                                     <th>Detail</th>
+                                    <th class="text-center" style="width: 45px;">Opsi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <% summary.recentLogs.forEach(log => { %>
                                     <tr>
                                         <td class="small text-muted"><%= formatDate(log.created_at) %></td>
-                                        <td class="fw-semibold text-truncate" style="max-width: 110px;" title="<%= log.username || log.user_name || 'Sistem' %>"><%= log.username || log.user_name || 'Sistem' %></td>
-                                        <td><span class="badge bg-secondary-subtle text-secondary border"><%= log.action %></span></td>
-                                        <td class="small text-truncate" style="max-width: 160px;" title="<%= log.details %>"><%= log.details %></td>
+                                        <td class="fw-semibold text-truncate" style="max-width: 100px;" title="<%= log.username || log.user_name || 'Sistem' %>"><%= log.username || log.user_name || 'Sistem' %></td>
+                                        <td>
+                                            <span class="badge <%= log.action === 'TRANSACTION_CREATE' ? 'bg-success-subtle text-success border-success-subtle' : (log.action === 'TRANSACTION_UPDATE' ? 'bg-warning-subtle text-warning-emphasis border-warning-subtle' : (log.action === 'TRANSACTION_DELETE' ? 'bg-danger-subtle text-danger border-danger-subtle' : 'bg-secondary-subtle text-secondary border')) %> border">
+                                                <%= log.action %>
+                                            </span>
+                                        </td>
+                                        <td class="small text-truncate" style="max-width: 140px;" title="<%= log.details %>"><%= log.details %></td>
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-sm btn-light text-primary border py-0 px-2 btn-detail-log" 
+                                                title="Lihat Detail Log"
+                                                data-waktu="<%= typeof formatDateTime !== 'undefined' ? formatDateTime(log.created_at) : log.created_at %>"
+                                                data-username="<%= log.username || log.user_name || 'Sistem' %>"
+                                                data-fullname="<%= log.user_name || '-' %>"
+                                                data-role="<%= log.role_name || '-' %>"
+                                                data-action="<%= log.action %>"
+                                                data-details="<%= (log.details || '').replace(/"/g, '&quot;') %>">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </td>
                                     </tr>
                                 <% }) %>
                             </tbody>
@@ -314,6 +337,8 @@
         </div>
     </div>
 </div>
+
+<%- include('../partials/modal_log_detail') %>
 
 <!-- Chart initialization & AJAX logic -->
 <script>

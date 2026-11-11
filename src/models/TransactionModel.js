@@ -167,10 +167,11 @@ class TransactionModel {
 
         // Recent Activity Logs
         const [recentLogs] = await db.query(
-            `SELECT a.*, u.username, u.full_name as user_name 
+            `SELECT a.*, u.username, u.full_name as user_name, r.name as role_name 
              FROM activity_logs a 
              LEFT JOIN users u ON a.user_id = u.id 
-             ORDER BY a.created_at DESC LIMIT 5`
+             LEFT JOIN roles r ON u.role_id = r.id 
+             ORDER BY a.created_at DESC, a.id DESC LIMIT 6`
         );
 
         // Initial Chart Data (bulanan)

@@ -1,0 +1,114 @@
+<!-- Modal Detail Log Aktivitas -->
+<div class="modal fade" id="modalDetailLog" tabindex="-1" aria-labelledby="modalDetailLogLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content shadow-lg border-0 rounded-3">
+            <div class="modal-header bg-light border-bottom py-3">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="rounded-circle bg-primary bg-opacity-10 text-primary p-2 d-inline-flex">
+                        <i class="bi bi-clock-history fs-5"></i>
+                    </span>
+                    <div>
+                        <h6 class="modal-title fw-bold text-dark mb-0" id="modalDetailLogLabel">Detail Rekam Aktivitas</h6>
+                        <small class="text-muted extra-small">Informasi riwayat audit trail sistem</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <div class="text-muted extra-small fw-semibold mb-1"><i class="bi bi-calendar3 me-1"></i>WAKTU REKAM</div>
+                            <div class="fw-bold text-dark fs-6" id="modalLogWaktu">-</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <div class="text-muted extra-small fw-semibold mb-1"><i class="bi bi-person-badge me-1"></i>PENGGUNA / OPERATOR</div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-bold text-primary fs-6" id="modalLogUsername">-</span>
+                                <span class="badge bg-secondary-subtle text-secondary border extra-small" id="modalLogRole">-</span>
+                            </div>
+                            <div class="text-muted extra-small mt-1" id="modalLogFullName">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label extra-small fw-bold text-muted text-uppercase mb-1"><i class="bi bi-tag me-1"></i>Tipe Tindakan / Aksi</label>
+                    <div>
+                        <span class="badge fs-6 px-3 py-2 border rounded-pill" id="modalLogActionBadge">Aksi</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="form-label extra-small fw-bold text-muted text-uppercase mb-1"><i class="bi bi-card-text me-1"></i>Rincian / Detail Aktivitas</label>
+                    <div class="p-3 bg-light rounded-3 border">
+                        <p class="mb-0 text-dark fw-medium" id="modalLogDetails" style="white-space: pre-wrap; word-break: break-word; line-height: 1.6;">-</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-top py-2">
+                <button type="button" class="btn btn-sm btn-secondary px-3" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modalEl = document.getElementById('modalDetailLog');
+        if (!modalEl) return;
+
+        const modalWaktu = document.getElementById('modalLogWaktu');
+        const modalUsername = document.getElementById('modalLogUsername');
+        const modalRole = document.getElementById('modalLogRole');
+        const modalFullName = document.getElementById('modalLogFullName');
+        const modalActionBadge = document.getElementById('modalLogActionBadge');
+        const modalDetails = document.getElementById('modalLogDetails');
+
+        // Event delegation for all buttons with class .btn-detail-log
+        document.body.addEventListener('click', function (e) {
+            const btn = e.target.closest('.btn-detail-log');
+            if (!btn) return;
+
+            const waktu = btn.getAttribute('data-waktu') || '-';
+            const username = btn.getAttribute('data-username') || 'Sistem';
+            const fullname = btn.getAttribute('data-fullname') || '';
+            const role = btn.getAttribute('data-role') || '-';
+            const action = btn.getAttribute('data-action') || '-';
+            const details = btn.getAttribute('data-details') || '-';
+
+            modalWaktu.textContent = waktu;
+            modalUsername.textContent = username;
+            modalRole.textContent = role;
+            modalFullName.textContent = fullname && fullname !== '-' && fullname !== username ? `Nama Lengkap: ${fullname}` : '';
+            modalDetails.textContent = details;
+
+            // Styling action badge
+            modalActionBadge.className = 'badge fs-6 px-3 py-2 border rounded-pill ';
+            if (action.includes('CREATE')) {
+                modalActionBadge.className += 'bg-success-subtle text-success border-success-subtle';
+                modalActionBadge.innerHTML = `<i class="bi bi-plus-circle me-1"></i>${action}`;
+            } else if (action.includes('UPDATE')) {
+                modalActionBadge.className += 'bg-warning-subtle text-warning-emphasis border-warning-subtle';
+                modalActionBadge.innerHTML = `<i class="bi bi-pencil-square me-1"></i>${action}`;
+            } else if (action.includes('DELETE')) {
+                modalActionBadge.className += 'bg-danger-subtle text-danger border-danger-subtle';
+                modalActionBadge.innerHTML = `<i class="bi bi-trash3 me-1"></i>${action}`;
+            } else if (action.includes('DEBT')) {
+                modalActionBadge.className += 'bg-primary-subtle text-primary border-primary-subtle';
+                modalActionBadge.innerHTML = `<i class="bi bi-cash-coin me-1"></i>${action}`;
+            } else if (action.includes('INVENTORY')) {
+                modalActionBadge.className += 'bg-info-subtle text-info-emphasis border-info-subtle';
+                modalActionBadge.innerHTML = `<i class="bi bi-box-arrow-right me-1"></i>${action}`;
+            } else {
+                modalActionBadge.className += 'bg-secondary-subtle text-secondary border-secondary-subtle';
+                modalActionBadge.innerHTML = `<i class="bi bi-activity me-1"></i>${action}`;
+            }
+
+            const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            bsModal.show();
+        });
+    });
+</script>

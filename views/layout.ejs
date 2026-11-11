@@ -290,9 +290,17 @@
                     </li>
                 <% } %>
 
+                <% if (user && (user.role_name === 'Admin' || user.role_name === 'Operator' || user.role_name === 'Pengurus')) { %>
+                    <li class="nav-item">
+                        <a href="/activity-logs" class="nav-link <%= typeof title !== 'undefined' && title.includes('Log Aktivitas') ? 'active' : '' %>">
+                            <i class="bi bi-clock-history"></i> Log Aktivitas
+                        </a>
+                    </li>
+                <% } %>
+
                 <% if (user && user.role_name === 'Admin') { %>
-                    <li class="nav-item mt-2">
-                        <a href="/settings" class="nav-link">
+                    <li class="nav-item">
+                        <a href="/settings" class="nav-link <%= typeof title !== 'undefined' && title.includes('Pengaturan') ? 'active' : '' %>">
                             <i class="bi bi-gear"></i> Pengaturan User
                         </a>
                     </li>
