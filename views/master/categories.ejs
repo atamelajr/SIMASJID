@@ -29,9 +29,13 @@
                                 <td class="fw-bold text-primary"><code><%= cat.account_code %></code></td>
                                 <td class="fw-semibold"><%= cat.name %></td>
                                 <td>
-                                    <span class="badge <%= cat.type === 'Penerimaan' ? 'bg-success' : 'bg-danger' %>">
-                                        <%= cat.type %>
-                                    </span>
+                                    <% if (cat.type === 'Penerimaan') { %>
+                                        <span class="badge bg-success">Penerimaan</span>
+                                    <% } else if (cat.type === 'Pengeluaran') { %>
+                                        <span class="badge bg-danger">Pengeluaran</span>
+                                    <% } else { %>
+                                        <span class="badge bg-primary">Mutasi Kas & Bank</span>
+                                    <% } %>
                                 </td>
                                 <td>
                                     <span class="badge bg-info-subtle text-info-emphasis border"><%= cat.sub_type %></span>
@@ -76,6 +80,7 @@
                         <select name="type" id="add_cat_type" class="form-select" required onchange="onAddCategoryTypeChange()">
                             <option value="Penerimaan">Penerimaan</option>
                             <option value="Pengeluaran">Pengeluaran</option>
+                            <option value="Mutasi">Mutasi Kas & Bank</option>
                         </select>
                     </div>
                     <div class="mb-3">
@@ -132,6 +137,7 @@
                         <select id="edit_type" name="type" class="form-select" required>
                             <option value="Penerimaan">Penerimaan</option>
                             <option value="Pengeluaran">Pengeluaran</option>
+                            <option value="Mutasi">Mutasi Kas & Bank</option>
                         </select>
                     </div>
                     <div class="mb-3">

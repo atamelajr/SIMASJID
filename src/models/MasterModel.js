@@ -2,12 +2,33 @@ const db = require('../../config/database');
 
 class MasterModel {
     // === 1. KATEGORI & COA ===
+    static async ensureCategoryTypeColumn() {
+        try {
+            // Update column ENUM to include 'Mutasi'
+            await db.query(`
+                ALTER TABLE categories 
+                MODIFY COLUMN type ENUM('Penerimaan', 'Pengeluaran', 'Mutasi') NOT NULL
+            `);
+            // Otomatis arahkan kode akun 100 atau kategori Transfer/Mutasi ke tipe 'Mutasi'
+            await db.query(`
+                UPDATE categories 
+                SET type = 'Mutasi', sub_type = 'Lainnya' 
+                WHERE account_code = '100' OR name LIKE '%Transfer%' OR name LIKE '%Mutasi%'
+            `);
+        } catch (err) {
+            console.warn('ensureCategoryTypeColumn notice:', err.message);
+        }
+    }
+
     static async getNextCategoryCodes() {
         const [rowsPenerimaan] = await db.query(
             `SELECT account_code FROM categories WHERE type = 'Penerimaan' AND account_code REGEXP '^[0-9]+$' ORDER BY CAST(account_code AS UNSIGNED) DESC LIMIT 1`
         );
         const [rowsPengeluaran] = await db.query(
             `SELECT account_code FROM categories WHERE type = 'Pengeluaran' AND account_code REGEXP '^[0-9]+$' ORDER BY CAST(account_code AS UNSIGNED) DESC LIMIT 1`
+        );
+        const [rowsMutasi] = await db.query(
+            `SELECT account_code FROM categories WHERE type = 'Mutasi' AND account_code REGEXP '^[0-9]+$' ORDER BY CAST(account_code AS UNSIGNED) DESC LIMIT 1`
         );
 
         let nextPenerimaan = 401;
@@ -22,13 +43,21 @@ class MasterModel {
             if (!isNaN(num)) nextPengeluaran = num + 1;
         }
 
+        let nextMutasi = 100;
+        if (rowsMutasi.length > 0) {
+            const num = parseInt(rowsMutasi[0].account_code);
+            if (!isNaN(num)) nextMutasi = num + 1;
+        }
+
         return {
             Penerimaan: String(nextPenerimaan),
-            Pengeluaran: String(nextPengeluaran)
+            Pengeluaran: String(nextPengeluaran),
+            Mutasi: String(nextMutasi)
         };
     }
 
     static async getAllCategories() {
+        await this.ensureCategoryTypeColumn();
         const [rows] = await db.query(`SELECT * FROM categories ORDER BY type ASC, account_code ASC`);
         return rows;
     }

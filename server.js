@@ -161,5 +161,7 @@ app.listen(PORT, () => {
     console.log(`🚀 Aplikasi SIMASJID berjalan di http://localhost:${PORT}`);
     // Auto-check & auto-migrate database schema (ISO/IEC 27001 continuous integrity)
     const WebSettingModel = require('./src/models/WebSettingModel');
+    const MasterModel = require('./src/models/MasterModel');
     WebSettingModel.ensureSchema().catch(e => console.warn('Schema check warning:', e.message));
+    MasterModel.ensureCategoryTypeColumn().catch(e => console.warn('Category schema check warning:', e.message));
 });

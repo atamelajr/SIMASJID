@@ -665,6 +665,7 @@
                             <select name="type" id="edit_type" class="form-select" required>
                                 <option value="Penerimaan">Penerimaan</option>
                                 <option value="Pengeluaran">Pengeluaran</option>
+                                <option value="Mutasi">Mutasi Kas & Bank</option>
                             </select>
                         </div>
                         <div class="col-md-4">
@@ -1573,10 +1574,12 @@
             const optType = opt.getAttribute('data-type');
             let show = false;
 
-            if (!selectedType || selectedType === 'Penerimaan & Pengeluaran') {
+            if (!selectedType) {
                 show = true;
+            } else if (selectedType === 'Penerimaan & Pengeluaran') {
+                show = (optType === 'Penerimaan' || optType === 'Pengeluaran');
             } else if (selectedType === 'Mutasi') {
-                show = false;
+                show = (optType === 'Mutasi');
             } else {
                 show = (optType === selectedType);
             }
