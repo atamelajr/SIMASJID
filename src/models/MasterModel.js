@@ -15,6 +15,14 @@ class MasterModel {
                 SET type = 'Mutasi', sub_type = 'Lainnya' 
                 WHERE account_code = '100' OR name LIKE '%Transfer%' OR name LIKE '%Mutasi%'
             `);
+            // Perbaiki transaksi lama yang menggunakan kategori 100/Transfer/Mutasi agar tipenya 'Mutasi'
+            await db.query(`
+                UPDATE transactions t
+                JOIN categories c ON t.category_id = c.id
+                SET t.type = 'Mutasi'
+                WHERE (c.account_code = '100' OR c.type = 'Mutasi' OR c.name LIKE '%Transfer Internal%' OR c.name LIKE '%Mutasi Kas%')
+                  AND t.type != 'Mutasi'
+            `);
         } catch (err) {
             console.warn('ensureCategoryTypeColumn notice:', err.message);
         }

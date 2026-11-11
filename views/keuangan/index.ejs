@@ -175,7 +175,7 @@
                                 <h5 class="fw-bold text-danger mb-0 mt-1">- <%= formatRupiah(filterSummary.totalPengeluaran) %></h5>
                             </div>
                         </div>
-                    <% } else if (filters.type === 'Mutasi') { %>
+                    <% } else if (filters.type === 'Mutasi' || (filters.category_id && filterSummary.totalMutasi > 0 && filterSummary.totalPenerimaan === 0 && filterSummary.totalPengeluaran === 0)) { %>
                         <div class="col-12 col-md-6 col-lg-4">
                             <div class="p-2 bg-white rounded border border-info-subtle shadow-xs">
                                 <div class="extra-small text-muted fw-semibold"><i class="bi bi-arrow-left-right text-info me-1"></i>Total Nilai Mutasi Kas & Bank</div>
@@ -183,19 +183,19 @@
                             </div>
                         </div>
                     <% } else { %>
-                        <div class="col-12 col-md-4">
+                        <div class="col-6 col-md-<%= filterSummary.totalMutasi > 0 ? '3' : '4' %>">
                             <div class="p-2 bg-white rounded border border-success-subtle shadow-xs">
                                 <div class="extra-small text-muted fw-semibold"><i class="bi bi-arrow-down-circle-fill text-success me-1"></i>Total Penerimaan</div>
                                 <h6 class="fw-bold text-success mb-0 mt-1">+ <%= formatRupiah(filterSummary.totalPenerimaan) %></h6>
                             </div>
                         </div>
-                        <div class="col-12 col-md-4">
+                        <div class="col-6 col-md-<%= filterSummary.totalMutasi > 0 ? '3' : '4' %>">
                             <div class="p-2 bg-white rounded border border-danger-subtle shadow-xs">
                                 <div class="extra-small text-muted fw-semibold"><i class="bi bi-arrow-up-circle-fill text-danger me-1"></i>Total Pengeluaran</div>
                                 <h6 class="fw-bold text-danger mb-0 mt-1">- <%= formatRupiah(filterSummary.totalPengeluaran) %></h6>
                             </div>
                         </div>
-                        <div class="col-12 col-md-4">
+                        <div class="col-6 col-md-<%= filterSummary.totalMutasi > 0 ? '3' : '4' %>">
                             <div class="p-2 bg-white rounded border <%= filterSummary.netto >= 0 ? 'border-primary-subtle' : 'border-danger-subtle' %> shadow-xs">
                                 <div class="extra-small text-muted fw-semibold"><i class="bi bi-wallet2 me-1"></i>Netto (Selisih Kas)</div>
                                 <h6 class="fw-bold <%= filterSummary.netto >= 0 ? 'text-primary' : 'text-danger' %> mb-0 mt-1">
@@ -203,6 +203,14 @@
                                 </h6>
                             </div>
                         </div>
+                        <% if (filterSummary.totalMutasi > 0) { %>
+                            <div class="col-6 col-md-3">
+                                <div class="p-2 bg-white rounded border border-info-subtle shadow-xs">
+                                    <div class="extra-small text-muted fw-semibold"><i class="bi bi-arrow-left-right text-info me-1"></i>Total Mutasi Kas & Bank</div>
+                                    <h6 class="fw-bold text-info mb-0 mt-1"><%= formatRupiah(filterSummary.totalMutasi) %></h6>
+                                </div>
+                            </div>
+                        <% } %>
                     <% } %>
                 </div>
             </div>

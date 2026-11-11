@@ -73,7 +73,7 @@ class ExcelExportService {
         ]);
         infoRow1.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF334155' } };
         worksheet.mergeCells(`A${infoRow1.number}:G${infoRow1.number}`);
-        worksheet.mergeCells(`H${infoRow1.number}:Q${infoRow1.number}`);
+        worksheet.mergeCells(`H${infoRow1.number}:R${infoRow1.number}`);
 
         const infoRow2 = worksheet.addRow([
             `Filter : [Tipe: ${filterLabels.typeName}] [Kategori: ${filterLabels.categoryName}] [Bentuk: ${filterLabels.paymentModeName}] [Rekening: ${filterLabels.accountName}]`,
@@ -82,19 +82,23 @@ class ExcelExportService {
         ]);
         infoRow2.font = { name: 'Calibri', size: 9, color: { argb: 'FF475569' } };
         worksheet.mergeCells(`A${infoRow2.number}:G${infoRow2.number}`);
-        worksheet.mergeCells(`H${infoRow2.number}:Q${infoRow2.number}`);
+        worksheet.mergeCells(`H${infoRow2.number}:R${infoRow2.number}`);
 
         worksheet.addRow([]); // Blank spacing
 
         // 3. Quick KPI Summary Cards
         let totalPenerimaanKas = 0;
         let totalPengeluaranKas = 0;
+        let totalMutasiKas = 0;
         let totalNonKas = 0;
 
         transactions.forEach(t => {
             const amt = parseFloat(t.amount || 0);
+            const isMutasi = t.type === 'Mutasi' || t.account_code === '100' || (t.category_name && t.category_name.toLowerCase().includes('mutasi'));
             if (t.is_in_kind === 1) {
                 totalNonKas += amt;
+            } else if (isMutasi) {
+                totalMutasiKas += amt;
             } else if (t.type === 'Penerimaan') {
                 totalPenerimaanKas += amt;
             } else if (t.type === 'Pengeluaran') {
@@ -104,37 +108,42 @@ class ExcelExportService {
         const surplusDefisit = totalPenerimaanKas - totalPengeluaranKas;
 
         const kpiHeaderRow = worksheet.addRow([
-            'TOTAL TRANSAKSI', '', 
-            'PENERIMAAN KAS', '', '', 
-            'PENGELUARAN KAS', '', '', 
-            'SURPLUS / (DEFISIT)', '', '', 
+            'TOTAL TRANSAKSI', '', '',
+            'PENERIMAAN KAS', '', '',
+            'PENGELUARAN KAS', '', '',
+            'SURPLUS / (DEFISIT)', '', '',
+            'MUTASI KAS & BANK', '', '',
             'DONASI BARANG (NON-KAS)', '', ''
         ]);
         const kpiValRow = worksheet.addRow([
-            `${transactions.length} Data`, '', 
-            totalPenerimaanKas, '', '', 
-            totalPengeluaranKas, '', '', 
-            surplusDefisit, '', '', 
+            `${transactions.length} Data`, '', '',
+            totalPenerimaanKas, '', '',
+            totalPengeluaranKas, '', '',
+            surplusDefisit, '', '',
+            totalMutasiKas, '', '',
             totalNonKas, '', ''
         ]);
 
         const kpiHNum = kpiHeaderRow.number;
         const kpiVNum = kpiValRow.number;
 
-        worksheet.mergeCells(`A${kpiHNum}:B${kpiHNum}`);
-        worksheet.mergeCells(`A${kpiVNum}:B${kpiVNum}`);
+        worksheet.mergeCells(`A${kpiHNum}:C${kpiHNum}`);
+        worksheet.mergeCells(`A${kpiVNum}:C${kpiVNum}`);
 
-        worksheet.mergeCells(`C${kpiHNum}:E${kpiHNum}`);
-        worksheet.mergeCells(`C${kpiVNum}:E${kpiVNum}`);
+        worksheet.mergeCells(`D${kpiHNum}:F${kpiHNum}`);
+        worksheet.mergeCells(`D${kpiVNum}:F${kpiVNum}`);
 
-        worksheet.mergeCells(`F${kpiHNum}:H${kpiHNum}`);
-        worksheet.mergeCells(`F${kpiVNum}:H${kpiVNum}`);
+        worksheet.mergeCells(`G${kpiHNum}:I${kpiHNum}`);
+        worksheet.mergeCells(`G${kpiVNum}:I${kpiVNum}`);
 
-        worksheet.mergeCells(`I${kpiHNum}:K${kpiHNum}`);
-        worksheet.mergeCells(`I${kpiVNum}:K${kpiVNum}`);
+        worksheet.mergeCells(`J${kpiHNum}:L${kpiHNum}`);
+        worksheet.mergeCells(`J${kpiVNum}:L${kpiVNum}`);
 
-        worksheet.mergeCells(`L${kpiHNum}:N${kpiHNum}`);
-        worksheet.mergeCells(`L${kpiVNum}:N${kpiVNum}`);
+        worksheet.mergeCells(`M${kpiHNum}:O${kpiHNum}`);
+        worksheet.mergeCells(`M${kpiVNum}:O${kpiVNum}`);
+
+        worksheet.mergeCells(`P${kpiHNum}:R${kpiHNum}`);
+        worksheet.mergeCells(`P${kpiVNum}:R${kpiVNum}`);
 
         kpiHeaderRow.font = { name: 'Calibri', size: 9, bold: true, color: { argb: 'FF475569' } };
         kpiHeaderRow.alignment = { vertical: 'middle', horizontal: 'center' };
@@ -160,11 +169,12 @@ class ExcelExportService {
             }
         };
 
-        setCardStyle(1, 2, 'FFF8FAFC', 'FF1E293B', false); // Total
-        setCardStyle(3, 5, 'FFF0FDF4', 'FF16A34A', true);  // Masuk
-        setCardStyle(6, 8, 'FFFEE2E2', 'FFDC2626', true);  // Keluar
-        setCardStyle(9, 11, surplusDefisit >= 0 ? 'FFFEFCE8' : 'FFFEE2E2', surplusDefisit >= 0 ? 'FFCA8A04' : 'FFDC2626', true); // Net
-        setCardStyle(12, 14, 'FFFAF5FF', 'FF9333EA', true); // Donasi Barang
+        setCardStyle(1, 3, 'FFF8FAFC', 'FF1E293B', false); // Total
+        setCardStyle(4, 6, 'FFF0FDF4', 'FF16A34A', true);  // Masuk
+        setCardStyle(7, 9, 'FFFEE2E2', 'FFDC2626', true);  // Keluar
+        setCardStyle(10, 12, surplusDefisit >= 0 ? 'FFFEFCE8' : 'FFFEE2E2', surplusDefisit >= 0 ? 'FFCA8A04' : 'FFDC2626', true); // Net
+        setCardStyle(13, 15, 'FFEFF6FF', 'FF2563EB', true); // Mutasi Kas & Bank
+        setCardStyle(16, 18, 'FFFAF5FF', 'FF9333EA', true); // Donasi Barang
 
         worksheet.addRow([]); // Blank spacing
 
@@ -185,6 +195,7 @@ class ExcelExportService {
             'Rincian Barang (Aset/Material)',
             'Penerimaan (Rp)',
             'Pengeluaran (Rp)',
+            'Mutasi Kas (Rp)',
             'Status Hutang',
             'Input Oleh'
         ]);
@@ -211,13 +222,15 @@ class ExcelExportService {
 
             let penerimaan = 0;
             let pengeluaran = 0;
+            let mutasi = 0;
 
-            if (trx.type === 'Penerimaan') {
+            const isMutasi = trx.type === 'Mutasi' || trx.account_code === '100' || (trx.category_name && trx.category_name.toLowerCase().includes('mutasi'));
+
+            if (isMutasi) {
+                mutasi = amt;
+            } else if (trx.type === 'Penerimaan') {
                 penerimaan = amt;
             } else if (trx.type === 'Pengeluaran') {
-                pengeluaran = amt;
-            } else if (trx.type === 'Mutasi') {
-                // Mutasi kas antar rekening
                 pengeluaran = amt;
             }
 
@@ -256,6 +269,7 @@ class ExcelExportService {
                 itemDetail,
                 penerimaan,
                 pengeluaran,
+                mutasi,
                 trx.payment_mode === 'Hutang' ? trx.debt_status || 'Belum Lunas' : '-',
                 trx.created_by_username || trx.created_by_name || '-'
             ]);
@@ -277,7 +291,7 @@ class ExcelExportService {
                 };
 
                 // Alignment & Formats
-                if (colNumber === 1 || colNumber === 3 || colNumber === 4 || colNumber === 5 || colNumber === 7 || colNumber === 9 || colNumber === 16 || colNumber === 17) {
+                if (colNumber === 1 || colNumber === 3 || colNumber === 4 || colNumber === 5 || colNumber === 7 || colNumber === 9 || colNumber === 17 || colNumber === 18) {
                     cell.alignment = { vertical: 'middle', horizontal: 'center' };
                 } else if (colNumber === 2) {
                     cell.alignment = { vertical: 'middle', horizontal: 'center' };
@@ -295,6 +309,13 @@ class ExcelExportService {
                     cell.numFmt = '#,##0;(#,##0);"-"';
                     if (pengeluaran > 0) {
                         cell.font = { name: 'Calibri', size: 9.5, bold: true, color: { argb: 'FFDC2626' } };
+                    }
+                } else if (colNumber === 16) {
+                    // Mutasi
+                    cell.alignment = { vertical: 'middle', horizontal: 'right' };
+                    cell.numFmt = '#,##0;(#,##0);"-"';
+                    if (mutasi > 0) {
+                        cell.font = { name: 'Calibri', size: 9.5, bold: true, color: { argb: 'FF2563EB' } };
                     }
                 } else {
                     cell.alignment = { vertical: 'middle', horizontal: 'left' };
@@ -317,7 +338,7 @@ class ExcelExportService {
             labelCell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF0F172A' } };
             labelCell.alignment = { vertical: 'middle', horizontal: 'right' };
 
-            // Formulas for Penerimaan & Pengeluaran
+            // Formulas for Penerimaan, Pengeluaran & Mutasi
             const sumPenerimaan = worksheet.getCell(`N${tNum}`);
             sumPenerimaan.value = { formula: `SUM(N${startDataRow}:N${endDataRow})` };
             sumPenerimaan.numFmt = '#,##0;(#,##0);"-"';
@@ -330,7 +351,13 @@ class ExcelExportService {
             sumPengeluaran.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFB91C1C' } };
             sumPengeluaran.alignment = { vertical: 'middle', horizontal: 'right' };
 
-            for (let c = 1; c <= 17; c++) {
+            const sumMutasi = worksheet.getCell(`P${tNum}`);
+            sumMutasi.value = { formula: `SUM(P${startDataRow}:P${endDataRow})` };
+            sumMutasi.numFmt = '#,##0;(#,##0);"-"';
+            sumMutasi.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF2563EB' } };
+            sumMutasi.alignment = { vertical: 'middle', horizontal: 'right' };
+
+            for (let c = 1; c <= 18; c++) {
                 const cell = totalRow.getCell(c);
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
                 cell.border = {
@@ -359,7 +386,7 @@ class ExcelExportService {
             netValCell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF0F766E' } };
             netValCell.alignment = { vertical: 'middle', horizontal: 'right' };
 
-            for (let c = 1; c <= 17; c++) {
+            for (let c = 1; c <= 18; c++) {
                 const cell = netRow.getCell(c);
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0FDF4' } };
                 cell.border = {
@@ -374,7 +401,7 @@ class ExcelExportService {
         // 7. AutoFilter & Freeze Panes
         worksheet.autoFilter = {
             from: { row: headerRowIndex, column: 1 },
-            to: { row: headerRowIndex, column: 17 }
+            to: { row: headerRowIndex, column: 18 }
         };
         worksheet.views = [
             { state: 'frozen', xSplit: 0, ySplit: headerRowIndex }
@@ -397,6 +424,7 @@ class ExcelExportService {
             { key: 'item', width: 30 },
             { key: 'income', width: 20 },
             { key: 'expense', width: 20 },
+            { key: 'mutasi', width: 20 },
             { key: 'debt', width: 15 },
             { key: 'user', width: 16 }
         ];

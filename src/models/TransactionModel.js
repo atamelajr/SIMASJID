@@ -217,7 +217,13 @@ class TransactionModel {
         }
         if (filters.type) {
             if (filters.type === 'Penerimaan & Pengeluaran') {
-                whereSql += ` AND t.type IN ('Penerimaan', 'Pengeluaran')`;
+                whereSql += ` AND t.type IN ('Penerimaan', 'Pengeluaran') AND c.type != 'Mutasi' AND c.account_code != '100'`;
+            } else if (filters.type === 'Pengeluaran') {
+                whereSql += ` AND t.type = 'Pengeluaran' AND c.type != 'Mutasi' AND c.account_code != '100'`;
+            } else if (filters.type === 'Penerimaan') {
+                whereSql += ` AND t.type = 'Penerimaan' AND c.type != 'Mutasi' AND c.account_code != '100'`;
+            } else if (filters.type === 'Mutasi') {
+                whereSql += ` AND (t.type = 'Mutasi' OR c.type = 'Mutasi' OR c.account_code = '100')`;
             } else {
                 whereSql += ` AND t.type = ?`;
                 params.push(filters.type);
@@ -227,9 +233,9 @@ class TransactionModel {
             if (filters.payment_mode === 'Donasi Barang') {
                 whereSql += ` AND (t.payment_mode = 'Donasi Barang' OR t.is_in_kind = 1)`;
             } else if (filters.payment_mode === 'Mutasi') {
-                whereSql += ` AND t.type = 'Mutasi'`;
+                whereSql += ` AND (t.type = 'Mutasi' OR c.type = 'Mutasi' OR c.account_code = '100')`;
             } else {
-                whereSql += ` AND t.payment_mode = ? AND t.is_in_kind = 0 AND t.type != 'Mutasi'`;
+                whereSql += ` AND t.payment_mode = ? AND t.is_in_kind = 0 AND t.type != 'Mutasi' AND c.type != 'Mutasi' AND c.account_code != '100'`;
                 params.push(filters.payment_mode);
             }
         }
@@ -246,10 +252,10 @@ class TransactionModel {
         const statsSql = `
             SELECT 
                 COUNT(DISTINCT t.id) as total_count,
-                COALESCE(SUM(CASE WHEN t.type = 'Penerimaan' AND t.is_in_kind = 0 THEN t.amount ELSE 0 END), 0) as total_penerimaan,
-                COALESCE(SUM(CASE WHEN t.type = 'Pengeluaran' AND t.is_in_kind = 0 THEN t.amount ELSE 0 END), 0) as total_pengeluaran,
+                COALESCE(SUM(CASE WHEN t.type = 'Penerimaan' AND c.type != 'Mutasi' AND c.account_code != '100' AND t.is_in_kind = 0 THEN t.amount ELSE 0 END), 0) as total_penerimaan,
+                COALESCE(SUM(CASE WHEN t.type = 'Pengeluaran' AND c.type != 'Mutasi' AND c.account_code != '100' AND t.is_in_kind = 0 THEN t.amount ELSE 0 END), 0) as total_pengeluaran,
                 COALESCE(SUM(CASE WHEN t.is_in_kind = 1 THEN t.amount ELSE 0 END), 0) as total_non_kas,
-                COALESCE(SUM(CASE WHEN t.type = 'Mutasi' THEN t.amount ELSE 0 END), 0) as total_mutasi,
+                COALESCE(SUM(CASE WHEN t.type = 'Mutasi' OR c.type = 'Mutasi' OR c.account_code = '100' THEN t.amount ELSE 0 END), 0) as total_mutasi,
                 COALESCE(SUM(t.amount), 0) as total_amount
             FROM transactions t
             JOIN categories c ON t.category_id = c.id
