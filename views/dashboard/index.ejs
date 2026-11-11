@@ -297,7 +297,7 @@
                                 <% summary.recentLogs.forEach(log => { %>
                                     <tr>
                                         <td class="small text-muted"><%= formatDate(log.created_at) %></td>
-                                        <td class="fw-semibold text-truncate" style="max-width: 110px;"><%= log.user_name || 'Sistem' %></td>
+                                        <td class="fw-semibold text-truncate" style="max-width: 110px;" title="<%= log.username || log.user_name || 'Sistem' %>"><%= log.username || log.user_name || 'Sistem' %></td>
                                         <td><span class="badge bg-secondary-subtle text-secondary border"><%= log.action %></span></td>
                                         <td class="small text-truncate" style="max-width: 160px;" title="<%= log.details %>"><%= log.details %></td>
                                     </tr>

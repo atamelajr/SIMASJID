@@ -167,7 +167,7 @@ class TransactionModel {
 
         // Recent Activity Logs
         const [recentLogs] = await db.query(
-            `SELECT a.*, u.full_name as user_name 
+            `SELECT a.*, u.username, u.full_name as user_name 
              FROM activity_logs a 
              LEFT JOIN users u ON a.user_id = u.id 
              ORDER BY a.created_at DESC LIMIT 5`
